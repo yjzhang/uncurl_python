@@ -34,7 +34,7 @@ class ClusterTest(TestCase):
         """
         centers = np.array([[0,10,20], [1, 11, 0], [50, 0, 100]])
         centers = centers.astype(float)
-        data = generate_poisson_data(centers, 100)
+        data = generate_poisson_data(centers, 200)
         data = data.astype(float)
         assignments, c_centers = uncurl.poisson_cluster(data, 3)
         distances = np.zeros((3,3))
@@ -45,6 +45,6 @@ class ClusterTest(TestCase):
         for i in range(3):
             correspond.append(np.argmin(distances[i,:]))
             # assert that the learned clusters are close to the actual clusters
-            self.assertTrue(min(distances[i,:]) < 5)
+            self.assertTrue(min(distances[i,:]) < 4)
         self.assertFalse(correspond[0]==correspond[1])
         self.assertFalse(correspond[1]==correspond[2])
