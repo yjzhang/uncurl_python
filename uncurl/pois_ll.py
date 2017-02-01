@@ -25,7 +25,7 @@ def poisson_ll_2(p1, p2):
     """
     Calculates Poisson LL(p1|p2).
     """
-    return -sum(p2 + p1*np.log(p2))
+    return -np.sum(p2 + p1*np.log(p2))
 
 def poisson_dist(p1, p2):
     """
