@@ -12,4 +12,6 @@ setup(name='uncurl',
           'numpy',
           'scipy',
       ],
+      test_suite='nose.collector',
+      tests_require=['nose'],
       zip_safe=False)

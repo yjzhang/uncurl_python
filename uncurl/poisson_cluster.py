@@ -13,8 +13,7 @@ def kmeans_pp(data, k):
         k (int): Number of clusters
 
     Returns:
-        a tuple of two arrays: a cells x 1 vector of cluster assignments,
-        and a genes x k array of cluster means.
+        centers - a genes x k array of cluster means.
     """
     genes, cells = data.shape
     centers = np.zeros((genes, k))
