@@ -10,5 +10,6 @@ setup(name='uncurl',
       packages=['uncurl'],
       install_requires=[
           'numpy',
+          'scipy',
       ],
       zip_safe=False)

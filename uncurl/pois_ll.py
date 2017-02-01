@@ -18,5 +18,17 @@ def poisson_ll(data, means):
     ll = np.zeros((cells, clusters))
     for i in range(clusters):
         for k  in range(cells):
-            ll[k,i] = -sum(means[:,i] + data[:,k]*np.log(means[:,i]))
+            ll[k,i] = poisson_ll_2(data[:,k], means[:,i])
     return ll
+
+def poisson_ll_2(p1, p2):
+    """
+    Calculates Poisson LL(p1|p2).
+    """
+    return -sum(p2 + p1*np.log(p2))
+
+def poisson_dist(p1, p2):
+    """
+    Calculates the Poisson distance between two vectors.
+    """
+    return np.dot(p1-p2, np.log(p1/p2))
