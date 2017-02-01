@@ -5,4 +5,4 @@ To install after cloning the repo: `pip install .`
 
 To run tests: `python setup.py test`
 
-Examples: TODO
+Examples: see `example.py`

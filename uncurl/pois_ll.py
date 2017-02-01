@@ -31,4 +31,7 @@ def poisson_dist(p1, p2):
     """
     Calculates the Poisson distance between two vectors.
     """
+    # ugh...
+    p1 += 0.0000000000000001
+    p2 += 0.0000000000000001
     return np.dot(p1-p2, np.log(p1/p2))

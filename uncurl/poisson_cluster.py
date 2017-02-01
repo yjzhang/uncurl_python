@@ -1,4 +1,4 @@
-# poisson clustering...
+# poisson clustering
 
 import numpy as np
 
@@ -20,7 +20,6 @@ def kmeans_pp(data, k):
     distances = np.zeros((cells, k))
     distances[:] = np.inf
     init = np.random.randint(0, cells)
-    print init
     centers[:,0] = data[:, init]
     for c in range(1,k):
         for c2 in range(c):
@@ -32,7 +31,6 @@ def kmeans_pp(data, k):
         min_distances = min_distances**2
         min_dist = np.random.choice(range(cells),
                 p=min_distances/min_distances.sum())
-        print min_dist
         centers[:,c] = data[:, min_dist]
     return centers
 
