@@ -16,7 +16,7 @@ def _create_w_objective(m, X):
         # optimization purposes
         w = w.reshape((m.shape[1], X.shape[1]))
         d = m.dot(w)
-        return np.sum(d - X*d)
+        return np.sum(d - X*np.log(d))
     def deriv(w):
         # TODO
         # derivative of objective wrt all elements of w
@@ -34,18 +34,20 @@ def _create_m_objective(w, X):
         X (array): genes x cells
     """
     def objective(m):
-        m = m.reshape((X.shape[0], w.shape[1]))
+        m = m.reshape((X.shape[0], w.shape[0]))
         d = m.dot(w)
-        return np.sum(d - X*d)
+        return np.sum(d - X*np.log(d))
     def deriv(m):
         # TODO
         pass
     return objective
 
 def _w_equality_constraints(cells, clusters, i):
-    fun = lambda w: sum(w[i*clusters:(i+1)*(clusters)]) - 1
+    # constraint for the ith cell
+    fun = lambda w: w.reshape((clusters, cells)).sum(0)[i] - 1.0
     jac_matrix = np.zeros(cells*clusters)
-    jac_matrix[i*clusters : (i+1)*clusters] = 1.0
+    for j in range(clusters):
+        jac_matrix[j*cells + i] = 1.0
     jac = lambda w: jac_matrix
     return (fun, jac)
 
@@ -56,7 +58,7 @@ def _create_w_constraints(cells, clusters):
     eq_constraints = [{'type': 'eq', 'fun': x, 'jac': y} for x,y in equality_constraint()]
     return tuple(eq_constraints)
 
-def poisson_estimate_state(data, means, max_iters=10):
+def poisson_estimate_state(data, means, max_iters=10, tol=1e-6):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing.
@@ -65,30 +67,36 @@ def poisson_estimate_state(data, means, max_iters=10):
         data (array): genes x cells
         means (array): initial centers - genes x clusters
         max_iters (int): maximum number of iterations
+        tol (float): if both M and W change by less than tol, then the iteration
+            is stopped.
 
     Returns:
         two matrices, M and W: M is genes x clusters, W is clusters x cells.
-        M is the cluster states and W is the state mixing components for each
+        M is the state centers and W is the state mixing components for each
         cell.
     """
     genes, cells = data.shape
     clusters = means.shape[1]
     w_constraints = _create_w_constraints(cells, clusters)
-    w_init = np.random.randn(cells*clusters)
+    w_init = np.random.random(cells*clusters)
     m_init = means.reshape(genes*clusters)
-    w_bounds = [(0, None) for x in w_init]
-    m_bounds = [(0, None) for x in m_init]
     # repeat steps 1 and 2 until convergence:
     for i in range(max_iters):
+        w_bounds = [(0, 1.0) for x in w_init]
+        m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
         w_objective = _create_w_objective(means, data)
         w_res = minimize(w_objective, w_init, bounds=w_bounds, constraints=w_constraints)
+        w_diff = np.sqrt((w_res.x-w_init)**2)
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
         m_objective = _create_m_objective(w_new, data)
         m_res = minimize(m_objective, m_init, bounds=m_bounds)
+        m_diff = np.sqrt((m_res.x-m_init)**2)
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x
         means = m_new
+        if w_diff < tol and m_diff < tol:
+            break
     return m_new, w_new
