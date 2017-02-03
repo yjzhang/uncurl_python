@@ -31,6 +31,9 @@ def generate_state_data(means, weights):
     Args:
         means (array): Cell types- genes x clusters
         weights (array): Cell cluster assignments- clusters x cells
+
+    Returns:
+        data matrix - genes x cells
     """
     x_true = np.dot(means, weights)
     sample = np.random.poisson(x_true)

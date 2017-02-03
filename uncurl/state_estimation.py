@@ -87,13 +87,13 @@ def poisson_estimate_state(data, means, max_iters=10, tol=1e-6):
         # step 1: given M, estimate W
         w_objective = _create_w_objective(means, data)
         w_res = minimize(w_objective, w_init, bounds=w_bounds, constraints=w_constraints)
-        w_diff = np.sqrt((w_res.x-w_init)**2)
+        w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
         m_objective = _create_m_objective(w_new, data)
         m_res = minimize(m_objective, m_init, bounds=m_bounds)
-        m_diff = np.sqrt((m_res.x-m_init)**2)
+        m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x
         means = m_new
