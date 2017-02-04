@@ -3,6 +3,8 @@
 import numpy as np
 from scipy.optimize import minimize
 
+eps=1e-8
+
 def _create_w_objective(m, X):
     """
     Creates an objective function and its derivative for W, given M and X (data)
@@ -11,19 +13,27 @@ def _create_w_objective(m, X):
         m (array): genes x clusters
         X (array): genes x cells
     """
+    genes, clusters = m.shape
+    cells = X.shape[1]
     def objective(w):
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
         w = w.reshape((m.shape[1], X.shape[1]))
-        d = m.dot(w)
+        d = m.dot(w)+eps
         return np.sum(d - X*np.log(d))
     def deriv(w):
         # TODO
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
         # x_ij
-        pass
-    return objective
+        w2 = w.reshape((m.shape[1], X.shape[1]))
+        d = m.dot(w2)+eps
+        deriv = np.zeros(w.shape)
+        for i in range(clusters):
+            for j in range(cells):
+                deriv[i*cells+j] = sum(m[:,i]) - sum(m[:,i]*X[:,j]/d[:,j])
+        return deriv
+    return objective, deriv
 
 def _create_m_objective(w, X):
     """
@@ -33,14 +43,21 @@ def _create_m_objective(w, X):
         w (array): clusters x cells
         X (array): genes x cells
     """
+    clusters, cells = w.shape
+    genes = X.shape[0]
     def objective(m):
         m = m.reshape((X.shape[0], w.shape[0]))
-        d = m.dot(w)
+        d = m.dot(w)+eps
         return np.sum(d - X*np.log(d))
     def deriv(m):
-        # TODO
-        pass
-    return objective
+        m2 = m.reshape((X.shape[0], w.shape[0]))
+        d = m2.dot(w)+eps
+        deriv = np.zeros(m.shape)
+        for i in range(genes):
+            for j in range(clusters):
+                deriv[i*clusters+j] = sum(w[j,:]) - sum(w[j,:]*X[i,:]/d[i,:])
+        return deriv
+    return objective, deriv
 
 def _w_equality_constraints(cells, clusters, i):
     # constraint for the ith cell
@@ -85,14 +102,14 @@ def poisson_estimate_state(data, means, max_iters=10, tol=1e-6):
         w_bounds = [(0, 1.0) for x in w_init]
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
-        w_objective = _create_w_objective(means, data)
-        w_res = minimize(w_objective, w_init, bounds=w_bounds, constraints=w_constraints)
+        w_objective, w_deriv = _create_w_objective(means, data)
+        w_res = minimize(w_objective, w_init, jac=w_deriv, bounds=w_bounds, constraints=w_constraints)
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
-        m_objective = _create_m_objective(w_new, data)
-        m_res = minimize(m_objective, m_init, bounds=m_bounds)
+        m_objective, m_deriv = _create_m_objective(w_new, data)
+        m_res = minimize(m_objective, m_init, jac=m_deriv, bounds=m_bounds)
         m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x
