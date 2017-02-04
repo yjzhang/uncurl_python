@@ -27,8 +27,10 @@ def dim_reduce(data, means, weights, d):
     proximity = distances**2
     J = np.eye(clusters) - 1./clusters
     B = -0.5*np.dot(J, np.dot(proximity, J))
-    e_val, e_vec = np.linalg.eig(B)
-    lam = np.diag(e_val[:d])
-    E = e_vec[:,:d]
+    # B should be symmetric, so we can use eigh
+    e_val, e_vec = np.linalg.eigh(B)
+    # Note: lam should be ordered to be the largest eigenvalues
+    lam = np.diag(e_val[-d:])[::-1]
+    E = e_vec[:,-d:][::-1]
     X = np.dot(E, lam**0.5)
     return X

@@ -16,6 +16,7 @@ def _create_w_objective(m, X):
     genes, clusters = m.shape
     cells = X.shape[1]
     def objective(w):
+        #print 'eval_w_obj'
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
         w = w.reshape((m.shape[1], X.shape[1]))
@@ -23,6 +24,7 @@ def _create_w_objective(m, X):
         return np.sum(d - X*np.log(d))
     def deriv(w):
         # TODO
+        #print 'eval_w_deriv'
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
         # x_ij
@@ -46,10 +48,12 @@ def _create_m_objective(w, X):
     clusters, cells = w.shape
     genes = X.shape[0]
     def objective(m):
+        #print 'eval_m_obj'
         m = m.reshape((X.shape[0], w.shape[0]))
         d = m.dot(w)+eps
         return np.sum(d - X*np.log(d))
     def deriv(m):
+        #print 'eval_m_deriv'
         m2 = m.reshape((X.shape[0], w.shape[0]))
         d = m2.dot(w)+eps
         deriv = np.zeros(m.shape)
@@ -75,7 +79,7 @@ def _create_w_constraints(cells, clusters):
     eq_constraints = [{'type': 'eq', 'fun': x, 'jac': y} for x,y in equality_constraint()]
     return tuple(eq_constraints)
 
-def poisson_estimate_state(data, means, max_iters=10, tol=1e-6):
+def poisson_estimate_state(data, means, init_weights=None, max_iters=10, tol=1e-6):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing.
@@ -83,6 +87,7 @@ def poisson_estimate_state(data, means, max_iters=10, tol=1e-6):
     Args:
         data (array): genes x cells
         means (array): initial centers - genes x clusters
+        init_weights (array): initial weights - clusters x cells
         max_iters (int): maximum number of iterations
         tol (float): if both M and W change by less than tol, then the iteration
             is stopped.
@@ -96,20 +101,23 @@ def poisson_estimate_state(data, means, max_iters=10, tol=1e-6):
     clusters = means.shape[1]
     w_constraints = _create_w_constraints(cells, clusters)
     w_init = np.random.random(cells*clusters)
+    if init_weights is not None:
+        w_init = init_weights.reshape(cells*clusters)
     m_init = means.reshape(genes*clusters)
     # repeat steps 1 and 2 until convergence:
     for i in range(max_iters):
+        print('iter: {0}'.format(i))
         w_bounds = [(0, 1.0) for x in w_init]
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
         w_objective, w_deriv = _create_w_objective(means, data)
-        w_res = minimize(w_objective, w_init, jac=w_deriv, bounds=w_bounds, constraints=w_constraints)
+        w_res = minimize(w_objective, w_init, method='SLSQP', jac=w_deriv, bounds=w_bounds, constraints=w_constraints, options={'disp':True})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
         m_objective, m_deriv = _create_m_objective(w_new, data)
-        m_res = minimize(m_objective, m_init, jac=m_deriv, bounds=m_bounds)
+        m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=m_deriv, bounds=m_bounds, options={'disp':True})
         m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x
