@@ -27,8 +27,8 @@ class StateEstimationTest(TestCase):
         sim_data = sim_data + 1e-8
         print sim_data
         # add noise to the mean
-        sim_means += 2*(np.random.random(sim_means.shape)-0.5)
-        m, w = state_estimation.poisson_estimate_state(sim_data, sim_means, max_iters=10)
+        sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
+        m, w = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         print m
         print w
         print w.sum(0)
@@ -59,8 +59,8 @@ class StateEstimationTest(TestCase):
         sim_data = sim_data + 1e-8
         print sim_data
         # add noise to the mean
-        sim_means += 5*(np.random.random(sim_means.shape)-0.5)
-        m, w = state_estimation.poisson_estimate_state(sim_data, sim_means, max_iters=10)
+        sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
+        m, w = state_estimation.poisson_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False)
         print m
         print w
         print w.sum(0)
