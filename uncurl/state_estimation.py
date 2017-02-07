@@ -18,27 +18,21 @@ def _create_w_objective(m, X):
     genes, clusters = m.shape
     cells = X.shape[1]
     def objective(w):
-        #print 'eval_w_obj'
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
         w = w.reshape((m.shape[1], X.shape[1]))
         d = m.dot(w)+eps
         return np.sum(d - X*np.log(d))/genes
     def deriv(w):
-        #print 'eval_w_deriv'
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
         # x_ij
         w2 = w.reshape((m.shape[1], X.shape[1]))
         d = m.dot(w2)+eps
-        #deriv = np.zeros(w.shape)
         temp = X/d
         m_sum = m.sum(0)
         m2 = m.T.dot(temp)
         deriv = m_sum.reshape((clusters, 1)) - m2
-        #for i in range(clusters):
-        #    for j in range(cells):
-        #        deriv[i*cells+j] = m_sum[i] - m2[i,j]
         return deriv.flatten()/genes
     return objective, deriv
 
@@ -53,22 +47,16 @@ def _create_m_objective(w, X):
     clusters, cells = w.shape
     genes = X.shape[0]
     def objective(m):
-        #print 'eval_m_obj'
         m = m.reshape((X.shape[0], w.shape[0]))
         d = m.dot(w)+eps
         return np.sum(d - X*np.log(d))/genes
     def deriv(m):
-        #print 'eval_m_deriv'
         m2 = m.reshape((X.shape[0], w.shape[0]))
         d = m2.dot(w)+eps
-        #deriv = np.zeros(m.shape)
         temp = X/d
         w_sum = w.sum(1)
         w2 = w.dot(temp.T)
         deriv = w_sum - w2.T
-        #for i in range(genes):
-        #    for j in range(clusters):
-        #        deriv[i*clusters+j] = w_sum[j] - w2[j,i]
         return deriv.flatten()/genes
     return objective, deriv
 

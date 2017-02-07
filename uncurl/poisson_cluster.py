@@ -4,7 +4,7 @@ import numpy as np
 
 from pois_ll import poisson_ll, poisson_dist
 
-def kmeans_pp(data, k):
+def kmeans_pp(data, k, centers=None):
     """
     Generates kmeans++ initial centers.
 
@@ -12,16 +12,26 @@ def kmeans_pp(data, k):
         data (array): A 2d array- genes x cells
         k (int): Number of clusters
 
+    Optional args:
+        centers (array): if provided, these are one or more known cluster centers. 2d array of genes x number of centers.
+
     Returns:
         centers - a genes x k array of cluster means.
     """
     genes, cells = data.shape
-    centers = np.zeros((genes, k))
+    num_known_centers = 0
+    if centers is None:
+        centers = np.zeros((genes, k))
+    else:
+        num_known_centers = centers.shape[1]
+        centers = np.concatenate((centers, np.zeros(genes, k-num_known_centers)))
     distances = np.zeros((cells, k))
     distances[:] = np.inf
-    init = np.random.randint(0, cells)
-    centers[:,0] = data[:, init]
-    for c in range(1,k):
+    if num_known_centers == 0:
+        init = np.random.randint(0, cells)
+        centers[:,0] = data[:, init]
+        num_known_centers+=1
+    for c in range(num_known_centers, k):
         for c2 in range(c):
             for i in range(cells):
                 distances[i,c2] = poisson_dist(data[:,i], centers[:,c2])
@@ -41,6 +51,8 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     Args:
         data (array): A 2d array- genes x cells
         k (int): Number of clusters
+
+    Optional args:
         init (array): Initial centers - genes x k array. Default: use kmeans++
         max_iters (int): Maximum number of iterations. Default: 100
 
