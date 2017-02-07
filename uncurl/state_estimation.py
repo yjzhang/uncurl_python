@@ -111,13 +111,14 @@ def poisson_estimate_state(data, means, init_weights=None, max_iters=10, tol=1e-
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
         w_objective, w_deriv = _create_w_objective(means, data)
-        w_res = minimize(w_objective, w_init, method='SLSQP', jac=w_deriv, bounds=w_bounds, constraints=w_constraints, options={'disp':True})
+        w_res = minimize(w_objective, w_init, method='SLSQP', jac=w_deriv, bounds=w_bounds, constraints=w_constraints, options={'disp':True, 'maxiter':100})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
         m_objective, m_deriv = _create_m_objective(w_new, data)
-        m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=m_deriv, bounds=m_bounds, options={'disp':True})
+        # method could be 'L-BFGS-B' or 'SLSQP'... SLSQP gives a memory error...
+        m_res = minimize(m_objective, m_init, method='TNC', jac=m_deriv, bounds=m_bounds, options={'disp':True, 'maxiter':1000})
         m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x
