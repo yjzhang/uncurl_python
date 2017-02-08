@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # Poisson clustering
     assignments, centers = uncurl.poisson_cluster(data, 2, init=centers)
     # State estimation
-    means, weights = uncurl.poisson_estimate_state(data, 2, max_iters=10)
+    means, weights = uncurl.poisson_estimate_state(data, 2, max_iters=100)
     # dimensionality reduction
     X = uncurl.dim_reduce(data, means, weights, 2)
     proj = np.dot(X, weights)
