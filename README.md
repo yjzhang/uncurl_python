@@ -15,7 +15,7 @@ The `poisson_cluster` function does Poisson clustering with hard assignments. It
 
 Example:
 
-```
+```python
 from uncurl import poisson_cluster
 import numpy as np
 
