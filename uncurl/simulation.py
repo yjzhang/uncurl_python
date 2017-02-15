@@ -58,3 +58,19 @@ def generate_poisson_states(n_states, n_cells, n_genes):
     W = W.T
     M = np.random.random((n_genes, n_states))*100
     return M, W
+
+def generate_poisson_lineage(n_states, n_cells_per_cluster, n_genes):
+    """
+    Generates a lineage for each state- assumes that each state has a common
+    ancestor.
+
+    Returns:
+        M - genes x clusters
+        W - clusters x cells
+    """
+    # means...
+    M = np.random.random((n_genes, n_states))*100
+    center = M.mean(1)
+    W = np.zeros((n_states, n_cells_per_cluster))
+    # TODO
+
