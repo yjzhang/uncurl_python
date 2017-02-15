@@ -41,6 +41,8 @@ def mst(points):
     Finds the minimum spanning tree of the provided array of 2d points, using
     Euclidean distance.
 
+    NOT IMPLEMENTED AND ALSO UNNECESSARY
+
     Args:
         points (array) = 2 x n array
 
@@ -93,20 +95,23 @@ def lineage(data, means, weights, curve_function='poly'):
     for c in range(clusters):
         cluster_cells = reduced_data[:, cell_cluster_assignments==c]
         # y = f(x)
-        # bounds are sort of arbitrary?
         if curve_function=='fourier':
-            p0 = [1.0]*12
+            p0 = [1.0]*10
+            # scipy is bad at finding the correct scale
+            p0[1] = 0.0001
+            bounds = (-np.inf, np.inf)
         else:
-            p0 = [1.0]*5
+            p0 = [1.0]*6
+            bounds = (-np.inf, np.inf)
         p_x, pcov_x = curve_fit(func, cluster_cells[0,:],
                 cluster_cells[1,:],
-                p0=p0)
+                p0=p0, bounds=bounds)
         perr_x = np.sum(np.sqrt(np.diag(pcov_x)))
         #print perr_x
         # x = f(y)
         p_y, pcov_y = curve_fit(func, cluster_cells[1,:],
                 cluster_cells[0,:],
-                p0=p0)
+                p0=p0, bounds=bounds)
         perr_y = np.sum(np.sqrt(np.diag(pcov_y)))
         #print perr_y
         if perr_x <= perr_y:
@@ -141,7 +146,6 @@ def lineage(data, means, weights, curve_function='poly'):
     # for each cluster, find the closest point in another cluster, and connect
     # those points. Add that point to cluster_edges.
     # build a distance matrix between the reduced points...
-    #TODO: this doesn't work because indexing is bad
     distances = np.array([[sum((x - y)**2) for x in cluster_fitted_vals.T] for y in cluster_fitted_vals.T])
     for c1 in range(clusters):
         min_dist = np.inf

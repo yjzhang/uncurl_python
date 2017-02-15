@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # dimensionality reduction
     X = uncurl.dim_reduce(data, means, weights, 2)
     proj = np.dot(X.T, weights)
-    cluster_curves, cluster_fitted_vals, cluster_edges, cluster_assignments = uncurl.lineage(data, means, weights)
+    cluster_curves, cluster_fitted_vals, cluster_edges, cluster_assignments = uncurl.lineage(data, means, weights, curve_function='poly')
     # dimensionality reduction with true data
     true_weights = dat['X']
     true_means = dat['M']
@@ -29,12 +29,12 @@ if __name__ == '__main__':
     plt.clf()
     plt.cla()
     plt.title('Dimensionality reduction plot')
-    plt.scatter(proj[0,:], proj[1,:], s=20, c=weights.argmax(0))
-    #plt.scatter(cluster_fitted_vals[0,:], cluster_fitted_vals[1,:], s=20, c=weights.argmax(0))
+    plt.scatter(proj[0,:], proj[1,:], s=30, c=true_weights.argmax(0), edgecolors='none', alpha=0.7)
+    plt.scatter(cluster_fitted_vals[0,:], cluster_fitted_vals[1,:], s=30, c=true_weights.argmax(0), edgecolors='none', alpha=0.7)
     # connect the lines
     for edge in cluster_edges:
         plt.plot((cluster_fitted_vals[0, edge[0]], cluster_fitted_vals[0, edge[1]]),
-                (cluster_fitted_vals[1, edge[0]], cluster_fitted_vals[1, edge[1]]), 'r')
+                (cluster_fitted_vals[1, edge[0]], cluster_fitted_vals[1, edge[1]]), 'black', linewidth=2)
     plt.xlabel('dim 1')
     plt.ylabel('dim 2')
     plt.savefig('branching_dim_reduce_fitted_poly.png')
