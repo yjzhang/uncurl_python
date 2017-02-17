@@ -71,6 +71,19 @@ def generate_poisson_lineage(n_states, n_cells_per_cluster, n_genes):
     # means...
     M = np.random.random((n_genes, n_states))*100
     center = M.mean(1)
-    W = np.zeros((n_states, n_cells_per_cluster))
+    W = np.zeros((n_states, n_cells_per_cluster*n_states))
     # TODO
+    # start at a center where all the clusters have equal probability, and for
+    # each cluster, interpolate linearly towards the cluster.
+    index = 0
+    means = np.array([1.0/n_states]*n_states)
+    for c in range(n_states):
+        for i in range(n_cells_per_cluster):
+            w = np.copy(means)
+            new_value = w[c] + i*(1.0 - 1.0/n_states)/n_cells_per_cluster
+            w[:] = (1.0 - new_value)/(n_states - 1.0)
+            w[c] = new_value
+            W[:, index] = w
+            index += 1
+    return M, W
 

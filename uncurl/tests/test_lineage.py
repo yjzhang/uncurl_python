@@ -13,16 +13,11 @@ class LineageTest(TestCase):
         """
         Testing lineage using provided weights and means
         """
-        sim_means = np.array([[20.,30.,1.],
-                              [10.,3.,8.],
-                              [90.,50.,20.],
-                              [10.,4.,30.]])
-        sim_assignments = np.array([[0.1,0.2,0.3,0.4,0.5,0.1,0.8],
-                                    [0.5,0.3,0.2,0.4,0.2,0.2,0.1],
-                                    [0.4,0.5,0.5,0.2,0.3,0.7,0.1]])
-        sim_data = simulation.generate_state_data(sim_means, sim_assignments)
+        M, W = simulation.generate_poisson_lineage(3, 100, 200)
+        sim_data = simulation.generate_state_data(M, W)
         sim_data = sim_data + 1e-8
+        m2 = M + np.random.random(M.shape) - 0.5
         # TODO: need a better simulation
-        # curves, fitted_vals, edges = lineage(sim_data, sim_means, sim_assignments)
+        curves, fitted_vals, edges, assignments = lineage(sim_data, m2, W)
         # assert something about the distances???
         # 1-NN based error?
