@@ -22,15 +22,17 @@ class NBTest(TestCase):
         R = np.array([[1.,1.,1.],
                       [2.,2.,2.],
                       [2.,2.,2.]])
-        data = simulation.generate_nb_data(P, R, 20)
+        data = simulation.generate_nb_data(P, R, 40)
         data = data.astype(float)
         data += 1e-8
         ll = nb_cluster.nb_ll(data, P, R)
-        self.assertEqual(ll.shape, (20,3))
+        self.assertEqual(ll.shape, (40,3))
         # test derivative
         d1 = nb_cluster._r_deriv(R[:,0], P[:,0], data)
         self.assertEqual(d1.shape, (3,))
-        # test nb_fit for one
+        # test nb cluster
+        p,r,a = nb_cluster.nb_cluster(data,3)
+
 
     def test_nb_fit(self):
         """

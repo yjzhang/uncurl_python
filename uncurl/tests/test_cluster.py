@@ -14,7 +14,7 @@ class ClusterTest(TestCase):
     def test_kmeans_pp(self):
         data = self.dat['Dat']
         genes, cells = data.shape
-        centers = uncurl.kmeans_pp(data, 3)
+        centers, assignments = uncurl.kmeans_pp(data, 3)
         self.assertEqual(centers.shape[0], genes)
         self.assertEqual(centers.shape[1], 3)
         # the center assignments are nondeterministic so...

@@ -17,6 +17,7 @@ def kmeans_pp(data, k, centers=None):
 
     Returns:
         centers - a genes x k array of cluster means.
+        assignments - a cells x 1 array of cluster assignments
     """
     genes, cells = data.shape
     num_known_centers = 0
@@ -42,7 +43,11 @@ def kmeans_pp(data, k, centers=None):
         min_dist = np.random.choice(range(cells),
                 p=min_distances/min_distances.sum())
         centers[:,c] = data[:, min_dist]
-    return centers
+    cluster_dists = np.zeros((cells, k))
+    for c in range(k):
+        cluster_dists[:,c] = np.array([poisson_dist(centers[:,c], data[:,i]) for i in range(cells)])
+    new_assignments = np.argmin(cluster_dists, 1)
+    return centers, new_assignments
 
 def poisson_cluster(data, k, init=None, max_iters=100):
     """
@@ -62,7 +67,7 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     """
     genes, cells = data.shape
     if init is None:
-        init = kmeans_pp(data, k)
+        init, assignments = kmeans_pp(data, k)
     centers = np.copy(init)
     assignments = np.zeros(cells)
     for it in range(max_iters):
