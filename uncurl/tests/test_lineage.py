@@ -13,11 +13,15 @@ class LineageTest(TestCase):
         """
         Testing lineage using provided weights and means
         """
-        M, W = simulation.generate_poisson_lineage(3, 100, 200)
+        M, W = simulation.generate_poisson_lineage(3, 100, 50)
         sim_data = simulation.generate_state_data(M, W)
         sim_data = sim_data + 1e-8
         m2 = M + np.random.random(M.shape) - 0.5
-        # TODO: need a better simulation
         curves, fitted_vals, edges, assignments = lineage(sim_data, m2, W)
-        # assert something about the distances???
-        # 1-NN based error?
+        # TODO: assert something about the distances???
+        print len(edges)
+        adjacent_count = 0
+        for e in edges:
+            if np.abs(e[0]-e[1]) <= 1:
+                adjacent_count += 1
+        self.assertTrue(adjacent_count>150)

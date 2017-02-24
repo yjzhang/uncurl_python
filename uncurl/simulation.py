@@ -69,7 +69,7 @@ def generate_poisson_lineage(n_states, n_cells_per_cluster, n_genes):
         W - clusters x cells
     """
     # means...
-    M = np.random.random((n_genes, n_states))*100
+    M = np.random.random((n_genes, n_states))*300
     center = M.mean(1)
     W = np.zeros((n_states, n_cells_per_cluster*n_states))
     # TODO
@@ -86,4 +86,32 @@ def generate_poisson_lineage(n_states, n_cells_per_cluster, n_genes):
             W[:, index] = w
             index += 1
     return M, W
+
+def generate_nb_data(P, R, n_cells, assignments=None):
+    """
+    Generates negative binomial data
+
+    Args:
+        P (array) - genes x clusters
+        R (array) - genes x clusters
+        n_cells (int) - number of cells
+        assignments (list) - cluster assignment of each cell. Default:
+            random uniform
+
+    Returns:
+        data array with shape genes x cells
+    """
+    genes, clusters = P.shape
+    output = np.zeros((genes, n_cells))
+    if assignments is None:
+        cluster_probs = np.ones(clusters)/clusters
+    for i in range(n_cells):
+        if assignments is None:
+            c = np.random.choice(range(clusters), p=cluster_probs)
+        else:
+            c = assignments[i]
+        # because numpy's negative binomial, r is the number of successes
+        output[:,i] = np.random.negative_binomial(R[:,c], 1.0-P[:,c])
+    return output
+
 
