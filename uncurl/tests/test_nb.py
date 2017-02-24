@@ -29,9 +29,7 @@ class NBTest(TestCase):
         self.assertEqual(ll.shape, (20,3))
         # test derivative
         d1 = nb_cluster._r_deriv(R[:,0], P[:,0], data)
-        d2 = nb_cluster._p_deriv(P[:,0], R[:,0], data)
         self.assertEqual(d1.shape, (3,))
-        self.assertEqual(d2.shape, (3,))
         # test nb_fit for one
 
     def test_nb_fit(self):
