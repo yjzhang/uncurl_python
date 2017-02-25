@@ -6,7 +6,7 @@ from scipy.special import gammaln, digamma
 
 from poisson_cluster import kmeans_pp
 
-eps=1e-4
+eps=1e-8
 
 def log_ncr(a, b):
     """
@@ -122,7 +122,6 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
     Returns:
         P, R, assignments
     """
-    # TODO
     genes, cells = data.shape
     if P_init is None:
         P_init = np.random.random((genes, k))

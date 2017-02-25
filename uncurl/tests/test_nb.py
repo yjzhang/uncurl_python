@@ -31,7 +31,10 @@ class NBTest(TestCase):
         d1 = nb_cluster._r_deriv(R[:,0], P[:,0], data)
         self.assertEqual(d1.shape, (3,))
         # test nb cluster
+        # how to test the results... they're often not good...
         p,r,a = nb_cluster.nb_cluster(data,3)
+        self.assertEqual(p.shape, P.shape)
+        self.assertEqual(r.shape, R.shape)
 
 
     def test_nb_fit(self):
@@ -45,4 +48,4 @@ class NBTest(TestCase):
                       [5.],
                       [2.]])
         data = simulation.generate_nb_data(P, R, 20)
-        nb_cluster.nb_fit(data)
+        p, r = nb_cluster.nb_fit(data)

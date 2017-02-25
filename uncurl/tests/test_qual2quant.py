@@ -6,6 +6,7 @@ from scipy.io import loadmat
 import uncurl
 
 class Qual2QuantTest(TestCase):
+    # TODO: test dataset
 
     def setUp(self):
         self.dat = loadmat('data/SCDE_k2_sup.mat')
