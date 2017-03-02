@@ -47,7 +47,7 @@ starting_centers = qual2quant(data, bin_data)
 
 ### State Estimation
 
-The `poisson_estimate_state` function is used to
+The `poisson_estimate_state` function is used to estimate cell types using the Poisson Convex Mixture Model.
 
 Example:
 
@@ -56,4 +56,22 @@ from uncurl import poisson_estimate_state
 
 data = np.loadtxt('counts.txt')
 M, W = poisson_estimate_state(data, 2)
+```
+
+### Dimensionality Reduction
+
+The `dim_reduce` function performs dimensionality reduction using MDS.
+
+### Lineage Estimation
+
+The `lineage` function performs lineage estimation from the output of `poisson_estimate_state`. It fits the data to a different 5th degree polynomial for each cell type.
+
+Example:
+
+```python
+from uncurl import poisson_estimate_state, lineage
+
+data = np.loadtxt('counts.txt')
+M, W = poisson_estimate_state(data, 2)
+curve_params, smoothed_points, edges, cell_assignments = lineage(data, M, W)
 ```
