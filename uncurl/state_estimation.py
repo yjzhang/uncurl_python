@@ -100,7 +100,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     """
     genes, cells = data.shape
     if init_means is None:
-        means = kmeans_pp(data, clusters)
+        means, assignments = kmeans_pp(data, clusters)
     else:
         means = init_means.copy()
     clusters = means.shape[1]
