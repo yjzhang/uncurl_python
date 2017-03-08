@@ -7,12 +7,12 @@ import uncurl
 if __name__ == '__main__':
     dat = loadmat('data/SynMouseESprog_1000.mat')
     data = dat['Dat'].toarray()
-    centers = uncurl.kmeans_pp(data, 2)
+    centers, assignments = uncurl.kmeans_pp(data, 2)
     lls = uncurl.poisson_ll(data, centers)
     # Poisson clustering
-    assignments, centers = uncurl.poisson_cluster(data, 2, init=centers)
+    assignments, centers = uncurl.poisson_cluster(data, 3)
     # State estimation
-    means, weights = uncurl.poisson_estimate_state(data, 2, max_iters=5)
+    means, weights = uncurl.poisson_estimate_state(data, 3, max_iters=5)
     # dimensionality reduction
     X = uncurl.dim_reduce(data, means, weights, 2)
     proj = np.dot(X.T, weights)

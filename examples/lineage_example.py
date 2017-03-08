@@ -8,10 +8,8 @@ from uncurl.lineage import fourier_series
 if __name__ == '__main__':
     dat = loadmat('data/BranchedSynDat.mat')
     data = dat['Dat'].astype(float)
-    centers = uncurl.kmeans_pp(data, 3)
-    lls = uncurl.poisson_ll(data, centers)
     # Poisson clustering
-    assignments, centers = uncurl.poisson_cluster(data, 3, init=centers)
+    assignments, centers = uncurl.poisson_cluster(data, 3)
     # State estimation
     #means, weights = uncurl.poisson_estimate_state(data, 3, max_iters=5)
     means, weights = np.load('means_weights.npy')

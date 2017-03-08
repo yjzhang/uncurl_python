@@ -7,7 +7,7 @@ import uncurl
 if __name__ == '__main__':
     dat = loadmat('data/SCDE_test.mat')
     data = dat['dat'].toarray()
-    centers = uncurl.kmeans_pp(data, 2)
+    centers, assignments = uncurl.kmeans_pp(data, 2)
     lls = uncurl.poisson_ll(data, centers)
     # Poisson clustering
     assignments, centers = uncurl.poisson_cluster(data, 2, init=centers)

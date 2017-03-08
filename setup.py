@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='uncurl',
-      version='0.1',
+      version='0.2',
       description='Tool for clustering single-cell RNASeq data',
       url='https://github.com/yjzhang/uncurl_python',
       author='Yue Zhang',
