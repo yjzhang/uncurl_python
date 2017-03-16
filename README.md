@@ -92,8 +92,8 @@ curve_params, smoothed_points, edges, cell_assignments = lineage(M, W)
 X = dim_reduce_data(M, 2)
 proj = np.dot(X.T, W)
 
-plt.scatter(proj[0,:], proj[1,:], s=30, c=true_weights.argmax(0), edgecolors='none', alpha=0.7)
-plt.scatter(smoothed_points[0,:], smoothed_points[1,:], s=30, c=W.argmax(0), edgecolors='none', alpha=0.7)
+plt.scatter(proj[0,:], proj[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)
+plt.scatter(smoothed_points[0,:], smoothed_points[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)
 # connect the lines
 for edge in edges:
     plt.plot((smoothed_points[0, edge[0]], smoothed_points[0, edge[1]]),
