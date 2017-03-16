@@ -53,15 +53,15 @@ def mst(points):
     n = points.shape[1]
     distances = np.array([[np.sum(np.sqrt((points[:,i]-points[:,j])**2)) for i in range(n)] for j in range(n)])
 
-def lineage(data, means, weights, curve_function='poly'):
+def lineage(means, weights, curve_function='poly', curve_dimensions=6):
     """
     Lineage graph produced by minimum spanning tree
 
     Args:
-        data (array): genes x cells
         means (array): genes x clusters - output of state estimation
         weights (array): clusters x cells - output of state estimation
         curve_function (string): either 'poly' or 'fourier'. Default: 'poly'
+        curve_dimensions (int): number of parameters for the curve. Default: 6
 
     Returns:
         - curve parameters - list of lists for each cluster
@@ -74,10 +74,10 @@ def lineage(data, means, weights, curve_function='poly'):
     elif curve_function=='fourier':
         func = fourier_series
     # step 1: dimensionality reduction
-    X = dim_reduce(data, means, weights, 2)
+    X = dim_reduce(means, weights, 2)
     reduced_data = np.dot(X.T, weights)
     # 2. identifying dominant cell types - max weight for each cell
-    genes, cells = data.shape
+    cells = weights.shape[1]
     clusters = means.shape[1]
     cell_cluster_assignments = []
     for i in range(cells):
@@ -96,12 +96,12 @@ def lineage(data, means, weights, curve_function='poly'):
         cluster_cells = reduced_data[:, cell_cluster_assignments==c]
         # y = f(x)
         if curve_function=='fourier':
-            p0 = [1.0]*10
+            p0 = [1.0]*curve_dimensions
             # scipy is bad at finding the correct scale
             p0[1] = 0.0001
             bounds = (-np.inf, np.inf)
         else:
-            p0 = [1.0]*6
+            p0 = [1.0]*curve_dimensions
             bounds = (-np.inf, np.inf)
         p_x, pcov_x = curve_fit(func, cluster_cells[0,:],
                 cluster_cells[1,:],

@@ -17,7 +17,7 @@ class LineageTest(TestCase):
         sim_data = simulation.generate_state_data(M, W)
         sim_data = sim_data + 1e-8
         m2 = M + np.random.random(M.shape) - 0.5
-        curves, fitted_vals, edges, assignments = lineage(sim_data, m2, W)
+        curves, fitted_vals, edges, assignments = lineage(m2, W)
         # TODO: assert something about the distances???
         print len(edges)
         adjacent_count = 0

@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # State estimation
     means, weights = uncurl.poisson_estimate_state(data, 2, max_iters=5)
     # dimensionality reduction
-    X = uncurl.dim_reduce(data, means, weights, 2)
+    X = uncurl.dim_reduce(means, weights, 2)
     proj = np.dot(X, weights)
     # plotting dimensionality reduction
     plt.cla()

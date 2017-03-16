@@ -22,7 +22,7 @@ class DimReduceTest(TestCase):
                                     [0.4,0.5,0.5,0.2,0.3,0.7,0.1]])
         sim_data = simulation.generate_state_data(sim_means, sim_assignments)
         sim_data = sim_data + 1e-8
-        X = dim_reduce(sim_data, sim_means, sim_assignments, 2)
+        X = dim_reduce(sim_means, sim_assignments, 2)
         self.assertEqual(X.shape, (3, 2))
         projections = np.dot(X.transpose(), sim_assignments)
         # assert something about the distances???

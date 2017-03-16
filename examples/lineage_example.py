@@ -14,15 +14,15 @@ if __name__ == '__main__':
     #means, weights = uncurl.poisson_estimate_state(data, 3, max_iters=5)
     means, weights = np.load('means_weights.npy')
     # dimensionality reduction
-    X = uncurl.dim_reduce(data, means, weights, 2)
+    X = uncurl.dim_reduce(means, weights, 2)
     proj = np.dot(X.T, weights)
-    cluster_curves, cluster_fitted_vals, cluster_edges, cluster_assignments = uncurl.lineage(data, means, weights, curve_function='poly')
+    cluster_curves, cluster_fitted_vals, cluster_edges, cluster_assignments = uncurl.lineage(means, weights, curve_function='poly')
     # dimensionality reduction with true data
     true_weights = dat['X']
     true_means = dat['M']
-    X = uncurl.dim_reduce(data, true_means, true_weights, 2)
+    X = uncurl.dim_reduce(true_means, true_weights, 2)
     proj_true = np.dot(X.T, true_weights)
-    true_curves, true_fitted, true_edges, true_assignments = uncurl.lineage(data, true_means, true_weights)
+    true_curves, true_fitted, true_edges, true_assignments = uncurl.lineage(true_means, true_weights)
     # plotting dimensionality reduction, fitted curves
     plt.clf()
     plt.cla()
