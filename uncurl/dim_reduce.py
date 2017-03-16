@@ -19,23 +19,7 @@ def dim_reduce(means, weights, d):
         X, a clusters x d matrix representing the reduced dimensions
         of the cluster centers.
     """
-    clusters = means.shape[1]
-    distances = np.zeros((clusters, clusters))
-    for i in range(clusters):
-        for j in range(clusters):
-            distances[i,j] = poisson_dist(means[:,i], means[:,j])
-    # do MDS on the distance matrix (procedure from Wikipedia)
-    proximity = distances**2
-    J = np.eye(clusters) - 1./clusters
-    B = -0.5*np.dot(J, np.dot(proximity, J))
-    # B should be symmetric, so we can use eigh
-    e_val, e_vec = np.linalg.eigh(B)
-    # Note: lam should be ordered to be the largest eigenvalues
-    lam = np.diag(e_val[-d:])[::-1]
-    #lam = max_or_zero(lam)
-    E = e_vec[:,-d:][::-1]
-    X = np.dot(E, lam**0.5)
-    return X
+    return dim_reduce_data(means, d)
 
 def dim_reduce_data(data, d):
     """

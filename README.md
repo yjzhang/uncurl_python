@@ -60,18 +60,43 @@ M, W = poisson_estimate_state(data, 2)
 
 ### Dimensionality Reduction
 
-The `dim_reduce` function performs dimensionality reduction using MDS.
+The `dim_reduce_data` function performs dimensionality reduction using MDS.
+
+Example:
+```python
+from uncurl import dim_reduce_data
+
+data = np.loadtxt('counts.txt')
+X = dim_reduce_data(data, 2)
+```
 
 ### Lineage Estimation
 
 The `lineage` function performs lineage estimation from the output of `poisson_estimate_state`. It fits the data to a different 5th degree polynomial for each cell type.
 
-Example:
+Example (including visualization):
 
 ```python
-from uncurl import poisson_estimate_state, lineage
+import numpy as np
+import matplotlib.pyplot as plt
+
+from uncurl import poisson_estimate_state, dim_reduce_data, lineage
 
 data = np.loadtxt('counts.txt')
 M, W = poisson_estimate_state(data, 2)
-curve_params, smoothed_points, edges, cell_assignments = lineage(data, M, W)
+
+curve_params, smoothed_points, edges, cell_assignments = lineage(M, W)
+
+# visualizing the lineage
+X = dim_reduce_data(M, 2)
+proj = np.dot(X.T, W)
+
+plt.scatter(proj[0,:], proj[1,:], s=30, c=true_weights.argmax(0), edgecolors='none', alpha=0.7)
+plt.scatter(smoothed_points[0,:], smoothed_points[1,:], s=30, c=W.argmax(0), edgecolors='none', alpha=0.7)
+# connect the lines
+for edge in edges:
+    plt.plot((smoothed_points[0, edge[0]], smoothed_points[0, edge[1]]),
+            (smoothed_points[1, edge[0]], smoothed_points[1, edge[1]]), 'black', linewidth=2)
+plt.xlabel('dim 1')
+plt.ylabel('dim 2')
 ```

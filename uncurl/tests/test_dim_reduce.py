@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from uncurl import simulation, dim_reduce
+from uncurl import simulation, dim_reduce, dim_reduce_data
 
 class DimReduceTest(TestCase):
 
@@ -24,6 +24,8 @@ class DimReduceTest(TestCase):
         sim_data = sim_data + 1e-8
         X = dim_reduce(sim_means, sim_assignments, 2)
         self.assertEqual(X.shape, (3, 2))
+        X2 = dim_reduce_data(sim_data, 2)
+        self.assertEqual(X2.shape, (sim_data.shape[1], 2))
         projections = np.dot(X.transpose(), sim_assignments)
         # assert something about the distances???
         # 1-NN based error?
