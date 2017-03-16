@@ -83,7 +83,8 @@ import matplotlib.pyplot as plt
 from uncurl import poisson_estimate_state, dim_reduce_data, lineage
 
 data = np.loadtxt('counts.txt')
-M, W = poisson_estimate_state(data, 2)
+# pretend that there are three natural clusters in the dataset.
+M, W = poisson_estimate_state(data, 3)
 
 curve_params, smoothed_points, edges, cell_assignments = lineage(M, W)
 
