@@ -11,9 +11,7 @@ def kmeans_pp(data, k, centers=None):
     Args:
         data (array): A 2d array- genes x cells
         k (int): Number of clusters
-
-    Optional args:
-        centers (array): if provided, these are one or more known cluster centers. 2d array of genes x number of centers.
+        centers (array, optional): if provided, these are one or more known cluster centers. 2d array of genes x number of centers.
 
     Returns:
         centers - a genes x k array of cluster means.
@@ -56,15 +54,16 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     Args:
         data (array): A 2d array- genes x cells
         k (int): Number of clusters
-
-    Optional args:
-        init (array): Initial centers - genes x k array. Default: use kmeans++
-        max_iters (int): Maximum number of iterations. Default: 100
+        init (array, optional): Initial centers - genes x k array. Default: None, use kmeans++
+        max_iters (int, optional): Maximum number of iterations. Default: 100
 
     Returns:
         a tuple of two arrays: a cells x 1 vector of cluster assignments,
         and a genes x k array of cluster means.
     """
+    # TODO: be able to use a combination of fixed and unknown starting points
+    # e.g., have init values only for certain genes, have a row of all
+    # zeros indicating that kmeans++ should be used for that row.
     genes, cells = data.shape
     if init is None:
         init, assignments = kmeans_pp(data, k)

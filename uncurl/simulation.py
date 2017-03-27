@@ -46,9 +46,9 @@ def generate_poisson_states(n_states, n_cells, n_genes):
     Returned values can be passed to generate_state_data(M, W).
 
     Args:
-        n_states (int) - number of states or clusters
-        n_cells (int) - number of cells
-        n_genes (int) - number of genes
+        n_states (int): number of states or clusters
+        n_cells (int): number of cells
+        n_genes (int): number of genes
 
     Returns:
         M - genes x clusters
@@ -92,10 +92,10 @@ def generate_nb_data(P, R, n_cells, assignments=None):
     Generates negative binomial data
 
     Args:
-        P (array) - genes x clusters
-        R (array) - genes x clusters
-        n_cells (int) - number of cells
-        assignments (list) - cluster assignment of each cell. Default:
+        P (array): genes x clusters
+        R (array): genes x clusters
+        n_cells (int): number of cells
+        assignments (list): cluster assignment of each cell. Default:
             random uniform
 
     Returns:

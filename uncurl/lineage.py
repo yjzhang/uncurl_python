@@ -44,7 +44,7 @@ def mst(points):
     NOT IMPLEMENTED AND ALSO UNNECESSARY
 
     Args:
-        points (array) = 2 x n array
+        points (array): 2 x n array
 
     Returns:
         list of edges - tuples of indices

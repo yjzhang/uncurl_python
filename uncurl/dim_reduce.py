@@ -11,9 +11,9 @@ def dim_reduce(means, weights, d):
     Dimensionality reduction using Poisson distances and MDS.
 
     Args:
-        means (array) - genes x clusters
-        weights (array) - clusters x cells
-        d (int) - desired dimensionality
+        means (array): genes x clusters
+        weights (array): clusters x cells
+        d (int): desired dimensionality
 
     Returns:
         X, a clusters x d matrix representing the reduced dimensions
@@ -26,8 +26,8 @@ def dim_reduce_data(data, d):
     Does a MDS on the data directly, not on the means.
 
     Args:
-        data (array) - genes x cells
-        d (int) - desired dimensionality
+        data (array): genes x cells
+        d (int): desired dimensionality
 
     Returns:
         X, a cells x d matrix

@@ -84,14 +84,12 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     Args:
         data (array): genes x cells
         clusters (int): number of mixture components
-
-    Optional args:
-        init_means (array): initial centers - genes x clusters. Default: kmeans++ initializations
-        init_weights (array): initial weights - clusters x cells. Default: random(0,1)
-        max_iters (int): maximum number of iterations. Default: 10
-        tol (float): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4
-        disp (bool): whether or not to display optimization parameters. Default: True
-        inner_max_iters (int): Number of iterations to run in the scipy minimizer for M and W. Default: 400
+        init_means (array, optional): initial centers - genes x clusters. Default: kmeans++ initializations
+        init_weights (array, optional): initial weights - clusters x cells. Default: random(0,1)
+        max_iters (int, optional): maximum number of iterations. Default: 10
+        tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4
+        disp (bool, optional): whether or not to display optimization parameters. Default: True
+        inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
 
     Returns:
         two matrices, M and W: M is genes x clusters, W is clusters x cells.
