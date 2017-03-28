@@ -6,11 +6,15 @@
 Welcome to UNCURL's documentation!
 ==================================
 
+Hello! Testing...
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-.. automodule:: uncurl
+   uncurl_2
+   uncurl
+
  
 
 Indices and tables
