@@ -30,3 +30,8 @@ uncurl.lineage
 --------------
 
 .. autofunction:: uncurl.lineage
+
+uncurl.pseudotime
+--------------
+
+.. autofunction:: uncurl.pseudotime
