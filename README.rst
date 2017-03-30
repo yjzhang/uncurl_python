@@ -76,10 +76,12 @@ Example:
     data = np.loadtxt('counts.txt')
     X = dim_reduce_data(data, 2)
 
-Lineage Estimation
-------------------
+Lineage Estimation & Pseudotime
+-------------------------------
 
 The `lineage` function performs lineage estimation from the output of `poisson_estimate_state`. It fits the data to a different 5th degree polynomial for each cell type.
+
+The `pseudotime` function calculates the pseudotime for each cell given the output of `lineage` and a starting cell.
 
 Example (including visualization):
 
@@ -88,13 +90,16 @@ Example (including visualization):
     import numpy as np
     import matplotlib.pyplot as plt
 
-    from uncurl import poisson_estimate_state, dim_reduce_data, lineage
+    from uncurl import poisson_estimate_state, dim_reduce_data, lineage, pseudotime
 
     data = np.loadtxt('counts.txt')
     # pretend that there are three natural clusters in the dataset.
     M, W = poisson_estimate_state(data, 3)
 
     curve_params, smoothed_points, edges, cell_assignments = lineage(M, W)
+
+    # assume the "root" is cell 0
+    ptime = pseudotime(0, edges, smoothed_points)
 
     # visualizing the lineage
     X = dim_reduce_data(M, 2)

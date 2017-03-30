@@ -202,13 +202,17 @@ def pseudotime(starting_node, edges, fitted_vals):
     Args:
         starting_node (int): index of the starting node
         edges (list): list of tuples (node1, node2)
-        fitted_vals (array): output of lineage
+        fitted_vals (array): output of lineage (2 x cells)
 
     Returns:
-        A dict containing the pseudotime value of each cell.
+        A 1d array containing the pseudotime value of each cell.
     """
     # TODO
     # 1. calculate a distance matrix...
     distances = np.array([[sum((x - y)**2) for x in fitted_vals.T] for y in fitted_vals.T])
     # 2. start from the root node/cell, calculate distance along graph
-    return graph_distances(starting_node, edges, distances)
+    distance_dict = graph_distances(starting_node, edges, distances)
+    output = []
+    for i in range(fitted_vals.shape[1]):
+        output.append(distance_dict[i])
+    return np.array(output)

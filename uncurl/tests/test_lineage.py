@@ -36,23 +36,22 @@ class LineageTest(TestCase):
         m2 = M + np.random.random(M.shape) - 0.5
         curves, fitted_vals, edges, assignments = lineage(m2, W)
         ptime = pseudotime(0, edges, fitted_vals)
-        ptime_list = [ptime[x] for x in range(300)]
         # assert that the cells are generally increasing in ptime
         # test each cluster
         old_p = 0
         for i in range(100):
-            p = ptime_list[i]
+            p = ptime[i]
             self.assertTrue(p >= old_p)
             old_p = p
         old_p = 0
         for i in range(100, 200):
-            p = ptime_list[i]
+            p = ptime[i]
             self.assertTrue(p >= old_p)
             self.assertTrue(p > 0)
             old_p = p
         old_p = 0
         for i in range(200, 300):
-            p = ptime_list[i]
+            p = ptime[i]
             self.assertTrue(p >= old_p)
             self.assertTrue(p > 0)
             old_p = p
