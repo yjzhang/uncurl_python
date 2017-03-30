@@ -1,4 +1,5 @@
 # Lineage tracing and pseudotime calculation
+import heapq
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -26,6 +27,39 @@ def fourier_series(x, *a):
         output += val1*np.sin(n_*x*w)
         output += val2*np.cos(n_*x*w)
     return output
+
+def graph_distances(start, edges, distances):
+    """
+    Given an undirected adjacency list and a pairwise distance matrix between
+    all nodes: calculates distances along graph from start node.
+
+    Args:
+        start (int): start node
+        edges (list): adjacency list of tuples
+        distances (array): 2d array of distances between nodes
+
+    Returns:
+        dict of node to distance from start
+    """
+    # convert adjacency list to adjacency dict
+    adj = {x: [] for x in range(len(distances))}
+    for n1, n2 in edges:
+        adj[n1].append(n2)
+        adj[n2].append(n1)
+    # run dijkstra's algorithm
+    to_visit = []
+    new_dist = {}
+    for n in adj[start]:
+        heapq.heappush(to_visit, (distances[start, n], n))
+    while to_visit:
+        d, next_node = heapq.heappop(to_visit)
+        if next_node not in new_dist:
+            new_dist[next_node] = d
+        for n in adj[next_node]:
+            if n not in new_dist:
+                heapq.heappush(to_visit, (d + distances[next_node, n], n))
+    return new_dist
+
 
 def poly_curve(x, *a):
     """
@@ -163,8 +197,18 @@ def lineage(means, weights, curve_function='poly', curve_dimensions=6):
     cluster_edges = [i for sublist in cluster_edges for i in sublist]
     return cluster_curves, cluster_fitted_vals, cluster_edges, cell_cluster_assignments
 
-def pseudotime():
+def pseudotime(starting_node, edges, fitted_vals):
     """
+    Args:
+        starting_node (int): index of the starting node
+        edges (list): list of tuples (node1, node2)
+        fitted_vals (array): output of lineage
+
+    Returns:
+        A dict containing the pseudotime value of each cell.
     """
     # TODO
-
+    # 1. calculate a distance matrix...
+    distances = np.array([[sum((x - y)**2) for x in fitted_vals.T] for y in fitted_vals.T])
+    # 2. start from the root node/cell, calculate distance along graph
+    return graph_distances(starting_node, edges, distances)

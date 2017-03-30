@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from uncurl import simulation, lineage
+from uncurl import simulation, lineage, pseudotime
 
 class LineageTest(TestCase):
 
@@ -11,7 +11,7 @@ class LineageTest(TestCase):
 
     def test_lineage(self):
         """
-        Testing lineage using provided weights and means
+        Testing lineage using randomly generated lineage data
         """
         M, W = simulation.generate_poisson_lineage(3, 100, 50)
         sim_data = simulation.generate_state_data(M, W)
@@ -25,3 +25,34 @@ class LineageTest(TestCase):
             if np.abs(e[0]-e[1]) <= 1:
                 adjacent_count += 1
         self.assertTrue(adjacent_count>150)
+
+    def test_pseudotime(self):
+        """
+        Test pseudotime calculations
+        """
+        M, W = simulation.generate_poisson_lineage(3, 100, 50)
+        sim_data = simulation.generate_state_data(M, W)
+        sim_data = sim_data + 1e-8
+        m2 = M + np.random.random(M.shape) - 0.5
+        curves, fitted_vals, edges, assignments = lineage(m2, W)
+        ptime = pseudotime(0, edges, fitted_vals)
+        ptime_list = [ptime[x] for x in range(300)]
+        # assert that the cells are generally increasing in ptime
+        # test each cluster
+        old_p = 0
+        for i in range(100):
+            p = ptime_list[i]
+            self.assertTrue(p >= old_p)
+            old_p = p
+        old_p = 0
+        for i in range(100, 200):
+            p = ptime_list[i]
+            self.assertTrue(p >= old_p)
+            self.assertTrue(p > 0)
+            old_p = p
+        old_p = 0
+        for i in range(200, 300):
+            p = ptime_list[i]
+            self.assertTrue(p >= old_p)
+            self.assertTrue(p > 0)
+            old_p = p
