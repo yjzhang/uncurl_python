@@ -36,7 +36,7 @@ class StateEstimationTest(TestCase):
         # mean error in M is less than 5
         self.assertTrue(np.mean(np.abs(sim_means-m))<10.0)
         # mean error in W is less than 0.2 (arbitrary boundary)
-        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.2)
+        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.3)
 
     def test_state_estimation_2(self):
         """
@@ -65,10 +65,10 @@ class StateEstimationTest(TestCase):
         print w
         print w.sum(0)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.01)
-        # mean error in M is less than 5
+        # mean error in M is less than 10
         self.assertTrue(np.mean(np.abs(sim_means-m))<10.0)
-        # mean error in W is less than 0.2 (arbitrary boundary)
-        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.2)
+        # mean error in W is less than 0.4 (arbitrary boundary)
+        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.4)
 
     def test_random_means(self):
         """
@@ -81,8 +81,8 @@ class StateEstimationTest(TestCase):
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
         m, w = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        self.assertTrue(np.mean(np.abs(sim_m-m))<35.0)
-        self.assertTrue(np.mean(np.abs(sim_w-w))<0.3)
+        self.assertTrue(np.mean(np.abs(sim_m-m))<50.0)
+        self.assertTrue(np.mean(np.abs(sim_w-w))<0.4)
 
     def test_random_means_2(self):
         """
@@ -95,5 +95,5 @@ class StateEstimationTest(TestCase):
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
         m, w = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        self.assertTrue(np.mean(np.abs(sim_m-m))<55.0)
+        self.assertTrue(np.mean(np.abs(sim_m-m))<60.0)
         self.assertTrue(np.mean(np.abs(sim_w-w))<0.5)

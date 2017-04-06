@@ -102,7 +102,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     else:
         means = init_means.copy()
     clusters = means.shape[1]
-    w_constraints = _create_w_constraints(cells, clusters)
+    #w_constraints = _create_w_constraints(cells, clusters)
     w_init = np.random.random(cells*clusters)
     if init_weights is not None:
         w_init = init_weights.reshape(cells*clusters)
@@ -115,7 +115,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
         w_objective, w_deriv = _create_w_objective(means, data)
-        w_res = minimize(w_objective, w_init, method='SLSQP', jac=w_deriv, bounds=w_bounds, constraints=w_constraints, options={'disp':disp, 'maxiter':inner_max_iters})
+        w_res = minimize(w_objective, w_init, method='SLSQP', jac=w_deriv, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
@@ -130,4 +130,5 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         means = m_new
         if w_diff < tol and m_diff < tol:
             break
+    w_new = w_new/w_new.sum(0)
     return m_new, w_new

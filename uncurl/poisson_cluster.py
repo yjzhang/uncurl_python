@@ -11,7 +11,7 @@ def kmeans_pp(data, k, centers=None):
     Args:
         data (array): A 2d array- genes x cells
         k (int): Number of clusters
-        centers (array, optional): if provided, these are one or more known cluster centers. 2d array of genes x number of centers.
+        centers (array, optional): if provided, these are one or more known cluster centers. 2d array of genes x number of centers (<=k).
 
     Returns:
         centers - a genes x k array of cluster means.
@@ -70,11 +70,10 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     centers = np.copy(init)
     assignments = np.zeros(cells)
     for it in range(max_iters):
-        #lls = poisson_ll(data, centers)
-        cluster_dists = np.zeros((cells, k))
-        for c in range(k):
-            cluster_dists[:,c] = np.array([poisson_dist(centers[:,c], data[:,i]) for i in range(cells)])
-        new_assignments = np.argmin(cluster_dists, 1)
+        lls = poisson_ll(data, centers)
+        #cluster_dists = np.zeros((cells, k))
+        # TODO: use log-likelihoods rather than distances
+        new_assignments = np.argmax(lls, 1)
         if np.equal(assignments, new_assignments).all():
             return assignments, centers
         for c in range(k):
