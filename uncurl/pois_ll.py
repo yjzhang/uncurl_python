@@ -2,6 +2,7 @@
 
 import numpy as np
 from scipy.stats import poisson
+from scipy.special import xlogy, gammaln
 
 def poisson_ll(data, means):
     """
@@ -20,7 +21,7 @@ def poisson_ll(data, means):
     for i in range(clusters):
         means_i = np.tile(means[:,i], (cells, 1))
         means_i = means_i.transpose()
-        ll[:,i] = np.sum(poisson.logpmf(data+1e-8, means_i+1e-8), 0)
+        ll[:,i] = np.sum(xlogy(data, means_i) - gammaln(data+1) - means_i, 0)
     return ll
 
 def poisson_ll_2(p1, p2):
