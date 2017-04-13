@@ -102,6 +102,7 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
         P_init = np.random.random((genes, k))
     if R_init is None:
         R_init = np.random.randint(1, data.max(), (genes, k))
+        R_init = R_init.astype(float)
     if assignments is None:
         _, assignments = kmeans_pp(data, k)
     means = np.zeros((genes, k))
