@@ -17,6 +17,8 @@ def kmeans_pp(data, k, centers=None):
         centers - a genes x k array of cluster means.
         assignments - a cells x 1 array of cluster assignments
     """
+    # TODO: what if there is missing data for a given gene?
+    # missing data could be if all the entires are -1.
     genes, cells = data.shape
     num_known_centers = 0
     if centers is None:

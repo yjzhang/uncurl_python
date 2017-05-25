@@ -1,6 +1,6 @@
 # state estimation with poisson convex mixture model
 
-from poisson_cluster import kmeans_pp
+from clustering import kmeans_pp
 
 import numpy as np
 from scipy.optimize import minimize

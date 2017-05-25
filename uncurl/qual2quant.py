@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from poisson_cluster import poisson_cluster
+from clustering import poisson_cluster
 
 def qualNorm(data, qualitative):
     """
@@ -30,9 +30,9 @@ def qualNorm(data, qualitative):
             continue
         qual_indices.append(i)
         threshold = (qualitative[i,:].max() - qualitative[i,:].min())/2.0
-        assignments, means = poisson_cluster(data[i,:].reshape((1, cells)))
-        high_mean = max(means)
-        low_mean = min(means)
+        assignments, means = poisson_cluster(data[i,:].reshape((1, cells)), 2)
+        high_mean = means.max()
+        low_mean = means.min()
         for k in range(clusters):
             if qualitative[i,k]>threshold:
                 output[i,k] = high_mean

@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 from scipy.special import gammaln, digamma, xlog1py
 from scipy.stats import nbinom
 
-from poisson_cluster import kmeans_pp
+from clustering import kmeans_pp
 import pois_ll
 
 eps=1e-8
