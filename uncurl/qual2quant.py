@@ -4,9 +4,9 @@ import numpy as np
 
 from poisson_cluster import poisson_cluster
 
-def qual2quant(data, qualitative):
+def qualNorm(data, qualitative):
     """
-    Generates starting points using binarized data.
+    Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.
 
     Args:
         data (array): 2d array of genes x cells
@@ -22,7 +22,13 @@ def qual2quant(data, qualitative):
     genes, cells = data.shape
     clusters = qualitative.shape[1]
     output = np.zeros((genes, clusters))
+    missing_indices = []
+    qual_indices = []
     for i in range(genes):
+        if qualitative[i,:].max() == -1 and qualitative[i,:].min() == -1:
+            missing_indices.append(i)
+            continue
+        qual_indices.append(i)
         threshold = (qualitative[i,:].max() - qualitative[i,:].min())/2.0
         assignments, means = poisson_cluster(data[i,:].reshape((1, cells)))
         high_mean = max(means)
@@ -32,4 +38,8 @@ def qual2quant(data, qualitative):
                 output[i,k] = high_mean
             else:
                 output[i,k] = low_mean
+    if missing_indices:
+        assignments, means = poisson_cluster(data[qual_indices, :], clusters, output[qual_indices, :])
+        for ind in missing_indices:
+            output[ind, :] = means[ind, :]
     return output

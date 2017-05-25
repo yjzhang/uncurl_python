@@ -35,18 +35,18 @@ Example:
 Qualitative to Quantitative Framework
 -------------------------------------
 
-The `qual2quant` function is used to convert binary data into starting points for clustering.
+The `qualNorm` function is used to convert binary data into starting points for clustering.
 
 Example:
 
 .. code-block:: python
 
-    from uncurl import qual2quant
+    from uncurl import qualNorm
     import numpy as np
 
     data = np.loadtxt('counts.txt')
     bin_data = np.loadtxt('binary.txt')
-    starting_centers = qual2quant(data, bin_data)
+    starting_centers = qualNorm(data, bin_data)
 
 State Estimation
 ----------------
