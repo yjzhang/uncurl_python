@@ -46,6 +46,7 @@ def nb_ll(data, P, R):
     Returns:
         cells x clusters array of log-likelihoods
     """
+    # TODO: include factorial...
     #data = data + eps
     genes, cells = data.shape
     clusters = P.shape[1]
@@ -93,9 +94,9 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
         max_iters (int): default: 100
 
     Returns:
+        assignments (array): 1d array of length cells, containing integers 0...k-1
         P (array): genes x k - value is 0 for genes with mean > var
         R (array): genes x k - value is inf for genes with mean > var
-        assignments (array): 1d array of length cells, containing integers 0...k-1
     """
     genes, cells = data.shape
     if P_init is None:
@@ -124,7 +125,7 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
         if np.equal(assignments,old_assignments).all():
             break
         old_assignments = np.copy(assignments)
-    return P_init, R_init, assignments
+    return assignments, P_init, R_init
 
 def fit_cluster(data, assignments, k, P_init, R_init, means):
     """

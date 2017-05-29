@@ -76,22 +76,21 @@ def _create_w_constraints(cells, clusters):
     eq_constraints = [{'type': 'eq', 'fun': x, 'jac': y} for x,y in equality_constraint()]
     return tuple(eq_constraints)
 
-# TODO: add reps - number of starting points
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1):
+def nb_estimate_state(data, clusters, R, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400):
     """
-    Uses a Poisson Covex Mixture model to estimate cell states and
+    Uses a Negative Binomial Mixture model to estimate cell states and
     cell state mixing weights.
 
     Args:
         data (array): genes x cells
         clusters (int): number of mixture components
+        R (array): vector of length genes containing the dispersion estimates for each gene.
         init_means (array, optional): initial centers - genes x clusters. Default: kmeans++ initializations
         init_weights (array, optional): initial weights - clusters x cells. Default: random(0,1)
         max_iters (int, optional): maximum number of iterations. Default: 10
         tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
-        reps (int, optional): number of random initializations. Default: 1.
 
     Returns:
         two matrices, M and W: M is genes x clusters, W is clusters x cells.

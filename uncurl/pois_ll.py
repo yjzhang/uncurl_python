@@ -43,14 +43,14 @@ def poisson_dist(p1, p2):
 
 # TODO: poisson_ll_zip
 
-def zip_ll(data, means, L):
+def zip_ll(data, means, M):
     """
     Calculates the zero-inflated Poisson log-likelihood.
 
     Args:
         data (array): genes x cells
         means (array): genes x k
-        L (array): genes x k - this is the probability of having a count of zero.
+        M (array): genes x k - this is the probability of having a count of zero.
 
     Returns:
         cells x k array of log-likelihood for each cell/cluster pair.
@@ -63,7 +63,7 @@ def zip_ll(data, means, L):
     for i in range(clusters):
         means_i = np.tile(means[:,i], (cells, 1))
         means_i = means_i.transpose()
-        L_i = np.tile(L[:,i], (cells, 1))
+        L_i = np.tile(M[:,i], (cells, 1))
         L_i = L_i.transpose()
         ll[:,i] = np.sum(d0*np.log(L_i + (1 - L_i)*np.exp(-means_i)), 0)
         ll[:,i] += np.sum(d1*(np.log(1 - L_i) + xlogy(data, means_i) - gammaln(data+1) - means_i), 0)

@@ -39,7 +39,7 @@ def qualNorm(data, qualitative):
             else:
                 output[i,k] = low_mean
     if missing_indices:
-        assignments, means = poisson_cluster(data[qual_indices, :], clusters, output[qual_indices, :])
+        assignments, means = poisson_cluster(data[qual_indices, :], clusters, output[qual_indices, :], max_iters=1)
         for ind in missing_indices:
             output[ind, :] = means[ind, :]
     return output

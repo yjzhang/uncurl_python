@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from pois_ll import poisson_ll, poisson_dist
+from pois_ll import poisson_ll, poisson_dist, zip_ll
 
 def kmeans_pp(data, k, centers=None):
     """
@@ -67,8 +67,7 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     # e.g., have init values only for certain genes, have a row of all
     # zeros indicating that kmeans++ should be used for that row.
     genes, cells = data.shape
-    if init is None:
-        init, assignments = kmeans_pp(data, k)
+    init, assignments = kmeans_pp(data, k, centers=init)
     centers = np.copy(init)
     assignments = np.zeros(cells)
     for it in range(max_iters):
@@ -82,3 +81,53 @@ def poisson_cluster(data, k, init=None, max_iters=100):
             centers[:,c] = np.mean(data[:,new_assignments==c], 1)
         assignments = new_assignments
     return assignments, centers
+
+def zip_fit_params(data):
+    """
+    Returns the ZIP parameters that best fit a given data set.
+
+    Args:
+        data (array): 2d array of genes x cells belonging to a given cluster
+
+    Returns:
+        L (array): 1d array of means
+        M (array): 1d array of zero-inflation parameter
+    """
+    genes, cells = data.shape
+    m = data.mean(1)
+    v = data.var(1)
+    M = (v-m)/(m**2+v-m)
+    M = np.array([min(1, x) for x in M])
+    L = (m**2+v-m)/m
+    L = np.array([max(0, x) for x in L])
+    return L, M
+
+def zip_cluster(data, k, init=None, max_iters=100):
+    """
+    Performs hard EM clustering using the zero-inflated Poisson distribution.
+
+    Args:
+        data (array): A 2d array- genes x cells
+        k (int): Number of clusters
+        init (array, optional): Initial centers - genes x k array. Default: None, use kmeans++
+        max_iters (int, optional): Maximum number of iterations. Default: 100
+
+    Returns:
+        assignments (array): integer assignments of cells to clusters (length cells)
+        L (array): means (genes x k)
+        M (array): zero-inflation parameter (genes x k)
+    """
+    genes, cells = data.shape
+    init, assignments = kmeans_pp(data, k, centers=init)
+    centers = np.copy(init)
+    M = np.zeros(centers.shape)
+    assignments = np.zeros(cells)
+    for it in range(max_iters):
+        lls = zip_ll(data, centers, M)
+        new_assignments = np.argmax(lls, 1)
+        if np.equal(assignments, new_assignments).all():
+            return assignments, centers, M
+        for c in range(k):
+            centers[:,c], M[:,c] = zip_fit_params(data[:, new_assignments==c])
+        assignments = new_assignments
+    return assignments, centers, M
