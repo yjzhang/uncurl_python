@@ -4,6 +4,8 @@ import numpy as np
 from scipy.stats import poisson
 from scipy.special import xlogy, gammaln
 
+eps = 1e-8
+
 def poisson_ll(data, means):
     """
     Calculates the Poisson log-likelihood.
@@ -28,8 +30,8 @@ def poisson_ll_2(p1, p2):
     """
     Calculates Poisson LL(p1|p2).
     """
-    p1_1 = p1 + 1e-10
-    p2_1 = p2 + 1e-10
+    p1_1 = p1 + eps
+    p2_1 = p2 + eps
     return -np.sum(p2_1 + p1_1*np.log(p2_1))
 
 def poisson_dist(p1, p2):
@@ -37,11 +39,9 @@ def poisson_dist(p1, p2):
     Calculates the Poisson distance between two vectors.
     """
     # ugh...
-    p1 += 1e-10
-    p2 += 1e-10
+    p1 += eps
+    p2 += eps
     return np.dot(p1-p2, np.log(p1/p2))
-
-# TODO: poisson_ll_zip
 
 def zip_ll(data, means, M):
     """
@@ -67,4 +67,5 @@ def zip_ll(data, means, M):
         L_i = L_i.transpose()
         ll[:,i] = np.sum(d0*np.log(L_i + (1 - L_i)*np.exp(-means_i)), 0)
         ll[:,i] += np.sum(d1*(np.log(1 - L_i) + xlogy(data, means_i) - gammaln(data+1) - means_i), 0)
+    print ll
     return ll

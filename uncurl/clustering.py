@@ -4,6 +4,8 @@ import numpy as np
 
 from pois_ll import poisson_ll, poisson_dist, zip_ll
 
+eps = 1e-8
+
 def kmeans_pp(data, k, centers=None):
     """
     Generates kmeans++ initial centers.
@@ -97,10 +99,10 @@ def zip_fit_params(data):
     m = data.mean(1)
     v = data.var(1)
     M = (v-m)/(m**2+v-m)
-    M = np.array([min(1, x) for x in M])
+    M = np.array([min(1.0, max(0.0,x)) for x in M])
     L = (m**2+v-m)/m
-    L = np.array([max(0, x) for x in L])
-    return L, M
+    L = np.array([max(0.0, x) for x in L])
+    return L+eps, M+eps
 
 def zip_cluster(data, k, init=None, max_iters=100):
     """
@@ -120,7 +122,7 @@ def zip_cluster(data, k, init=None, max_iters=100):
     genes, cells = data.shape
     init, assignments = kmeans_pp(data, k, centers=init)
     centers = np.copy(init)
-    M = np.zeros(centers.shape)
+    M = np.zeros(centers.shape) + 0.1
     assignments = np.zeros(cells)
     for it in range(max_iters):
         lls = zip_ll(data, centers, M)

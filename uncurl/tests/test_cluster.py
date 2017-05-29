@@ -34,11 +34,32 @@ class ClusterTest(TestCase):
         Basically this is to test that the Poisson EM can correctly separate
         clusters in simulated data.
         """
-        centers = np.array([[0,10,20], [1, 11, 0], [50, 0, 100]])
+        centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
         centers = centers.astype(float)
         data = generate_poisson_data(centers, 500)
         data = data.astype(float)
         assignments, c_centers = uncurl.poisson_cluster(data, 3)
+        distances = np.zeros((3,3))
+        for i in range(3):
+            for j in range(3):
+                distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
+        correspond = []
+        for i in range(3):
+            correspond.append(np.argmin(distances[i,:]))
+            # assert that the learned clusters are close to the actual clusters
+            self.assertTrue(min(distances[i,:]) < np.sqrt(np.sum(centers[i]**2))/2)
+        self.assertFalse(correspond[0]==correspond[1])
+        self.assertFalse(correspond[1]==correspond[2])
+
+    def test_zip_simulation(self):
+        """
+        ZIP clustering on poisson-simulated data
+        """
+        centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
+        centers = centers.astype(float)
+        data = generate_poisson_data(centers, 500)
+        data = data.astype(float)
+        assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
         distances = np.zeros((3,3))
         for i in range(3):
             for j in range(3):

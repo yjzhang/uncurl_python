@@ -31,7 +31,7 @@ class NBTest(TestCase):
         # test derivative
         # test nb cluster
         # how to test the results... they're often not good...
-        p,r,a = nb_cluster(data,3)
+        a,p,r = nb_cluster(data,3)
         self.assertEqual(p.shape, P.shape)
         self.assertEqual(r.shape, R.shape)
         p_nans = np.isnan(p)
