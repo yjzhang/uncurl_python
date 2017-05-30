@@ -70,7 +70,7 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     # e.g., have init values only for certain genes, have a row of all
     # zeros indicating that kmeans++ should be used for that row.
     genes, cells = data.shape
-    init, assignments = kmeans_pp(data, k, centers=init)
+    init, assignments = kmeans_pp(data+eps, k, centers=init)
     centers = np.copy(init)
     assignments = np.zeros(cells)
     #print 'starting: ', centers
@@ -126,13 +126,13 @@ def zip_cluster(data, k, init=None, max_iters=100):
         M (array): zero-inflation parameter (genes x k)
     """
     genes, cells = data.shape
-    init, new_assignments = kmeans_pp(data, k, centers=init)
+    init, new_assignments = kmeans_pp(data+eps, k, centers=init)
     centers = np.copy(init)
     M = np.zeros(centers.shape)
     assignments = new_assignments
+    for c in range(k):
+        centers[:,c], M[:,c] = zip_fit_params(data[:, assignments==c]+eps)
     for it in range(max_iters):
-        for c in range(k):
-            centers[:,c], M[:,c] = zip_fit_params(data[:, assignments==c]+eps)
         print centers
         print M
         print M.max()
@@ -144,5 +144,7 @@ def zip_cluster(data, k, init=None, max_iters=100):
         print new_assignments
         if np.equal(assignments, new_assignments).all():
             return assignments, centers, M
+        for c in range(k):
+            centers[:,c], M[:,c] = zip_fit_params(data[:, assignments==c]+eps)
         assignments = new_assignments
     return assignments, centers, M
