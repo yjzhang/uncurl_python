@@ -1,10 +1,10 @@
 UNCURL public functions
 =======================
 
-uncurl.qual2quant
+uncurl.qualNorm
 -----------------
 
-.. autofunction:: uncurl.qual2quant
+.. autofunction:: uncurl.qualNorm
 
 uncurl.poisson_cluster
 ----------------------

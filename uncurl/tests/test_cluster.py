@@ -5,6 +5,8 @@ from scipy.io import loadmat
 
 import uncurl
 from uncurl.simulation import generate_poisson_data, generate_zip_data
+from uncurl.evaluation import purity
+from uncurl.clustering import zip_fit_params
 
 class ClusterTest(TestCase):
 
@@ -36,7 +38,7 @@ class ClusterTest(TestCase):
         """
         centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
         centers = centers.astype(float)
-        data = generate_poisson_data(centers, 500)
+        data, labs = generate_poisson_data(centers, 500)
         data = data.astype(float)
         assignments, c_centers = uncurl.poisson_cluster(data, 3)
         distances = np.zeros((3,3))
@@ -51,6 +53,7 @@ class ClusterTest(TestCase):
             self.assertTrue(min(distances[i,:]) < np.sqrt(np.sum((centers[:,i])**2))/2)
         self.assertFalse(correspond[0]==correspond[1])
         self.assertFalse(correspond[1]==correspond[2])
+        self.assertTrue(purity(assignments, labs, 3) > 0.8)
 
     def test_zip_simulation(self):
         """
@@ -58,7 +61,7 @@ class ClusterTest(TestCase):
         """
         centers = np.array([[0.1,10,20], [0.1, 11, 0.1], [50, 0.1, 100]])
         centers = centers.astype(float)
-        data = generate_poisson_data(centers, 500)
+        data, labs = generate_poisson_data(centers, 500)
         data = data.astype(float)
         assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
         distances = np.zeros((3,3))
@@ -73,16 +76,31 @@ class ClusterTest(TestCase):
             self.assertTrue(min(distances[i,:]) < np.sqrt(np.sum((centers[:,i])**2))/2)
         self.assertFalse(correspond[0]==correspond[1])
         self.assertFalse(correspond[1]==correspond[2])
+        self.assertTrue(purity(assignments, labs, 3) > 0.8)
+
+    def test_zip_fit(self):
+        """
+        Tests the algorithm for fitting a ZIP distribution.
+        """
+        for i in range(10):
+            centers = np.random.randint(10, 1000, (3,1))
+            M = np.random.random((3,1))
+            data, labs = generate_zip_data(centers, M, 200)
+            L_, M_ = zip_fit_params(data)
+            self.assertTrue(np.mean(np.abs(M.flatten() - M_)) < 0.2)
+            self.assertTrue(np.mean(np.abs(centers.flatten() - L_)) < 10)
+
 
     def test_zip_simulation_2(self):
         """
         ZIP clustering on ZIP-simulated data
         """
-        centers = np.array([[0.1,10,20], [0.1, 11, 5], [50, 0.1, 100]])
-        L = np.array([[0.1,0.2,0.3], [0.1, 0.0, 0.0], [0.5, 0.2, 0.8]])
+        centers = np.random.randint(10, 1000, (3,3))
+        L = np.random.random((3,3))
         centers = centers.astype(float)
-        data = generate_zip_data(centers, L, 500)
+        data, labs = generate_zip_data(centers, L, 1000)
         data = data.astype(float)
+        print data
         assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
         distances = np.zeros((3,3))
         for i in range(3):
@@ -91,6 +109,7 @@ class ClusterTest(TestCase):
         correspond = []
         print c_centers
         print c_zeros
+        print purity(assignments, labs, 3)
         for i in range(3):
             correspond.append(np.argmin(distances[i,:]))
             # assert that the learned clusters are close to the actual clusters
@@ -102,6 +121,7 @@ class ClusterTest(TestCase):
             print centers[:,i]
             print learned_zs
             print L[:,i]
-            self.assertTrue(np.sum(np.abs(learned_means - centers[:,i])) <= sum(centers[:,i])/2)
+            #self.assertTrue(np.sum(np.abs(learned_means - centers[:,i])) <= sum(centers[:,i])/2)
+        self.assertTrue(purity(assignments, labs, 3) > 0.8)
         self.assertFalse(correspond[0]==correspond[1])
         self.assertFalse(correspond[1]==correspond[2])

@@ -29,7 +29,7 @@ Example:
   # data is a 2d array of floats, with dimensions genes x cells
   data = np.loadtxt('counts.txt')
   assignments_p, centers = poisson_cluster(data, 2)
-  P, R, assignments_nb = nb_cluster(data, 2)
+  assignments_nb, P, R = nb_cluster(data, 2)
 
 
 Qualitative to Quantitative Framework

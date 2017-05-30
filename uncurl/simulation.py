@@ -19,10 +19,12 @@ def generate_poisson_data(centers, n_cells, cluster_probs=None):
     output = np.zeros((genes, n_cells))
     if cluster_probs is None:
         cluster_probs = np.ones(clusters)/clusters
+    labels = []
     for i in range(n_cells):
         c = np.random.choice(range(clusters), p=cluster_probs)
+        labels.append(c)
         output[:,i] = np.random.poisson(centers[:,c])
-    return output
+    return output, np.array(labels)
 
 def generate_zip_data(M, L, n_cells, cluster_probs=None):
     """
@@ -43,10 +45,12 @@ def generate_zip_data(M, L, n_cells, cluster_probs=None):
     if cluster_probs is None:
         cluster_probs = np.ones(clusters)/clusters
     zip_p = np.random.random((genes, n_cells))
+    labels = []
     for i in range(n_cells):
         c = np.random.choice(range(clusters), p=cluster_probs)
+        labels.append(c)
         output[:,i] = np.where(zip_p[:,i] < L[:,c], 0, np.random.poisson(M[:,c]))
-    return output
+    return output, np.array(labels)
 
 
 def generate_state_data(means, weights):

@@ -25,7 +25,7 @@ class PoissonTest(TestCase):
     def test_zip_ll(self):
         centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
         centers = centers.astype(float)
-        data = generate_poisson_data(centers, 500)
+        data, labs = generate_poisson_data(centers, 500)
         data = data.astype(float)
         starting_centers = centers
         starting_L = np.array([[0,0,0], [0, 0, 0], [0, 0, 0]])
