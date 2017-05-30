@@ -49,7 +49,7 @@ def kmeans_pp(data, k, centers=None):
     for c in range(k):
         cluster_dists[:,c] = np.array([poisson_dist(centers[:,c], data[:,i]) for i in range(cells)])
     new_assignments = np.argmin(cluster_dists, 1)
-    centers[centers==0.0] = 0.1
+    centers[centers==0.0] = eps
     return centers, new_assignments
 
 def poisson_cluster(data, k, init=None, max_iters=100):
@@ -77,7 +77,6 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     for it in range(max_iters):
         lls = poisson_ll(data, centers)
         #cluster_dists = np.zeros((cells, k))
-        # TODO: use log-likelihoods rather than distances
         new_assignments = np.argmax(lls, 1)
         if np.equal(assignments, new_assignments).all():
             #print 'ending: ', centers
@@ -103,12 +102,12 @@ def zip_fit_params(data):
     v = data.var(1)
     M = (v-m)/(m**2+v-m)
     #M = v/(v+m**2)
-    M[np.isnan(M)] = 0.0
-    M = np.array([min(0.99, max(0.0,x)) for x in M])
+    #M[np.isnan(M)] = 0.0
+    M = np.array([min(0.9, max(0.0,x)) for x in M])
     L = m + v/m - 1.0
     #L = (v + m**2)/m
-    L[np.isnan(L)] = 0.0
-    L = np.array([max(0.01, x) for x in L])
+    #L[np.isnan(L)] = 0.0
+    L = np.array([max(0.0, x) for x in L])
     return L, M
 
 def zip_cluster(data, k, init=None, max_iters=100):
@@ -127,11 +126,13 @@ def zip_cluster(data, k, init=None, max_iters=100):
         M (array): zero-inflation parameter (genes x k)
     """
     genes, cells = data.shape
-    init, assignments = kmeans_pp(data, k, centers=init)
+    init, new_assignments = kmeans_pp(data, k, centers=init)
     centers = np.copy(init)
     M = np.zeros(centers.shape)
-    assignments = np.zeros(cells)
+    assignments = new_assignments
     for it in range(max_iters):
+        for c in range(k):
+            centers[:,c], M[:,c] = zip_fit_params(data[:, assignments==c]+eps)
         print centers
         print M
         print M.max()
@@ -143,7 +144,5 @@ def zip_cluster(data, k, init=None, max_iters=100):
         print new_assignments
         if np.equal(assignments, new_assignments).all():
             return assignments, centers, M
-        for c in range(k):
-            centers[:,c], M[:,c] = zip_fit_params(data[:, new_assignments==c])
         assignments = new_assignments
     return assignments, centers, M

@@ -16,15 +16,15 @@ if __name__ == '__main__':
     assignments_nb, P, R = uncurl.nb_cluster(data, 2)
     # ZIP clustering
     assignments_zip, M, L = uncurl.zip_cluster(data, 2)
-    # State estimation
-    means, weights = uncurl.poisson_estimate_state(data, 2, max_iters=5)
-    # dimensionality reduction
-    X = uncurl.dim_reduce(means, weights, 2)
-    proj = np.dot(X, weights)
     true_labs = dat['Lab'][0]
     print 'poisson purity:', purity(assignments_poisson, true_labs, 2)
     print 'NB purity:', purity(assignments_nb, true_labs, 2)
     print 'ZIP purity:', purity(assignments_zip, true_labs, 2)
+    # State estimation
+    means, weights = uncurl.poisson_estimate_state(data, 2, max_iters=2, disp=False)
+    # dimensionality reduction
+    X = uncurl.dim_reduce(means, weights, 2)
+    proj = np.dot(X, weights)
     # plotting dimensionality reduction
     plt.cla()
     # weight plot

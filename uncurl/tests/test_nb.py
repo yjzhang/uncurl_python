@@ -4,6 +4,7 @@ import numpy as np
 
 from uncurl import nb_cluster, simulation
 from uncurl.nb_cluster import nb_ll, nb_fit
+from uncurl.evaluation import purity
 
 class NBTest(TestCase):
 
@@ -21,7 +22,7 @@ class NBTest(TestCase):
         R = np.array([[1.,8.,10.],
                       [2.,8.,24],
                       [3.,6.,30.]])
-        data = simulation.generate_nb_data(P, R, 100)
+        data, labels = simulation.generate_nb_data(P, R, 100)
         data = data.astype(float)
         #data += 1e-8
         ll = nb_ll(data, P, R)
@@ -40,6 +41,7 @@ class NBTest(TestCase):
         self.assertFalse(r_nans.any())
         # assert that all the points aren't being put into
         # the same cluster.
+        self.assertTrue(purity(labels, a, 3) > 0.8)
         self.assertFalse((a==a[0]).all())
 
 
@@ -53,7 +55,7 @@ class NBTest(TestCase):
         R = np.array([[1.],
                       [8.],
                       [2.]])
-        data = simulation.generate_nb_data(P, R, 500)
+        data, _ = simulation.generate_nb_data(P, R, 500)
         p, r = nb_fit(data)
         p_nans = np.isnan(p)
         r_nans = np.isnan(r)
@@ -65,4 +67,30 @@ class NBTest(TestCase):
         print r
         print np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3
         self.assertTrue(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3 < 3)
+
+    def test_nb_fit_random(self):
+        """
+        Tests fitting an NB distribution with random parameters
+        """
+        for i in range(10):
+            P = np.random.random((3,1))
+            R = np.random.randint(1, 100, (3,1))
+            data, _ = simulation.generate_nb_data(P, R, 500)
+            try:
+                p, r = nb_fit(data)
+            except ValueError:
+                continue
+            p_nans = np.isnan(p)
+            r_nans = np.isnan(r)
+            self.assertFalse(p_nans.any())
+            self.assertFalse(r_nans.any())
+            self.assertFalse(np.isinf(p).any())
+            self.assertFalse(np.isinf(r).any())
+            self.assertTrue(np.sum(np.abs(p - P.flatten())**2)/3 < 0.5)
+            print P
+            print R
+            print p
+            print r
+            print np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3
+            self.assertTrue(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3 < 30)
 

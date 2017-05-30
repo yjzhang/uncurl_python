@@ -20,6 +20,8 @@ def purity(labels, true_labels, k):
     for i in range(k):
         indices = labels==i
         true_clusters = true_labels[indices]
+        if len(true_clusters)==0:
+            continue
         counts = Counter(true_clusters)
         lab, count = counts.most_common()[0]
         purity += count

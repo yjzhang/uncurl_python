@@ -13,7 +13,8 @@ def generate_poisson_data(centers, n_cells, cluster_probs=None):
             Default: uniform.
 
     Returns:
-        array with shape genes x n_cells
+        output - array with shape genes x n_cells
+        labels - array of cluster labels
     """
     genes, clusters = centers.shape
     output = np.zeros((genes, n_cells))
@@ -38,7 +39,8 @@ def generate_zip_data(M, L, n_cells, cluster_probs=None):
             Default: uniform.
 
     Returns:
-        array with shape genes x n_cells
+        output - array with shape genes x n_cells
+        labels - array of cluster labels
     """
     genes, clusters = M.shape
     output = np.zeros((genes, n_cells))
@@ -129,18 +131,21 @@ def generate_nb_data(P, R, n_cells, assignments=None):
 
     Returns:
         data array with shape genes x cells
+        labels - array of cluster labels
     """
     genes, clusters = P.shape
     output = np.zeros((genes, n_cells))
     if assignments is None:
         cluster_probs = np.ones(clusters)/clusters
+    labels = []
     for i in range(n_cells):
         if assignments is None:
             c = np.random.choice(range(clusters), p=cluster_probs)
         else:
             c = assignments[i]
+        labels.append(c)
         # because numpy's negative binomial, r is the number of successes
         output[:,i] = np.random.negative_binomial(R[:,c], 1.0-P[:,c])
-    return output
+    return output, np.array(labels)
 
 
