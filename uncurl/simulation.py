@@ -24,6 +24,31 @@ def generate_poisson_data(centers, n_cells, cluster_probs=None):
         output[:,i] = np.random.poisson(centers[:,c])
     return output
 
+def generate_zip_data(M, L, n_cells, cluster_probs=None):
+    """
+    Generates zero-inflated poisson-distributed data, given a set of means and zero probs for each cluster.
+
+    Args:
+        M (array): genes x clusters matrix
+        L (array): genes x clusters matrix - zero-inflation parameters
+        n_cells (int): number of output cells
+        cluster_probs (array): prior probability for each cluster.
+            Default: uniform.
+
+    Returns:
+        array with shape genes x n_cells
+    """
+    genes, clusters = M.shape
+    output = np.zeros((genes, n_cells))
+    if cluster_probs is None:
+        cluster_probs = np.ones(clusters)/clusters
+    zip_p = np.random.random((genes, n_cells))
+    for i in range(n_cells):
+        c = np.random.choice(range(clusters), p=cluster_probs)
+        output[:,i] = np.where(zip_p[:,i] < L[:,c], 0, np.random.poisson(M[:,c]))
+    return output
+
+
 def generate_state_data(means, weights):
     """
     Generates data according to the Poisson Convex Mixture Model.

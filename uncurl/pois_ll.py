@@ -39,9 +39,9 @@ def poisson_dist(p1, p2):
     Calculates the Poisson distance between two vectors.
     """
     # ugh...
-    p1 += eps
-    p2 += eps
-    return np.dot(p1-p2, np.log(p1/p2))
+    p1_ = p1 + eps
+    p2_ = p2 + eps
+    return np.dot(p1_-p2_, np.log(p1_/p2_))
 
 def zip_ll(data, means, M):
     """
@@ -65,6 +65,10 @@ def zip_ll(data, means, M):
         means_i = means_i.transpose()
         L_i = np.tile(M[:,i], (cells, 1))
         L_i = L_i.transpose()
-        ll[:,i] = np.sum(d0*np.log(L_i + (1 - L_i)*np.exp(-means_i)), 0)
-        ll[:,i] += np.sum(d1*(np.log(1 - L_i) + xlogy(data, means_i) - gammaln(data+1) - means_i), 0)
+        ll_0 = np.log(L_i + (1 - L_i)*np.exp(-means_i))
+        ll_0 = np.where(np.isinf(ll_0), 0.0, ll_0)
+        ll_1 = np.log(1 - L_i) + xlogy(data, means_i) - gammaln(data+1) - means_i
+        ll_0 = np.where(d0, ll_0, 0.0)
+        ll_1 = np.where(d1, ll_1, 0.0)
+        ll[:,i] = np.sum(ll_0 + ll_1, 0)
     return ll

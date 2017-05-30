@@ -27,7 +27,7 @@ def kmeans_pp(data, k, centers=None):
         centers = np.zeros((genes, k))
     else:
         num_known_centers = centers.shape[1]
-        centers = np.concatenate((centers, np.zeros(genes, k-num_known_centers)))
+        centers = np.concatenate((centers, np.zeros((genes, k-num_known_centers))), 1)
     distances = np.zeros((cells, k))
     distances[:] = np.inf
     if num_known_centers == 0:
@@ -49,6 +49,7 @@ def kmeans_pp(data, k, centers=None):
     for c in range(k):
         cluster_dists[:,c] = np.array([poisson_dist(centers[:,c], data[:,i]) for i in range(cells)])
     new_assignments = np.argmin(cluster_dists, 1)
+    centers[centers==0.0] = 0.1
     return centers, new_assignments
 
 def poisson_cluster(data, k, init=None, max_iters=100):
@@ -72,12 +73,14 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     init, assignments = kmeans_pp(data, k, centers=init)
     centers = np.copy(init)
     assignments = np.zeros(cells)
+    #print 'starting: ', centers
     for it in range(max_iters):
         lls = poisson_ll(data, centers)
         #cluster_dists = np.zeros((cells, k))
         # TODO: use log-likelihoods rather than distances
         new_assignments = np.argmax(lls, 1)
         if np.equal(assignments, new_assignments).all():
+            #print 'ending: ', centers
             return assignments, centers
         for c in range(k):
             centers[:,c] = np.mean(data[:,new_assignments==c], 1)
@@ -99,10 +102,14 @@ def zip_fit_params(data):
     m = data.mean(1)
     v = data.var(1)
     M = (v-m)/(m**2+v-m)
-    M = np.array([min(1.0, max(0.0,x)) for x in M])
-    L = (m**2+v-m)/m
-    L = np.array([max(0.0, x) for x in L])
-    return L+eps, M+eps
+    #M = v/(v+m**2)
+    M[np.isnan(M)] = 0.0
+    M = np.array([min(0.99, max(0.0,x)) for x in M])
+    L = m + v/m - 1.0
+    #L = (v + m**2)/m
+    L[np.isnan(L)] = 0.0
+    L = np.array([max(0.01, x) for x in L])
+    return L, M
 
 def zip_cluster(data, k, init=None, max_iters=100):
     """
@@ -122,11 +129,18 @@ def zip_cluster(data, k, init=None, max_iters=100):
     genes, cells = data.shape
     init, assignments = kmeans_pp(data, k, centers=init)
     centers = np.copy(init)
-    M = np.zeros(centers.shape) + 0.1
+    M = np.zeros(centers.shape)
     assignments = np.zeros(cells)
     for it in range(max_iters):
+        print centers
+        print M
+        print M.max()
+        print centers.max()
+        print centers.min()
         lls = zip_ll(data, centers, M)
+        print lls
         new_assignments = np.argmax(lls, 1)
+        print new_assignments
         if np.equal(assignments, new_assignments).all():
             return assignments, centers, M
         for c in range(k):

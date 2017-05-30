@@ -4,7 +4,7 @@ import numpy as np
 from scipy.io import loadmat
 
 import uncurl
-from uncurl.simulation import generate_poisson_data
+from uncurl.simulation import generate_poisson_data, generate_zip_data
 
 class ClusterTest(TestCase):
 
@@ -46,8 +46,9 @@ class ClusterTest(TestCase):
         correspond = []
         for i in range(3):
             correspond.append(np.argmin(distances[i,:]))
+            c = correspond[i]
             # assert that the learned clusters are close to the actual clusters
-            self.assertTrue(min(distances[i,:]) < np.sqrt(np.sum(centers[i]**2))/2)
+            self.assertTrue(min(distances[i,:]) < np.sqrt(np.sum((centers[:,i])**2))/2)
         self.assertFalse(correspond[0]==correspond[1])
         self.assertFalse(correspond[1]==correspond[2])
 
@@ -55,7 +56,7 @@ class ClusterTest(TestCase):
         """
         ZIP clustering on poisson-simulated data
         """
-        centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
+        centers = np.array([[0.1,10,20], [0.1, 11, 0.1], [50, 0.1, 100]])
         centers = centers.astype(float)
         data = generate_poisson_data(centers, 500)
         data = data.astype(float)
@@ -67,7 +68,40 @@ class ClusterTest(TestCase):
         correspond = []
         for i in range(3):
             correspond.append(np.argmin(distances[i,:]))
+            c = correspond[i]
             # assert that the learned clusters are close to the actual clusters
-            self.assertTrue(min(distances[i,:]) < np.sqrt(np.sum(centers[i]**2))/2)
+            self.assertTrue(min(distances[i,:]) < np.sqrt(np.sum((centers[:,i])**2))/2)
+        self.assertFalse(correspond[0]==correspond[1])
+        self.assertFalse(correspond[1]==correspond[2])
+
+    def test_zip_simulation_2(self):
+        """
+        ZIP clustering on ZIP-simulated data
+        """
+        centers = np.array([[0.1,10,20], [0.1, 11, 5], [50, 0.1, 100]])
+        L = np.array([[0.1,0.2,0.3], [0.1, 0.0, 0.0], [0.5, 0.2, 0.8]])
+        centers = centers.astype(float)
+        data = generate_zip_data(centers, L, 500)
+        data = data.astype(float)
+        assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
+        distances = np.zeros((3,3))
+        for i in range(3):
+            for j in range(3):
+                distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
+        correspond = []
+        print c_centers
+        print c_zeros
+        for i in range(3):
+            correspond.append(np.argmin(distances[i,:]))
+            # assert that the learned clusters are close to the actual clusters
+            c = correspond[i]
+            learned_means = c_centers[:,c]
+            learned_zs = c_zeros[:,c]
+            print c
+            print learned_means
+            print centers[:,i]
+            print learned_zs
+            print L[:,i]
+            self.assertTrue(np.sum(np.abs(learned_means - centers[:,i])) <= sum(centers[:,i])/2)
         self.assertFalse(correspond[0]==correspond[1])
         self.assertFalse(correspond[1]==correspond[2])

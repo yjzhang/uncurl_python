@@ -53,7 +53,7 @@ class NBTest(TestCase):
         R = np.array([[1.],
                       [8.],
                       [2.]])
-        data = simulation.generate_nb_data(P, R, 200)
+        data = simulation.generate_nb_data(P, R, 500)
         p, r = nb_fit(data)
         p_nans = np.isnan(p)
         r_nans = np.isnan(r)
@@ -61,4 +61,8 @@ class NBTest(TestCase):
         self.assertFalse(r_nans.any())
         self.assertFalse(np.isinf(p).any())
         self.assertFalse(np.isinf(r).any())
+        self.assertTrue(np.sum(np.abs(p - P.flatten())**2)/3 < 0.5)
+        print r
+        print np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3
+        self.assertTrue(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3 < 3)
 

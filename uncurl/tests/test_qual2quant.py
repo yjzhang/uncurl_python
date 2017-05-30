@@ -21,4 +21,4 @@ class Qual2QuantTest(TestCase):
         starting_points = uncurl.qualNorm(self.data, self.qualData)
         self.assertTrue(starting_points.shape==(2904, 2))
         self.assertFalse(np.isnan(starting_points).any())
-        self.assertFalse((starting_points == 0).any())
+        self.assertTrue((starting_points == 0).sum() < 100)
