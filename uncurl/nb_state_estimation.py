@@ -1,5 +1,4 @@
-# state estimation with poisson convex mixture model
-# TODO: not yet implemented
+# state estimation with NB convex mixture model
 
 from clustering import kmeans_pp
 from nb_cluster import nb_fit

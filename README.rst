@@ -3,9 +3,9 @@ UNCURL
 
 TODO: pypi
 
-To install after cloning the repo: `pip install .`
+To install after cloning the repo: ``pip install .``
 
-To run tests: `python setup.py test`
+To run tests: ``python setup.py test``
 
 Examples: see the examples folder.
 
@@ -15,9 +15,9 @@ Features
 Clustering
 ----------
 
-The `poisson_cluster` function does Poisson clustering with hard assignments. It takes an array of features by examples and the number of clusters, and returns two arrays: an array of cluster assignments and an array of cluster centers.
+The ``poisson_cluster`` function does Poisson clustering with hard assignments. It takes an array of features by examples and the number of clusters, and returns two arrays: an array of cluster assignments and an array of cluster centers.
 
-The `nb_cluster` function is used for negative binomial clustering with the same parameters. It returns three arrays: P and R, the negative binomial parameters for all genes and clusters, and the cluster assignments for each cell.
+The ``nb_cluster`` function is used for negative binomial clustering with the same parameters. It returns three arrays: P and R, the negative binomial parameters for all genes and clusters, and the cluster assignments for each cell.
 
 Example:
 
@@ -35,7 +35,7 @@ Example:
 Qualitative to Quantitative Framework
 -------------------------------------
 
-The `qualNorm` function is used to convert binary data into starting points for clustering.
+The ``qualNorm`` function is used to convert binary data into starting points for clustering.
 
 Example:
 
@@ -51,21 +51,22 @@ Example:
 State Estimation
 ----------------
 
-The `poisson_estimate_state` function is used to estimate cell types using the Poisson Convex Mixture Model.
+The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution.
 
 Example:
 
 .. code-block:: python
 
-    from uncurl import poisson_estimate_state
+    from uncurl import poisson_estimate_state, nb_estimate_state
 
     data = np.loadtxt('counts.txt')
     M, W = poisson_estimate_state(data, 2)
+    M2, W2, R = nb_estimate_state(data, 2)
 
 Dimensionality Reduction
 ------------------------
 
-The `dim_reduce_data` function performs dimensionality reduction using MDS.
+The ``dim_reduce_data`` function performs dimensionality reduction using MDS.
 
 Example:
 
@@ -79,9 +80,9 @@ Example:
 Lineage Estimation & Pseudotime
 -------------------------------
 
-The `lineage` function performs lineage estimation from the output of `poisson_estimate_state`. It fits the data to a different 5th degree polynomial for each cell type.
+The ``lineage`` function performs lineage estimation from the output of ``poisson_estimate_state``. It fits the data to a different 5th degree polynomial for each cell type.
 
-The `pseudotime` function calculates the pseudotime for each cell given the output of `lineage` and a starting cell.
+The ``pseudotime`` function calculates the pseudotime for each cell given the output of ``lineage`` and a starting cell.
 
 Example (including visualization):
 
