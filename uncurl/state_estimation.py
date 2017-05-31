@@ -60,22 +60,6 @@ def _create_m_objective(w, X):
         return deriv.flatten()/genes
     return objective, deriv
 
-def _w_equality_constraints(cells, clusters, i):
-    # constraint for the ith cell
-    fun = lambda w: w.reshape((clusters, cells)).sum(0)[i] - 1.0
-    jac_matrix = np.zeros(cells*clusters)
-    for j in range(clusters):
-        jac_matrix[j*cells + i] = 1.0
-    jac = lambda w: jac_matrix
-    return (fun, jac)
-
-def _create_w_constraints(cells, clusters):
-    def equality_constraint():
-        for i in range(cells):
-            yield _w_equality_constraints(cells, clusters, i)
-    eq_constraints = [{'type': 'eq', 'fun': x, 'jac': y} for x,y in equality_constraint()]
-    return tuple(eq_constraints)
-
 # TODO: add reps - number of starting points
 def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1):
     """
@@ -104,7 +88,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     else:
         means = init_means.copy()
     clusters = means.shape[1]
-    #w_constraints = _create_w_constraints(cells, clusters)
     w_init = np.random.random(cells*clusters)
     if init_weights is not None:
         w_init = init_weights.reshape(cells*clusters)
