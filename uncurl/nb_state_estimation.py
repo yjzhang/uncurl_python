@@ -108,7 +108,7 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
         w_objective, w_deriv = _create_w_objective(means, data, R)
-        w_res = minimize(w_objective, w_init, method='SLSQP', jac=w_deriv, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
+        w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=w_deriv, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x

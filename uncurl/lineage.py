@@ -70,22 +70,6 @@ def poly_curve(x, *a):
         output += a[n]*x**n
     return output
 
-def mst(points):
-    """
-    Finds the minimum spanning tree of the provided array of 2d points, using
-    Euclidean distance.
-
-    NOT IMPLEMENTED AND ALSO UNNECESSARY
-
-    Args:
-        points (array): 2 x n array
-
-    Returns:
-        list of edges - tuples of indices
-    """
-    # TODO (actually this isn't even used)
-    n = points.shape[1]
-    distances = np.array([[np.sum(np.sqrt((points[:,i]-points[:,j])**2)) for i in range(n)] for j in range(n)])
 
 def lineage(means, weights, curve_function='poly', curve_dimensions=6):
     """
@@ -98,10 +82,10 @@ def lineage(means, weights, curve_function='poly', curve_dimensions=6):
         curve_dimensions (int): number of parameters for the curve. Default: 6
 
     Returns:
-        - curve parameters - list of lists for each cluster
-        - smoothed data in 2d space - 2 x cells
-        - list of edges - pairs of cell indices
-        - cell cluster assignments - list of ints
+        curve parameters: list of lists for each cluster
+        smoothed data in 2d space: 2 x cells
+        list of edges: pairs of cell indices
+        cell cluster assignments: list of ints
     """
     if curve_function=='poly':
         func = poly_curve
@@ -110,6 +94,8 @@ def lineage(means, weights, curve_function='poly', curve_dimensions=6):
     # step 1: dimensionality reduction
     X = dim_reduce(means, weights, 2)
     reduced_data = np.dot(X.T, weights)
+    if X.shape[0]==2:
+        reduced_data = np.dot(X, weights)
     # 2. identifying dominant cell types - max weight for each cell
     cells = weights.shape[1]
     clusters = means.shape[1]

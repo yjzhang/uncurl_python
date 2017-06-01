@@ -70,6 +70,24 @@ def generate_state_data(means, weights):
     sample = np.random.poisson(x_true)
     return sample.astype(float)
 
+def generate_nb_state_data(means, weights, R):
+    """
+    Generates data according to the Negative Binomial Convex Mixture Model.
+
+    Args:
+        means (array): Cell types- genes x clusters
+        weights (array): Cell cluster assignments- clusters x cells
+        R (array): dispersion parameter - 1 x genes
+
+    Returns:
+        data matrix - genes x cells
+    """
+    x_true = np.dot(means, weights)
+    sample = np.random.poisson(x_true)
+    # TODO
+    return sample.astype(float)
+
+
 def generate_poisson_states(n_states, n_cells, n_genes):
     """
     Generates means and weights for the Poisson Convex Mixture Model.

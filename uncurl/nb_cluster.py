@@ -60,6 +60,12 @@ def nb_ll(data, P, R):
         lls[:,c] = ll.sum(0)
     return lls
 
+def nb_obj():
+    """
+    Gets NB objective function for a 1d NB distribution.
+    """
+    # TODO
+
 def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
     """
     Fits the NB distribution to data using method of moments.
@@ -79,6 +85,7 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
         raise ValueError("For NB fit, means must be less than variances")
     P = 1.0 - means/variances
     R = means*(1-P)/P
+    # TODO: do something better - use gradient descent to get better estimates?
     return P,R
 
 def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10):

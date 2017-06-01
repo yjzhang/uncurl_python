@@ -31,6 +31,8 @@ def max_variance_genes(data, nbins=10, frac=0.1):
         var_sorted = var_i.argsort()
         top_var_indices = var_sorted[len(bin_i) - frac_elements:]
         ind = bin_i[top_var_indices]
+        # filter out genes with zero variance
+        ind = [index for index in ind if var[index]>0]
         indices.extend(ind)
     return indices
 

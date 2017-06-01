@@ -133,15 +133,8 @@ def zip_cluster(data, k, init=None, max_iters=100):
     for c in range(k):
         centers[:,c], M[:,c] = zip_fit_params(data[:, assignments==c]+eps)
     for it in range(max_iters):
-        print centers
-        print M
-        print M.max()
-        print centers.max()
-        print centers.min()
         lls = zip_ll(data, centers, M)
-        print lls
         new_assignments = np.argmax(lls, 1)
-        print new_assignments
         if np.equal(assignments, new_assignments).all():
             return assignments, centers, M
         for c in range(k):
