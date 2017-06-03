@@ -82,11 +82,32 @@ def generate_nb_state_data(means, weights, R):
     Returns:
         data matrix - genes x cells
     """
+    cells = weights.shape[1]
     x_true = np.dot(means, weights)
-    sample = np.random.poisson(x_true)
-    # TODO
+    sample = np.random.negative_binomial(np.tile(R, (cells, 1)).T, x_true)
     return sample.astype(float)
 
+def generate_nb_states(n_states, n_cells, n_genes):
+    """
+    Generates means and weights for the Negative Binomial Mixture Model.
+    Weights are distributed Dirichlet(1,1,...), means are rand(0, 1).
+    Returned values can be passed to generate_state_data(M, W).
+
+    Args:
+        n_states (int): number of states or clusters
+        n_cells (int): number of cells
+        n_genes (int): number of genes
+
+    Returns:
+        M - genes x clusters
+        W - clusters x cells
+        R - genes x 1 - randint(1, 100)
+    """
+    W = np.random.dirichlet([1]*n_states, size=(n_cells,))
+    W = W.T
+    M = np.random.random((n_genes, n_states))
+    R = np.random.randint(1, 100, n_genes)
+    return M, W, R
 
 def generate_poisson_states(n_states, n_cells, n_genes):
     """
@@ -103,7 +124,7 @@ def generate_poisson_states(n_states, n_cells, n_genes):
         M - genes x clusters
         W - clusters x cells
     """
-    W = np.random.dirichlet([1]*n_states, size=(n_states,))
+    W = np.random.dirichlet([1]*n_states, size=(n_cells,))
     W = W.T
     M = np.random.random((n_genes, n_states))*100
     return M, W

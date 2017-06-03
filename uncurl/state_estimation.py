@@ -22,19 +22,15 @@ def _create_w_objective(m, X):
         # optimization purposes
         w = w.reshape((m.shape[1], X.shape[1]))
         d = m.dot(w)+eps
-        return np.sum(d - X*np.log(d))/genes
-    def deriv(w):
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
         # x_ij
-        w2 = w.reshape((m.shape[1], X.shape[1]))
-        d = m.dot(w2)+eps
         temp = X/d
         m_sum = m.sum(0)
         m2 = m.T.dot(temp)
         deriv = m_sum.reshape((clusters, 1)) - m2
-        return deriv.flatten()/genes
-    return objective, deriv
+        return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
+    return objective
 
 def _create_m_objective(w, X):
     """
@@ -49,16 +45,12 @@ def _create_m_objective(w, X):
     def objective(m):
         m = m.reshape((X.shape[0], w.shape[0]))
         d = m.dot(w)+eps
-        return np.sum(d - X*np.log(d))/genes
-    def deriv(m):
-        m2 = m.reshape((X.shape[0], w.shape[0]))
-        d = m2.dot(w)+eps
         temp = X/d
         w_sum = w.sum(1)
         w2 = w.dot(temp.T)
         deriv = w_sum - w2.T
-        return deriv.flatten()/genes
-    return objective, deriv
+        return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
+    return objective
 
 # TODO: add reps - number of starting points
 def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1):
@@ -96,20 +88,20 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
-        w_bounds = [(0, 1.0) for x in w_init]
+        w_bounds = [(0, None) for x in w_init]
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
-        w_objective, w_deriv = _create_w_objective(means, data)
+        w_objective = _create_w_objective(means, data)
         # TODO: select between L-BFGS-B or SLSQP optimization methods
-        w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=w_deriv, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
+        w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=True, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
-        m_objective, m_deriv = _create_m_objective(w_new, data)
+        m_objective = _create_m_objective(w_new, data)
         # method could be 'L-BFGS-B' or 'SLSQP'... SLSQP gives a memory error...
         # or use TNC...
-        m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=m_deriv, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
+        m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=True, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))/m_init.size
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x

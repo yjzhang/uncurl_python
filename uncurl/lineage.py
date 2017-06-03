@@ -3,6 +3,7 @@ import heapq
 
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.spatial.distance import pdist, squareform
 
 from dim_reduce import dim_reduce
 
@@ -65,8 +66,8 @@ def poly_curve(x, *a):
     """
     Arbitrary dimension polynomial.
     """
-    output = a[0]
-    for n in range(1, len(a)):
+    output = 0.0
+    for n in range(0, len(a)):
         output += a[n]*x**n
     return output
 
@@ -99,41 +100,45 @@ def lineage(means, weights, curve_function='poly', curve_dimensions=6):
     # 2. identifying dominant cell types - max weight for each cell
     cells = weights.shape[1]
     clusters = means.shape[1]
-    cell_cluster_assignments = []
-    for i in range(cells):
-        max_cluster = weights[:,i].argmax()
-        cell_cluster_assignments.append(max_cluster)
-    cell_cluster_assignments = np.array(cell_cluster_assignments)
+    cell_cluster_assignments = weights.argmax(0)
     # 3. fit smooth curve over cell types -5th order fourier series
     # cluster_curves contains the parameters for each curve.
     cluster_curves = []
     # cluster_fitted_vals is a 2 x cells array
-    cluster_fitted_vals = np.zeros(reduced_data.shape)
+    cluster_fitted_vals = reduced_data.copy()
     # cluster_edges contain a list of ordered pairs (indices) connecting cells
     # in each cluster.
     cluster_edges = []
     for c in range(clusters):
         cluster_cells = reduced_data[:, cell_cluster_assignments==c]
+        if len(cluster_cells) == 0:
+            cluster_edges.append([])
+            continue
+        if cluster_cells.shape[1] < 2:
+            cluster_edges.append([])
+            continue
+        elif cluster_cells.shape[1] < curve_dimensions:
+            tc = cluster_cells.shape[1]-1
+        else:
+            tc = curve_dimensions
         # y = f(x)
         if curve_function=='fourier':
-            p0 = [1.0]*curve_dimensions
+            p0 = [1.0]*tc
             # scipy is bad at finding the correct scale
             p0[1] = 0.0001
             bounds = (-np.inf, np.inf)
         else:
-            p0 = [1.0]*curve_dimensions
+            p0 = [1.0]*tc
             bounds = (-np.inf, np.inf)
         p_x, pcov_x = curve_fit(func, cluster_cells[0,:],
                 cluster_cells[1,:],
                 p0=p0, bounds=bounds)
         perr_x = np.sum(np.sqrt(np.diag(pcov_x)))
-        #print perr_x
         # x = f(y)
         p_y, pcov_y = curve_fit(func, cluster_cells[1,:],
                 cluster_cells[0,:],
                 p0=p0, bounds=bounds)
         perr_y = np.sum(np.sqrt(np.diag(pcov_y)))
-        #print perr_y
         if perr_x <= perr_y:
             x_vals = reduced_data[0,:]
             cluster_curves.append(p_x)
@@ -166,11 +171,15 @@ def lineage(means, weights, curve_function='poly', curve_dimensions=6):
     # for each cluster, find the closest point in another cluster, and connect
     # those points. Add that point to cluster_edges.
     # build a distance matrix between the reduced points...
-    distances = np.array([[sum((x - y)**2) for x in cluster_fitted_vals.T] for y in cluster_fitted_vals.T])
+    distances = squareform(pdist(cluster_fitted_vals.T))
     for c1 in range(clusters):
         min_dist = np.inf
         min_index = None
+        if sum(cell_cluster_assignments==c1)==0:
+            continue
         for c2 in range(clusters):
+            if sum(cell_cluster_assignments==c2)==0:
+                continue
             if c1!=c2:
                 distances_c = distances[cell_cluster_assignments==c1,:][:, cell_cluster_assignments==c2]
                 mindex = np.unravel_index(distances_c.argmin(), distances_c.shape)
