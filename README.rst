@@ -1,13 +1,13 @@
 UNCURL
 ======
 
-TODO: pypi
-
 To install after cloning the repo: ``pip install .``
 
 To run tests: ``python setup.py test``
 
 Examples: see the examples folder.
+
+`Full documentation <https://yjzhang.github.io/uncurl_python/>`_
 
 Features
 ========
@@ -60,8 +60,8 @@ Example:
     from uncurl import poisson_estimate_state, nb_estimate_state
 
     data = np.loadtxt('counts.txt')
-    M, W = poisson_estimate_state(data, 2)
-    M2, W2, R = nb_estimate_state(data, 2)
+    M, W, ll = poisson_estimate_state(data, 2)
+    M2, W2, R, ll2 = nb_estimate_state(data, 2)
 
 Dimensionality Reduction
 ------------------------
