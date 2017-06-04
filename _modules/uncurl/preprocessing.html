@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.preprocessing &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.preprocessing</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Misc functions...</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="max_variance_genes"><a class="viewcode-back" href="../../uncurl.html#uncurl.preprocessing.max_variance_genes">[docs]</a><span class="k">def</span> <span class="nf">max_variance_genes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function identifies the genes that have the max variance</span>
+<span class="sd">    across a number of bins sorted by mean.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): genes x cells</span>
+<span class="sd">        nbins (int): number of bins to sort genes by mean expression level. Default: 10.</span>
+<span class="sd">        frac (float): fraction of genes to return per bin - between 0 and 1. Default: 0.1</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of gene indices (list of ints)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">mean_indices</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">n_elements</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">nbins</span>
+    <span class="n">frac_elements</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_elements</span><span class="o">*</span><span class="n">frac</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbins</span><span class="p">):</span>
+        <span class="n">bin_i</span> <span class="o">=</span> <span class="n">mean_indices</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">n_elements</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">n_elements</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="n">nbins</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">bin_i</span> <span class="o">=</span> <span class="n">mean_indices</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">n_elements</span> <span class="p">:]</span>
+        <span class="n">var_i</span> <span class="o">=</span> <span class="n">var</span><span class="p">[</span><span class="n">bin_i</span><span class="p">]</span>
+        <span class="n">var_sorted</span> <span class="o">=</span> <span class="n">var_i</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="n">top_var_indices</span> <span class="o">=</span> <span class="n">var_sorted</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">bin_i</span><span class="p">)</span> <span class="o">-</span> <span class="n">frac_elements</span><span class="p">:]</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">bin_i</span><span class="p">[</span><span class="n">top_var_indices</span><span class="p">]</span>
+        <span class="c1"># filter out genes with zero variance</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">ind</span> <span class="k">if</span> <span class="n">var</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">indices</span></div>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

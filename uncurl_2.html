@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>UNCURL public functions &#8212; UNCURL 0.2.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="uncurl package" href="uncurl.html" />
+    <link rel="prev" title="Welcome to UNCURL’s documentation!" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl.html" title="uncurl package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to UNCURL’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="uncurl-public-functions">
+<h1>UNCURL public functions<a class="headerlink" href="#uncurl-public-functions" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-uncurl"></span><dl class="function">
+<dt id="uncurl.poisson_cluster">
+<code class="descclassname">uncurl.</code><code class="descname">poisson_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>init=None</em>, <em>max_iters=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/poisson_cluster.html#poisson_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs Poisson hard EM on the given data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; Number of clusters</li>
+<li><strong>init</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial centers - genes x k array. Default: None, use kmeans++</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Maximum number of iterations. Default: 100</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">a cells x 1 vector of cluster assignments,
+and a genes x k array of cluster means.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a tuple of two arrays</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster">
+<code class="descclassname">uncurl.</code><code class="descname">nb_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>P_init=None</em>, <em>R_init=None</em>, <em>assignments=None</em>, <em>max_iters=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs negative binomial clustering on the given data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of clusters</li>
+<li><strong>P_init</strong> (<em>array</em>) &#8211; NB success prob param - genes x k. Default: random</li>
+<li><strong>R_init</strong> (<em>array</em>) &#8211; NB stopping param - genes x k. Default: random</li>
+<li><strong>assignments</strong> (<em>array</em>) &#8211; cells x 1 array of integers 0...k. Default: kmeans-pp (poisson)</li>
+<li><strong>max_iters</strong> (<em>int</em>) &#8211; default: 100</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">P, R, assignments</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.qual2quant">
+<code class="descclassname">uncurl.</code><code class="descname">qual2quant</code><span class="sig-paren">(</span><em>data</em>, <em>binarized</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qual2quant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates starting points using binarized data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells</li>
+<li><strong>binarized</strong> (<em>array</em>) &#8211; binary data - genes x clusters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Array of starting positions - genes x clusters</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.poisson_estimate_state">
+<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
+cell state mixing weights.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: kmeans++ initializations</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells. Default: random(0,1)</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4</li>
+<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the scipy minimizer for M and W. Default: 400</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">M is genes x clusters, W is clusters x cells.
+M is the state centers and W is the state mixing components for each
+cell.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">two matrices, M and W</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.lineage">
+<code class="descclassname">uncurl.</code><code class="descname">lineage</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>curve_function='poly'</em>, <em>curve_dimensions=6</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/lineage.html#lineage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.lineage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lineage graph produced by minimum spanning tree</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; genes x clusters - output of state estimation</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; clusters x cells - output of state estimation</li>
+<li><strong>curve_function</strong> (<em>string</em>) &#8211; either &#8216;poly&#8217; or &#8216;fourier&#8217;. Default: &#8216;poly&#8217;</li>
+<li><strong>curve_dimensions</strong> (<em>int</em>) &#8211; number of parameters for the curve. Default: 6</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li>curve parameters - list of lists for each cluster</li>
+<li>smoothed data in 2d space - 2 x cells</li>
+<li>list of edges - pairs of cell indices</li>
+<li>cell cluster assignments - list of ints</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to UNCURL&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="uncurl.html"
+                        title="next chapter">uncurl package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/uncurl_2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl.html" title="uncurl package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to UNCURL’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,888 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl package &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="UNCURL public functions" href="uncurl_pub.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl_pub.html" title="UNCURL public functions"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="uncurl-package">
+<h1>uncurl package<a class="headerlink" href="#uncurl-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-uncurl.clustering">
+<span id="uncurl-clustering-module"></span><h2>uncurl.clustering module<a class="headerlink" href="#module-uncurl.clustering" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.clustering.kmeans_pp">
+<code class="descclassname">uncurl.clustering.</code><code class="descname">kmeans_pp</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>centers=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/clustering.html#kmeans_pp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.clustering.kmeans_pp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates kmeans++ initial centers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; Number of clusters</li>
+<li><strong>centers</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; if provided, these are one or more known cluster centers. 2d array of genes x number of centers (&lt;=k).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">centers - a genes x k array of cluster means.
+assignments - a cells x 1 array of cluster assignments</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.clustering.poisson_cluster">
+<code class="descclassname">uncurl.clustering.</code><code class="descname">poisson_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>init=None</em>, <em>max_iters=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/clustering.html#poisson_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.clustering.poisson_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs Poisson hard EM on the given data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; Number of clusters</li>
+<li><strong>init</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial centers - genes x k array. Default: None, use kmeans++</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Maximum number of iterations. Default: 100</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">a cells x 1 vector of cluster assignments,
+and a genes x k array of cluster means.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a tuple of two arrays</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.clustering.zip_cluster">
+<code class="descclassname">uncurl.clustering.</code><code class="descname">zip_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>init=None</em>, <em>max_iters=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/clustering.html#zip_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.clustering.zip_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs hard EM clustering using the zero-inflated Poisson distribution.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; Number of clusters</li>
+<li><strong>init</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial centers - genes x k array. Default: None, use kmeans++</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Maximum number of iterations. Default: 100</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">integer assignments of cells to clusters (length cells)
+L (array): means (genes x k)
+M (array): zero-inflation parameter (genes x k)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">assignments (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.clustering.zip_fit_params">
+<code class="descclassname">uncurl.clustering.</code><code class="descname">zip_fit_params</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/clustering.html#zip_fit_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.clustering.zip_fit_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ZIP parameters that best fit a given data set.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells belonging to a given cluster</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">1d array of means
+M (array): 1d array of zero-inflation parameter</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">L (array)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.dim_reduce">
+<span id="uncurl-dim-reduce-module"></span><h2>uncurl.dim_reduce module<a class="headerlink" href="#module-uncurl.dim_reduce" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.dim_reduce.dim_reduce">
+<code class="descclassname">uncurl.dim_reduce.</code><code class="descname">dim_reduce</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dim_reduce.html#dim_reduce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.dim_reduce.dim_reduce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dimensionality reduction using Poisson distances and MDS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; genes x clusters</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; clusters x cells</li>
+<li><strong>d</strong> (<em>int</em>) &#8211; desired dimensionality</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">X, a clusters x d matrix representing the reduced dimensions
+of the cluster centers.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.dim_reduce.dim_reduce_data">
+<code class="descclassname">uncurl.dim_reduce.</code><code class="descname">dim_reduce_data</code><span class="sig-paren">(</span><em>data</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dim_reduce.html#dim_reduce_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.dim_reduce.dim_reduce_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does a MDS on the data directly, not on the means.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>d</strong> (<em>int</em>) &#8211; desired dimensionality</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">X, a cells x d matrix</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.evaluation">
+<span id="uncurl-evaluation-module"></span><h2>uncurl.evaluation module<a class="headerlink" href="#module-uncurl.evaluation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.evaluation.purity">
+<code class="descclassname">uncurl.evaluation.</code><code class="descname">purity</code><span class="sig-paren">(</span><em>labels</em>, <em>true_labels</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/evaluation.html#purity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.evaluation.purity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the purity score for the given labels.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>labels</strong> (<em>array</em>) &#8211; 1D array of integers</li>
+<li><strong>true_labels</strong> (<em>array</em>) &#8211; 1D array of integers - true labels</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of clusters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">purity score - a float bewteen 0 and 1. Closer to 1 is better.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.lineage">
+<span id="uncurl-lineage-module"></span><h2>uncurl.lineage module<a class="headerlink" href="#module-uncurl.lineage" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.lineage.fourier_series">
+<code class="descclassname">uncurl.lineage.</code><code class="descname">fourier_series</code><span class="sig-paren">(</span><em>x</em>, <em>*a</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/lineage.html#fourier_series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.lineage.fourier_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arbitrary dimensionality fourier series.</p>
+<p>The first parameter is a_0, and the second parameter is the interval/scale
+parameter.</p>
+<p>The parameters are altering sin and cos paramters.</p>
+<p>n = (len(a)-2)/2</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.lineage.graph_distances">
+<code class="descclassname">uncurl.lineage.</code><code class="descname">graph_distances</code><span class="sig-paren">(</span><em>start</em>, <em>edges</em>, <em>distances</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/lineage.html#graph_distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.lineage.graph_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an undirected adjacency list and a pairwise distance matrix between
+all nodes: calculates distances along graph from start node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start</strong> (<em>int</em>) &#8211; start node</li>
+<li><strong>edges</strong> (<em>list</em>) &#8211; adjacency list of tuples</li>
+<li><strong>distances</strong> (<em>array</em>) &#8211; 2d array of distances between nodes</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of node to distance from start</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.lineage.lineage">
+<code class="descclassname">uncurl.lineage.</code><code class="descname">lineage</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>curve_function='poly'</em>, <em>curve_dimensions=6</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/lineage.html#lineage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.lineage.lineage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lineage graph produced by minimum spanning tree</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; genes x clusters - output of state estimation</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; clusters x cells - output of state estimation</li>
+<li><strong>curve_function</strong> (<em>string</em>) &#8211; either &#8216;poly&#8217; or &#8216;fourier&#8217;. Default: &#8216;poly&#8217;</li>
+<li><strong>curve_dimensions</strong> (<em>int</em>) &#8211; number of parameters for the curve. Default: 6</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list of lists for each cluster
+smoothed data in 2d space: 2 x cells
+list of edges: pairs of cell indices
+cell cluster assignments: list of ints</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">curve parameters</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.lineage.poly_curve">
+<code class="descclassname">uncurl.lineage.</code><code class="descname">poly_curve</code><span class="sig-paren">(</span><em>x</em>, <em>*a</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/lineage.html#poly_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.lineage.poly_curve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arbitrary dimension polynomial.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.lineage.pseudotime">
+<code class="descclassname">uncurl.lineage.</code><code class="descname">pseudotime</code><span class="sig-paren">(</span><em>starting_node</em>, <em>edges</em>, <em>fitted_vals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/lineage.html#pseudotime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.lineage.pseudotime" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>starting_node</strong> (<em>int</em>) &#8211; index of the starting node</li>
+<li><strong>edges</strong> (<em>list</em>) &#8211; list of tuples (node1, node2)</li>
+<li><strong>fitted_vals</strong> (<em>array</em>) &#8211; output of lineage (2 x cells)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A 1d array containing the pseudotime value of each cell.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.nb_cluster">
+<span id="uncurl-nb-cluster-module"></span><h2>uncurl.nb_cluster module<a class="headerlink" href="#module-uncurl.nb_cluster" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.nb_cluster.dlog_ncr">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">dlog_ncr</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#dlog_ncr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.dlog_ncr" title="Permalink to this definition">¶</a></dt>
+<dd><p>derivative of log(nCr(a,b)) wrt a</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.find_nb_genes">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">find_nb_genes</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#find_nb_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.find_nb_genes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the indices of all genes in the dataset that have
+a mean &lt; 0.9 variance. Returns an array of booleans.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.fit_cluster">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">fit_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>assignments</em>, <em>k</em>, <em>P_init</em>, <em>R_init</em>, <em>means</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#fit_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.fit_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fits NB/poisson params to a cluster.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.log_ncr">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">log_ncr</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#log_ncr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.log_ncr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns log(nCr(a,b)), given that b&lt;a. Does not assume that a and b
+are integers (uses log-gamma).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.nb_cluster">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>P_init=None</em>, <em>R_init=None</em>, <em>assignments=None</em>, <em>max_iters=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs negative binomial clustering on the given data. If some genes have mean &gt; variance, then these genes are fitted to a Poisson distribution.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of clusters</li>
+<li><strong>P_init</strong> (<em>array</em>) &#8211; NB success prob param - genes x k. Default: random</li>
+<li><strong>R_init</strong> (<em>array</em>) &#8211; NB stopping param - genes x k. Default: random</li>
+<li><strong>assignments</strong> (<em>array</em>) &#8211; cells x 1 array of integers 0...k-1. Default: kmeans-pp (poisson)</li>
+<li><strong>max_iters</strong> (<em>int</em>) &#8211; default: 100</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">1d array of length cells, containing integers 0...k-1
+P (array): genes x k - value is 0 for genes with mean &gt; var
+R (array): genes x k - value is inf for genes with mean &gt; var</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">assignments (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.nb_fit">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_fit</code><span class="sig-paren">(</span><em>data</em>, <em>P_init=None</em>, <em>R_init=None</em>, <em>epsilon=1e-08</em>, <em>max_iters=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fits the NB distribution to data using method of moments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>P</strong> (<em>array</em>) &#8211; NB success prob param - genes x 1</li>
+<li><strong>R</strong> (<em>array</em>) &#8211; NB stopping param - genes x 1</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">P, R - fit to data</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.nb_ll">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_ll</code><span class="sig-paren">(</span><em>data</em>, <em>P</em>, <em>R</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_ll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_ll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the negative binomial log-likelihood of the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>P</strong> (<em>array</em>) &#8211; NB success probability param - genes x clusters</li>
+<li><strong>R</strong> (<em>array</em>) &#8211; NB stopping param - genes x clusters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">cells x clusters array of log-likelihoods</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.nb_obj">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_obj</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets NB objective function for a 1d NB distribution.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.nb_state_estimation">
+<span id="uncurl-nb-state-estimation-module"></span><h2>uncurl.nb_state_estimation module<a class="headerlink" href="#module-uncurl.nb_state_estimation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.nb_state_estimation.nb_estimate_state">
+<code class="descclassname">uncurl.nb_state_estimation.</code><code class="descname">nb_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>R=None</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_state_estimation.html#nb_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_state_estimation.nb_estimate_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a Negative Binomial Mixture model to estimate cell states and
+cell state mixing weights.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
+<li><strong>R</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; vector of length genes containing the dispersion estimates for each gene. Default: use nb_fit</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: kmeans++ initializations</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells. Default: random(0,1)</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (in RMSE), then the iteration is stopped. Default: 1e-4</li>
+<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the scipy minimizer for M and W. Default: 400</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">genes x clusters - state centers
+W (array): clusters x cells - state mixing components for each cell
+R (array): 1 x genes - NB dispersion parameter for each gene
+ll (float): Log-likelihood of final iteration</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">M (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.pois_ll">
+<span id="uncurl-pois-ll-module"></span><h2>uncurl.pois_ll module<a class="headerlink" href="#module-uncurl.pois_ll" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.pois_ll.poisson_dist">
+<code class="descclassname">uncurl.pois_ll.</code><code class="descname">poisson_dist</code><span class="sig-paren">(</span><em>p1</em>, <em>p2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#poisson_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.poisson_dist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Poisson distance between two vectors.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.pois_ll.poisson_ll">
+<code class="descclassname">uncurl.pois_ll.</code><code class="descname">poisson_ll</code><span class="sig-paren">(</span><em>data</em>, <em>means</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#poisson_ll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.poisson_ll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Poisson log-likelihood.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; 2d numpy array of genes x cells</li>
+<li><strong>means</strong> (<em>array</em>) &#8211; 2d numpy array of genes x k</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">cells x k array of log-likelihood for each cell/cluster pair</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.pois_ll.poisson_ll_2">
+<code class="descclassname">uncurl.pois_ll.</code><code class="descname">poisson_ll_2</code><span class="sig-paren">(</span><em>p1</em>, <em>p2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#poisson_ll_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.poisson_ll_2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates Poisson LL(p1|p2).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.pois_ll.zip_ll">
+<code class="descclassname">uncurl.pois_ll.</code><code class="descname">zip_ll</code><span class="sig-paren">(</span><em>data</em>, <em>means</em>, <em>M</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#zip_ll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.zip_ll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the zero-inflated Poisson log-likelihood.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>means</strong> (<em>array</em>) &#8211; genes x k</li>
+<li><strong>M</strong> (<em>array</em>) &#8211; genes x k - this is the probability of having a count of zero.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">cells x k array of log-likelihood for each cell/cluster pair.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.preprocessing">
+<span id="uncurl-preprocessing-module"></span><h2>uncurl.preprocessing module<a class="headerlink" href="#module-uncurl.preprocessing" title="Permalink to this headline">¶</a></h2>
+<p>Misc functions...</p>
+<dl class="function">
+<dt id="uncurl.preprocessing.max_variance_genes">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=10</em>, <em>frac=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.max_variance_genes" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function identifies the genes that have the max variance
+across a number of bins sorted by mean.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>nbins</strong> (<em>int</em>) &#8211; number of bins to sort genes by mean expression level. Default: 10.</li>
+<li><strong>frac</strong> (<em>float</em>) &#8211; fraction of genes to return per bin - between 0 and 1. Default: 0.1</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of gene indices (list of ints)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.qual2quant">
+<span id="uncurl-qual2quant-module"></span><h2>uncurl.qual2quant module<a class="headerlink" href="#module-uncurl.qual2quant" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.qual2quant.qualNorm">
+<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNorm</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNorm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells</li>
+<li><strong>qualitative</strong> (<em>array</em>) &#8211; 2d array of numerical data - genes x clusters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Array of starting positions for state estimation or
+clustering, with shape genes x clusters</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.simulation">
+<span id="uncurl-simulation-module"></span><h2>uncurl.simulation module<a class="headerlink" href="#module-uncurl.simulation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.simulation.generate_nb_data">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_nb_data</code><span class="sig-paren">(</span><em>P</em>, <em>R</em>, <em>n_cells</em>, <em>assignments=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_nb_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_nb_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates negative binomial data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>P</strong> (<em>array</em>) &#8211; genes x clusters</li>
+<li><strong>R</strong> (<em>array</em>) &#8211; genes x clusters</li>
+<li><strong>n_cells</strong> (<em>int</em>) &#8211; number of cells</li>
+<li><strong>assignments</strong> (<em>list</em>) &#8211; cluster assignment of each cell. Default:
+random uniform</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">data array with shape genes x cells
+labels - array of cluster labels</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.simulation.generate_nb_state_data">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_nb_state_data</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>R</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_nb_state_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_nb_state_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates data according to the Negative Binomial Convex Mixture Model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; Cell types- genes x clusters</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; Cell cluster assignments- clusters x cells</li>
+<li><strong>R</strong> (<em>array</em>) &#8211; dispersion parameter - 1 x genes</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">data matrix - genes x cells</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.simulation.generate_nb_states">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_nb_states</code><span class="sig-paren">(</span><em>n_states</em>, <em>n_cells</em>, <em>n_genes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_nb_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_nb_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates means and weights for the Negative Binomial Mixture Model.
+Weights are distributed Dirichlet(1,1,...), means are rand(0, 1).
+Returned values can be passed to generate_state_data(M, W).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n_states</strong> (<em>int</em>) &#8211; number of states or clusters</li>
+<li><strong>n_cells</strong> (<em>int</em>) &#8211; number of cells</li>
+<li><strong>n_genes</strong> (<em>int</em>) &#8211; number of genes</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">M - genes x clusters
+W - clusters x cells
+R - genes x 1 - randint(1, 100)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.simulation.generate_poisson_data">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_poisson_data</code><span class="sig-paren">(</span><em>centers</em>, <em>n_cells</em>, <em>cluster_probs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_poisson_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_poisson_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates poisson-distributed data, given a set of means for each cluster.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>centers</strong> (<em>array</em>) &#8211; genes x clusters matrix</li>
+<li><strong>n_cells</strong> (<em>int</em>) &#8211; number of output cells</li>
+<li><strong>cluster_probs</strong> (<em>array</em>) &#8211; prior probability for each cluster.
+Default: uniform.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">output - array with shape genes x n_cells
+labels - array of cluster labels</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.simulation.generate_poisson_lineage">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_poisson_lineage</code><span class="sig-paren">(</span><em>n_states</em>, <em>n_cells_per_cluster</em>, <em>n_genes</em>, <em>means=300</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_poisson_lineage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_poisson_lineage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a lineage for each state- assumes that each state has a common
+ancestor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">M - genes x clusters
+W - clusters x cells</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.simulation.generate_poisson_states">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_poisson_states</code><span class="sig-paren">(</span><em>n_states</em>, <em>n_cells</em>, <em>n_genes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_poisson_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_poisson_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates means and weights for the Poisson Convex Mixture Model.
+Weights are distributed Dirichlet(1,1,...), means are rand(0, 100).
+Returned values can be passed to generate_state_data(M, W).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n_states</strong> (<em>int</em>) &#8211; number of states or clusters</li>
+<li><strong>n_cells</strong> (<em>int</em>) &#8211; number of cells</li>
+<li><strong>n_genes</strong> (<em>int</em>) &#8211; number of genes</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">M - genes x clusters
+W - clusters x cells</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.simulation.generate_state_data">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_state_data</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_state_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_state_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates data according to the Poisson Convex Mixture Model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; Cell types- genes x clusters</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; Cell cluster assignments- clusters x cells</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">data matrix - genes x cells</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.simulation.generate_zip_data">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_zip_data</code><span class="sig-paren">(</span><em>M</em>, <em>L</em>, <em>n_cells</em>, <em>cluster_probs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_zip_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_zip_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates zero-inflated poisson-distributed data, given a set of means and zero probs for each cluster.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>M</strong> (<em>array</em>) &#8211; genes x clusters matrix</li>
+<li><strong>L</strong> (<em>array</em>) &#8211; genes x clusters matrix - zero-inflation parameters</li>
+<li><strong>n_cells</strong> (<em>int</em>) &#8211; number of output cells</li>
+<li><strong>cluster_probs</strong> (<em>array</em>) &#8211; prior probability for each cluster.
+Default: uniform.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">output - array with shape genes x n_cells
+labels - array of cluster labels</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.spatial_inference">
+<span id="uncurl-spatial-inference-module"></span><h2>uncurl.spatial_inference module<a class="headerlink" href="#module-uncurl.spatial_inference" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.spatial_inference.spatial">
+<code class="descclassname">uncurl.spatial_inference.</code><code class="descname">spatial</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/spatial_inference.html#spatial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.spatial_inference.spatial" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.state_estimation">
+<span id="uncurl-state-estimation-module"></span><h2>uncurl.state_estimation module<a class="headerlink" href="#module-uncurl.state_estimation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.state_estimation.poisson_estimate_state">
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>reps=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
+cell state mixing weights.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: kmeans++ initializations</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells. Default: random(0,1)</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4</li>
+<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the scipy minimizer for M and W. Default: 400</li>
+<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of random initializations. Default: 1.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">genes x clusters - state means
+W (array): clusters x cells - state mixing components for each cell
+ll (float): final log-likelihood</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">M (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-uncurl" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">uncurl package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-uncurl.clustering">uncurl.clustering module</a></li>
+<li><a class="reference internal" href="#module-uncurl.dim_reduce">uncurl.dim_reduce module</a></li>
+<li><a class="reference internal" href="#module-uncurl.evaluation">uncurl.evaluation module</a></li>
+<li><a class="reference internal" href="#module-uncurl.lineage">uncurl.lineage module</a></li>
+<li><a class="reference internal" href="#module-uncurl.nb_cluster">uncurl.nb_cluster module</a></li>
+<li><a class="reference internal" href="#module-uncurl.nb_state_estimation">uncurl.nb_state_estimation module</a></li>
+<li><a class="reference internal" href="#module-uncurl.pois_ll">uncurl.pois_ll module</a></li>
+<li><a class="reference internal" href="#module-uncurl.preprocessing">uncurl.preprocessing module</a></li>
+<li><a class="reference internal" href="#module-uncurl.qual2quant">uncurl.qual2quant module</a></li>
+<li><a class="reference internal" href="#module-uncurl.simulation">uncurl.simulation module</a></li>
+<li><a class="reference internal" href="#module-uncurl.spatial_inference">uncurl.spatial_inference module</a></li>
+<li><a class="reference internal" href="#module-uncurl.state_estimation">uncurl.state_estimation module</a></li>
+<li><a class="reference internal" href="#module-uncurl">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="uncurl_pub.html"
+                        title="previous chapter">UNCURL public functions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/uncurl.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl_pub.html" title="UNCURL public functions"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

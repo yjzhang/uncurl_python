@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.lineage &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.lineage</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Lineage tracing and pseudotime calculation</span>
+<span class="kn">import</span> <span class="nn">heapq</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">curve_fit</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="k">import</span> <span class="n">pdist</span><span class="p">,</span> <span class="n">squareform</span>
+
+<span class="kn">from</span> <span class="nn">dim_reduce</span> <span class="k">import</span> <span class="n">dim_reduce</span>
+
+<div class="viewcode-block" id="fourier_series"><a class="viewcode-back" href="../../uncurl.html#uncurl.lineage.fourier_series">[docs]</a><span class="k">def</span> <span class="nf">fourier_series</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Arbitrary dimensionality fourier series.</span>
+
+<span class="sd">    The first parameter is a_0, and the second parameter is the interval/scale</span>
+<span class="sd">    parameter.</span>
+
+<span class="sd">    The parameters are altering sin and cos paramters.</span>
+
+<span class="sd">    n = (len(a)-2)/2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="n">n_</span> <span class="o">=</span> <span class="n">n</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">val1</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">val2</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="n">val1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">n_</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="n">val2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">n_</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+<div class="viewcode-block" id="graph_distances"><a class="viewcode-back" href="../../uncurl.html#uncurl.lineage.graph_distances">[docs]</a><span class="k">def</span> <span class="nf">graph_distances</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">distances</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an undirected adjacency list and a pairwise distance matrix between</span>
+<span class="sd">    all nodes: calculates distances along graph from start node.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        start (int): start node</span>
+<span class="sd">        edges (list): adjacency list of tuples</span>
+<span class="sd">        distances (array): 2d array of distances between nodes</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict of node to distance from start</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># convert adjacency list to adjacency dict</span>
+    <span class="n">adj</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">distances</span><span class="p">))}</span>
+    <span class="k">for</span> <span class="n">n1</span><span class="p">,</span> <span class="n">n2</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">adj</span><span class="p">[</span><span class="n">n1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span>
+        <span class="n">adj</span><span class="p">[</span><span class="n">n2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n1</span><span class="p">)</span>
+    <span class="c1"># run dijkstra&#39;s algorithm</span>
+    <span class="n">to_visit</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">new_dist</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">adj</span><span class="p">[</span><span class="n">start</span><span class="p">]:</span>
+        <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">to_visit</span><span class="p">,</span> <span class="p">(</span><span class="n">distances</span><span class="p">[</span><span class="n">start</span><span class="p">,</span> <span class="n">n</span><span class="p">],</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">while</span> <span class="n">to_visit</span><span class="p">:</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">next_node</span> <span class="o">=</span> <span class="n">heapq</span><span class="o">.</span><span class="n">heappop</span><span class="p">(</span><span class="n">to_visit</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">next_node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_dist</span><span class="p">:</span>
+            <span class="n">new_dist</span><span class="p">[</span><span class="n">next_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">adj</span><span class="p">[</span><span class="n">next_node</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_dist</span><span class="p">:</span>
+                <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">to_visit</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span> <span class="o">+</span> <span class="n">distances</span><span class="p">[</span><span class="n">next_node</span><span class="p">,</span> <span class="n">n</span><span class="p">],</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">new_dist</span></div>
+
+
+<div class="viewcode-block" id="poly_curve"><a class="viewcode-back" href="../../uncurl.html#uncurl.lineage.poly_curve">[docs]</a><span class="k">def</span> <span class="nf">poly_curve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Arbitrary dimension polynomial.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)):</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="n">n</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+
+<div class="viewcode-block" id="lineage"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.lineage.lineage">[docs]</a><span class="k">def</span> <span class="nf">lineage</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">curve_function</span><span class="o">=</span><span class="s1">&#39;poly&#39;</span><span class="p">,</span> <span class="n">curve_dimensions</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lineage graph produced by minimum spanning tree</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        means (array): genes x clusters - output of state estimation</span>
+<span class="sd">        weights (array): clusters x cells - output of state estimation</span>
+<span class="sd">        curve_function (string): either &#39;poly&#39; or &#39;fourier&#39;. Default: &#39;poly&#39;</span>
+<span class="sd">        curve_dimensions (int): number of parameters for the curve. Default: 6</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        curve parameters: list of lists for each cluster</span>
+<span class="sd">        smoothed data in 2d space: 2 x cells</span>
+<span class="sd">        list of edges: pairs of cell indices</span>
+<span class="sd">        cell cluster assignments: list of ints</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">curve_function</span><span class="o">==</span><span class="s1">&#39;poly&#39;</span><span class="p">:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">poly_curve</span>
+    <span class="k">elif</span> <span class="n">curve_function</span><span class="o">==</span><span class="s1">&#39;fourier&#39;</span><span class="p">:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">fourier_series</span>
+    <span class="c1"># step 1: dimensionality reduction</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">reduced_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+        <span class="n">reduced_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+    <span class="c1"># 2. identifying dominant cell types - max weight for each cell</span>
+    <span class="n">cells</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">clusters</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">cell_cluster_assignments</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># 3. fit smooth curve over cell types -5th order fourier series</span>
+    <span class="c1"># cluster_curves contains the parameters for each curve.</span>
+    <span class="n">cluster_curves</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># cluster_fitted_vals is a 2 x cells array</span>
+    <span class="n">cluster_fitted_vals</span> <span class="o">=</span> <span class="n">reduced_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="c1"># cluster_edges contain a list of ordered pairs (indices) connecting cells</span>
+    <span class="c1"># in each cluster.</span>
+    <span class="n">cluster_edges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+        <span class="n">cluster_cells</span> <span class="o">=</span> <span class="n">reduced_data</span><span class="p">[:,</span> <span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cluster_cells</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">cluster_edges</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">cluster_cells</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">cluster_edges</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">cluster_cells</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">curve_dimensions</span><span class="p">:</span>
+            <span class="n">tc</span> <span class="o">=</span> <span class="n">cluster_cells</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tc</span> <span class="o">=</span> <span class="n">curve_dimensions</span>
+        <span class="c1"># y = f(x)</span>
+        <span class="k">if</span> <span class="n">curve_function</span><span class="o">==</span><span class="s1">&#39;fourier&#39;</span><span class="p">:</span>
+            <span class="n">p0</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span><span class="o">*</span><span class="n">tc</span>
+            <span class="c1"># scipy is bad at finding the correct scale</span>
+            <span class="n">p0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0001</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p0</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span><span class="o">*</span><span class="n">tc</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="n">p_x</span><span class="p">,</span> <span class="n">pcov_x</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">cluster_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span>
+                <span class="n">cluster_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span>
+                <span class="n">p0</span><span class="o">=</span><span class="n">p0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">perr_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">pcov_x</span><span class="p">)))</span>
+        <span class="c1"># x = f(y)</span>
+        <span class="n">p_y</span><span class="p">,</span> <span class="n">pcov_y</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">cluster_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span>
+                <span class="n">cluster_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span>
+                <span class="n">p0</span><span class="o">=</span><span class="n">p0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">perr_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">pcov_y</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">perr_x</span> <span class="o">&lt;=</span> <span class="n">perr_y</span><span class="p">:</span>
+            <span class="n">x_vals</span> <span class="o">=</span> <span class="n">reduced_data</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span>
+            <span class="n">cluster_curves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_x</span><span class="p">)</span>
+            <span class="n">y_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">p_x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x_vals</span><span class="p">])</span>
+            <span class="c1">#print &#39;error:&#39;, np.sum(np.sqrt((y_vals - reduced_data[1,:])**2)[cell_cluster_assignments==c])</span>
+            <span class="n">fitted_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x_vals</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">])</span>
+            <span class="n">cluster_fitted_vals</span><span class="p">[:,</span><span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">fitted_vals</span><span class="p">[:,</span><span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span>
+            <span class="c1"># sort points by increasing X, connect points</span>
+            <span class="n">x_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x_vals</span><span class="p">)</span>
+            <span class="n">x_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x_indices</span> <span class="k">if</span> <span class="n">cell_cluster_assignments</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">==</span><span class="n">c</span><span class="p">]</span>
+            <span class="n">new_cluster_edges</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_indices</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x_indices</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="n">new_cluster_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">))</span>
+            <span class="n">cluster_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_cluster_edges</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y_vals</span> <span class="o">=</span> <span class="n">reduced_data</span><span class="p">[</span><span class="mi">1</span><span class="p">,:]</span>
+            <span class="n">cluster_curves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_y</span><span class="p">)</span>
+            <span class="n">x_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">p_y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">y_vals</span><span class="p">])</span>
+            <span class="c1">#print &#39;error:&#39;, np.sum(np.sqrt((x_vals - reduced_data[0,:])**2)[cell_cluster_assignments==c])</span>
+            <span class="n">fitted_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x_vals</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">])</span>
+            <span class="n">cluster_fitted_vals</span><span class="p">[:,</span><span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">fitted_vals</span><span class="p">[:,</span><span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span>
+            <span class="c1"># sort points by increasing Y, connect points</span>
+            <span class="n">y_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">y_vals</span><span class="p">)</span>
+            <span class="n">y_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">y_indices</span> <span class="k">if</span> <span class="n">cell_cluster_assignments</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">==</span><span class="n">c</span><span class="p">]</span>
+            <span class="n">new_cluster_edges</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">y_indices</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">y_indices</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="n">new_cluster_edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">))</span>
+            <span class="n">cluster_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_cluster_edges</span><span class="p">)</span>
+    <span class="c1"># 4. connect each cluster together</span>
+    <span class="c1"># for each cluster, find the closest point in another cluster, and connect</span>
+    <span class="c1"># those points. Add that point to cluster_edges.</span>
+    <span class="c1"># build a distance matrix between the reduced points...</span>
+    <span class="n">distances</span> <span class="o">=</span> <span class="n">squareform</span><span class="p">(</span><span class="n">pdist</span><span class="p">(</span><span class="n">cluster_fitted_vals</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">c1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+        <span class="n">min_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">min_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c1</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c2</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">c1</span><span class="o">!=</span><span class="n">c2</span><span class="p">:</span>
+                <span class="n">distances_c</span> <span class="o">=</span> <span class="n">distances</span><span class="p">[</span><span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c1</span><span class="p">,:][:,</span> <span class="n">cell_cluster_assignments</span><span class="o">==</span><span class="n">c2</span><span class="p">]</span>
+                <span class="n">mindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">distances_c</span><span class="o">.</span><span class="n">argmin</span><span class="p">(),</span> <span class="n">distances_c</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">distances_c</span><span class="p">[</span><span class="n">mindex</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_dist</span><span class="p">:</span>
+                    <span class="n">min_dist</span> <span class="o">=</span> <span class="n">distances_c</span><span class="p">[</span><span class="n">mindex</span><span class="p">]</span>
+                    <span class="n">min_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">distances</span><span class="o">==</span><span class="n">min_dist</span><span class="p">)</span>
+                    <span class="n">min_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">min_index</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">min_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">cluster_edges</span><span class="p">[</span><span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_index</span><span class="p">)</span>
+    <span class="c1"># flatten cluster_edges?</span>
+    <span class="n">cluster_edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">cluster_edges</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">cluster_curves</span><span class="p">,</span> <span class="n">cluster_fitted_vals</span><span class="p">,</span> <span class="n">cluster_edges</span><span class="p">,</span> <span class="n">cell_cluster_assignments</span></div>
+
+<div class="viewcode-block" id="pseudotime"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.lineage.pseudotime">[docs]</a><span class="k">def</span> <span class="nf">pseudotime</span><span class="p">(</span><span class="n">starting_node</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">fitted_vals</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        starting_node (int): index of the starting node</span>
+<span class="sd">        edges (list): list of tuples (node1, node2)</span>
+<span class="sd">        fitted_vals (array): output of lineage (2 x cells)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A 1d array containing the pseudotime value of each cell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO</span>
+    <span class="c1"># 1. calculate a distance matrix...</span>
+    <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="nb">sum</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fitted_vals</span><span class="o">.</span><span class="n">T</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">fitted_vals</span><span class="o">.</span><span class="n">T</span><span class="p">])</span>
+    <span class="c1"># 2. start from the root node/cell, calculate distance along graph</span>
+    <span class="n">distance_dict</span> <span class="o">=</span> <span class="n">graph_distances</span><span class="p">(</span><span class="n">starting_node</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">distances</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">fitted_vals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance_dict</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>
