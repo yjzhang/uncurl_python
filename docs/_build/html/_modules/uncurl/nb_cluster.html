@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.nb_cluster &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.nb_cluster</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Negative binomial clustering</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">minimize</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">gammaln</span><span class="p">,</span> <span class="n">digamma</span><span class="p">,</span> <span class="n">xlog1py</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">nbinom</span>
+
+<span class="kn">from</span> <span class="nn">clustering</span> <span class="k">import</span> <span class="n">kmeans_pp</span>
+<span class="kn">import</span> <span class="nn">pois_ll</span>
+
+<span class="n">eps</span><span class="o">=</span><span class="mf">1e-8</span>
+
+<div class="viewcode-block" id="find_nb_genes"><a class="viewcode-back" href="../../uncurl.html#uncurl.nb_cluster.find_nb_genes">[docs]</a><span class="k">def</span> <span class="nf">find_nb_genes</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds the indices of all genes in the dataset that have</span>
+<span class="sd">    a mean &lt; 0.9 variance. Returns an array of booleans.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">data_vars</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">nb_indices</span> <span class="o">=</span> <span class="n">data_means</span> <span class="o">&lt;</span> <span class="mf">0.9</span><span class="o">*</span><span class="n">data_vars</span>
+    <span class="k">return</span> <span class="n">nb_indices</span></div>
+
+<div class="viewcode-block" id="log_ncr"><a class="viewcode-back" href="../../uncurl.html#uncurl.nb_cluster.log_ncr">[docs]</a><span class="k">def</span> <span class="nf">log_ncr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns log(nCr(a,b)), given that b&lt;a. Does not assume that a and b</span>
+<span class="sd">    are integers (uses log-gamma).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span></div>
+
+<div class="viewcode-block" id="dlog_ncr"><a class="viewcode-back" href="../../uncurl.html#uncurl.nb_cluster.dlog_ncr">[docs]</a><span class="k">def</span> <span class="nf">dlog_ncr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    derivative of log(nCr(a,b)) wrt a</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">digamma</span><span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">digamma</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="nb_ll"><a class="viewcode-back" href="../../uncurl.html#uncurl.nb_cluster.nb_ll">[docs]</a><span class="k">def</span> <span class="nf">nb_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the negative binomial log-likelihood of the data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): genes x cells</span>
+<span class="sd">        P (array): NB success probability param - genes x clusters</span>
+<span class="sd">        R (array): NB stopping param - genes x clusters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        cells x clusters array of log-likelihoods</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: include factorial...</span>
+    <span class="c1">#data = data + eps</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">clusters</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">cells</span><span class="p">,</span> <span class="n">clusters</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+        <span class="n">P_c</span> <span class="o">=</span> <span class="n">P</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">R_c</span> <span class="o">=</span> <span class="n">R</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">R_c</span> <span class="o">+</span> <span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">data</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">R_c</span><span class="p">)</span>
+        <span class="n">ll</span> <span class="o">+=</span> <span class="n">R_c</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">P_c</span><span class="p">)</span> <span class="o">+</span> <span class="n">xlog1py</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">-</span><span class="n">P_c</span><span class="p">)</span>
+        <span class="c1">#new_ll = np.sum(nbinom.logpmf(data, R_c, P_c), 0)</span>
+        <span class="n">lls</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">ll</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lls</span></div>
+
+<div class="viewcode-block" id="nb_obj"><a class="viewcode-back" href="../../uncurl.html#uncurl.nb_cluster.nb_obj">[docs]</a><span class="k">def</span> <span class="nf">nb_obj</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets NB objective function for a 1d NB distribution.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+    <span class="c1"># TODO</span>
+
+<div class="viewcode-block" id="nb_fit"><a class="viewcode-back" href="../../uncurl.html#uncurl.nb_cluster.nb_fit">[docs]</a><span class="k">def</span> <span class="nf">nb_fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">P_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">R_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fits the NB distribution to data using method of moments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): genes x cells</span>
+<span class="sd">        P (array): NB success prob param - genes x 1</span>
+<span class="sd">        R (array): NB stopping param - genes x 1</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        P, R - fit to data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># method of moments</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">variances</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">means</span> <span class="o">&gt;</span> <span class="n">variances</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;For NB fit, means must be less than variances&quot;</span><span class="p">)</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">means</span><span class="o">/</span><span class="n">variances</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">means</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">P</span><span class="p">)</span><span class="o">/</span><span class="n">P</span>
+    <span class="c1"># TODO: do something better - use gradient descent to get better estimates?</span>
+    <span class="k">return</span> <span class="n">P</span><span class="p">,</span><span class="n">R</span></div>
+
+<div class="viewcode-block" id="nb_cluster"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.nb_cluster.nb_cluster">[docs]</a><span class="k">def</span> <span class="nf">nb_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">P_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">R_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assignments</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs negative binomial clustering on the given data. If some genes have mean &gt; variance, then these genes are fitted to a Poisson distribution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): genes x cells</span>
+<span class="sd">        k (int): number of clusters</span>
+<span class="sd">        P_init (array): NB success prob param - genes x k. Default: random</span>
+<span class="sd">        R_init (array): NB stopping param - genes x k. Default: random</span>
+<span class="sd">        assignments (array): cells x 1 array of integers 0...k-1. Default: kmeans-pp (poisson)</span>
+<span class="sd">        max_iters (int): default: 100</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        assignments (array): 1d array of length cells, containing integers 0...k-1</span>
+<span class="sd">        P (array): genes x k - value is 0 for genes with mean &gt; var</span>
+<span class="sd">        R (array): genes x k - value is inf for genes with mean &gt; var</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="n">P_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">P_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">R_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">R_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+        <span class="n">R_init</span> <span class="o">=</span> <span class="n">R_init</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">assignments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">assignments</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+        <span class="c1">#assignments = np.array([np.random.randint(0,k) for i in range(cells)])</span>
+    <span class="n">old_assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">assignments</span><span class="p">)</span>
+    <span class="c1"># If mean &gt; variance, then fall back to Poisson, since NB</span>
+    <span class="c1"># distribution can&#39;t handle that case.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
+        <span class="c1"># estimate params from assigned cells</span>
+        <span class="n">nb_gene_indices</span> <span class="o">=</span> <span class="n">fit_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">P_init</span><span class="p">,</span> <span class="n">R_init</span><span class="p">,</span> <span class="n">means</span><span class="p">)</span>
+        <span class="c1"># re-calculate assignments</span>
+        <span class="n">lls</span> <span class="o">=</span> <span class="n">nb_ll</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">nb_gene_indices</span><span class="p">,</span> <span class="p">:],</span> <span class="n">P_init</span><span class="p">[</span><span class="n">nb_gene_indices</span><span class="p">,:],</span> <span class="n">R_init</span><span class="p">[</span><span class="n">nb_gene_indices</span><span class="p">,:])</span>
+        <span class="n">lls</span> <span class="o">+=</span> <span class="n">pois_ll</span><span class="o">.</span><span class="n">poisson_ll</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="o">~</span><span class="n">nb_gene_indices</span><span class="p">,:],</span> <span class="n">means</span><span class="p">[</span><span class="o">~</span><span class="n">nb_gene_indices</span><span class="p">,:])</span>
+        <span class="c1"># set NB params to failure values</span>
+        <span class="n">P_init</span><span class="p">[</span><span class="o">~</span><span class="n">nb_gene_indices</span><span class="p">,:]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">R_init</span><span class="p">[</span><span class="o">~</span><span class="n">nb_gene_indices</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">):</span>
+            <span class="n">assignments</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">lls</span><span class="p">[</span><span class="n">c</span><span class="p">,:])</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">assignments</span><span class="p">,</span><span class="n">old_assignments</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">break</span>
+        <span class="n">old_assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">assignments</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">P_init</span><span class="p">,</span> <span class="n">R_init</span></div>
+
+<div class="viewcode-block" id="fit_cluster"><a class="viewcode-back" href="../../uncurl.html#uncurl.nb_cluster.fit_cluster">[docs]</a><span class="k">def</span> <span class="nf">fit_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">P_init</span><span class="p">,</span> <span class="n">R_init</span><span class="p">,</span> <span class="n">means</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fits NB/poisson params to a cluster.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[:,</span><span class="n">assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">assignments</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">nb_gene_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="kc">True</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">genes</span><span class="p">)])</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="n">c_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span>
+        <span class="n">nb_gene_indices</span> <span class="o">=</span> <span class="n">nb_gene_indices</span> <span class="o">&amp;</span> <span class="n">find_nb_genes</span><span class="p">(</span><span class="n">c_data</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="n">c_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span>
+        <span class="n">nb_genes</span> <span class="o">=</span> <span class="n">c_data</span><span class="p">[</span><span class="n">nb_gene_indices</span><span class="p">,:]</span>
+        <span class="n">poisson_genes</span> <span class="o">=</span> <span class="n">c_data</span><span class="p">[</span><span class="o">~</span><span class="n">nb_gene_indices</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">P_init</span><span class="p">[</span><span class="n">nb_gene_indices</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">R_init</span><span class="p">[</span><span class="n">nb_gene_indices</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">nb_fit</span><span class="p">(</span><span class="n">nb_genes</span><span class="p">)</span>
+        <span class="n">means</span><span class="p">[</span><span class="o">~</span><span class="n">nb_gene_indices</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">poisson_genes</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nb_gene_indices</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

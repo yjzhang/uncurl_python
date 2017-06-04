@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.clustering &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.clustering</h1><div class="highlight"><pre>
+<span></span><span class="c1"># poisson clustering</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">pois_ll</span> <span class="k">import</span> <span class="n">poisson_ll</span><span class="p">,</span> <span class="n">poisson_dist</span><span class="p">,</span> <span class="n">zip_ll</span>
+
+<span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-8</span>
+
+<div class="viewcode-block" id="kmeans_pp"><a class="viewcode-back" href="../../uncurl.html#uncurl.clustering.kmeans_pp">[docs]</a><span class="k">def</span> <span class="nf">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates kmeans++ initial centers.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): A 2d array- genes x cells</span>
+<span class="sd">        k (int): Number of clusters</span>
+<span class="sd">        centers (array, optional): if provided, these are one or more known cluster centers. 2d array of genes x number of centers (&lt;=k).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        centers - a genes x k array of cluster means.</span>
+<span class="sd">        assignments - a cells x 1 array of cluster assignments</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: what if there is missing data for a given gene?</span>
+    <span class="c1"># missing data could be if all the entires are -1.</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">num_known_centers</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">centers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">num_known_centers</span> <span class="o">=</span> <span class="n">centers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">centers</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">k</span><span class="o">-</span><span class="n">num_known_centers</span><span class="p">))),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">cells</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="n">distances</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">if</span> <span class="n">num_known_centers</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cells</span><span class="p">)</span>
+        <span class="n">centers</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">init</span><span class="p">]</span>
+        <span class="n">num_known_centers</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_known_centers</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">):</span>
+                <span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">c2</span><span class="p">]</span> <span class="o">=</span> <span class="n">poisson_dist</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">centers</span><span class="p">[:,</span><span class="n">c2</span><span class="p">])</span>
+        <span class="c1"># choose a new data point as center... probability proportional</span>
+        <span class="c1"># to distance^2</span>
+        <span class="n">min_distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">min_distances</span> <span class="o">=</span> <span class="n">min_distances</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">min_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">),</span>
+                <span class="n">p</span><span class="o">=</span><span class="n">min_distances</span><span class="o">/</span><span class="n">min_distances</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">min_dist</span><span class="p">]</span>
+    <span class="n">cluster_dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">cells</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="n">cluster_dists</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">poisson_dist</span><span class="p">(</span><span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">],</span> <span class="n">data</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">)])</span>
+    <span class="n">new_assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">cluster_dists</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">centers</span><span class="p">[</span><span class="n">centers</span><span class="o">==</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="n">eps</span>
+    <span class="k">return</span> <span class="n">centers</span><span class="p">,</span> <span class="n">new_assignments</span></div>
+
+<div class="viewcode-block" id="poisson_cluster"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.clustering.poisson_cluster">[docs]</a><span class="k">def</span> <span class="nf">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs Poisson hard EM on the given data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): A 2d array- genes x cells</span>
+<span class="sd">        k (int): Number of clusters</span>
+<span class="sd">        init (array, optional): Initial centers - genes x k array. Default: None, use kmeans++</span>
+<span class="sd">        max_iters (int, optional): Maximum number of iterations. Default: 100</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        a tuple of two arrays: a cells x 1 vector of cluster assignments,</span>
+<span class="sd">        and a genes x k array of cluster means.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: be able to use a combination of fixed and unknown starting points</span>
+    <span class="c1"># e.g., have init values only for certain genes, have a row of all</span>
+    <span class="c1"># zeros indicating that kmeans++ should be used for that row.</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">init</span><span class="p">,</span> <span class="n">assignments</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="o">+</span><span class="n">eps</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span>
+    <span class="c1">#print &#39;starting: &#39;, centers</span>
+    <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
+        <span class="n">lls</span> <span class="o">=</span> <span class="n">poisson_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span>
+        <span class="c1">#cluster_dists = np.zeros((cells, k))</span>
+        <span class="n">new_assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">lls</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">assignments</span><span class="p">,</span> <span class="n">new_assignments</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="c1">#print &#39;ending: &#39;, centers</span>
+            <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">new_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">assignments</span> <span class="o">=</span> <span class="n">new_assignments</span>
+    <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span></div>
+
+<div class="viewcode-block" id="zip_fit_params"><a class="viewcode-back" href="../../uncurl.html#uncurl.clustering.zip_fit_params">[docs]</a><span class="k">def</span> <span class="nf">zip_fit_params</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the ZIP parameters that best fit a given data set.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): 2d array of genes x cells belonging to a given cluster</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        L (array): 1d array of means</span>
+<span class="sd">        M (array): 1d array of zero-inflation parameter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="o">-</span><span class="n">m</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">m</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">v</span><span class="o">-</span><span class="n">m</span><span class="p">)</span>
+    <span class="c1">#M = v/(v+m**2)</span>
+    <span class="c1">#M[np.isnan(M)] = 0.0</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">min</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">M</span><span class="p">])</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">v</span><span class="o">/</span><span class="n">m</span> <span class="o">-</span> <span class="mf">1.0</span>
+    <span class="c1">#L = (v + m**2)/m</span>
+    <span class="c1">#L[np.isnan(L)] = 0.0</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">L</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">L</span><span class="p">,</span> <span class="n">M</span></div>
+
+<div class="viewcode-block" id="zip_cluster"><a class="viewcode-back" href="../../uncurl.html#uncurl.clustering.zip_cluster">[docs]</a><span class="k">def</span> <span class="nf">zip_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs hard EM clustering using the zero-inflated Poisson distribution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): A 2d array- genes x cells</span>
+<span class="sd">        k (int): Number of clusters</span>
+<span class="sd">        init (array, optional): Initial centers - genes x k array. Default: None, use kmeans++</span>
+<span class="sd">        max_iters (int, optional): Maximum number of iterations. Default: 100</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        assignments (array): integer assignments of cells to clusters (length cells)</span>
+<span class="sd">        L (array): means (genes x k)</span>
+<span class="sd">        M (array): zero-inflation parameter (genes x k)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">init</span><span class="p">,</span> <span class="n">new_assignments</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="o">+</span><span class="n">eps</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">centers</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">assignments</span> <span class="o">=</span> <span class="n">new_assignments</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">],</span> <span class="n">M</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">zip_fit_params</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="n">assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span><span class="o">+</span><span class="n">eps</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
+        <span class="n">lls</span> <span class="o">=</span> <span class="n">zip_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">centers</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+        <span class="n">new_assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">lls</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">assignments</span><span class="p">,</span> <span class="n">new_assignments</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span><span class="p">,</span> <span class="n">M</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">],</span> <span class="n">M</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">zip_fit_params</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="n">assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span><span class="o">+</span><span class="n">eps</span><span class="p">)</span>
+        <span class="n">assignments</span> <span class="o">=</span> <span class="n">new_assignments</span>
+    <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span><span class="p">,</span> <span class="n">M</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

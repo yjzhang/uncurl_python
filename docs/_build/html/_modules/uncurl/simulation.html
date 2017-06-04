@@ -1,0 +1,282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.simulation &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.simulation</h1><div class="highlight"><pre>
+<span></span><span class="c1"># simulations... generating poisson data?</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="generate_poisson_data"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_poisson_data">[docs]</a><span class="k">def</span> <span class="nf">generate_poisson_data</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">,</span> <span class="n">cluster_probs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates poisson-distributed data, given a set of means for each cluster.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        centers (array): genes x clusters matrix</span>
+<span class="sd">        n_cells (int): number of output cells</span>
+<span class="sd">        cluster_probs (array): prior probability for each cluster.</span>
+<span class="sd">            Default: uniform.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        output - array with shape genes x n_cells</span>
+<span class="sd">        labels - array of cluster labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">clusters</span> <span class="o">=</span> <span class="n">centers</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">cluster_probs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cluster_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span><span class="o">/</span><span class="n">clusters</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="n">cluster_probs</span><span class="p">)</span>
+        <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">output</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="generate_zip_data"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_zip_data">[docs]</a><span class="k">def</span> <span class="nf">generate_zip_data</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">,</span> <span class="n">cluster_probs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates zero-inflated poisson-distributed data, given a set of means and zero probs for each cluster.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        M (array): genes x clusters matrix</span>
+<span class="sd">        L (array): genes x clusters matrix - zero-inflation parameters</span>
+<span class="sd">        n_cells (int): number of output cells</span>
+<span class="sd">        cluster_probs (array): prior probability for each cluster.</span>
+<span class="sd">            Default: uniform.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        output - array with shape genes x n_cells</span>
+<span class="sd">        labels - array of cluster labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">clusters</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">cluster_probs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cluster_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span><span class="o">/</span><span class="n">clusters</span>
+    <span class="n">zip_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">))</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="n">cluster_probs</span><span class="p">)</span>
+        <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">output</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">zip_p</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">L</span><span class="p">[:,</span><span class="n">c</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">M</span><span class="p">[:,</span><span class="n">c</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="generate_state_data"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_state_data">[docs]</a><span class="k">def</span> <span class="nf">generate_state_data</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates data according to the Poisson Convex Mixture Model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        means (array): Cell types- genes x clusters</span>
+<span class="sd">        weights (array): Cell cluster assignments- clusters x cells</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        data matrix - genes x cells</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">x_true</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sample</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="generate_nb_state_data"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_nb_state_data">[docs]</a><span class="k">def</span> <span class="nf">generate_nb_state_data</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates data according to the Negative Binomial Convex Mixture Model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        means (array): Cell types- genes x clusters</span>
+<span class="sd">        weights (array): Cell cluster assignments- clusters x cells</span>
+<span class="sd">        R (array): dispersion parameter - 1 x genes</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        data matrix - genes x cells</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cells</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">x_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+    <span class="n">P_true</span> <span class="o">=</span> <span class="n">x_true</span><span class="o">/</span><span class="p">(</span><span class="mf">1.0</span><span class="o">+</span><span class="n">x_true</span><span class="p">)</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">negative_binomial</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">P_true</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sample</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="generate_nb_states"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_nb_states">[docs]</a><span class="k">def</span> <span class="nf">generate_nb_states</span><span class="p">(</span><span class="n">n_states</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates means and weights for the Negative Binomial Mixture Model.</span>
+<span class="sd">    Weights are distributed Dirichlet(1,1,...), means are rand(0, 1).</span>
+<span class="sd">    Returned values can be passed to generate_state_data(M, W).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n_states (int): number of states or clusters</span>
+<span class="sd">        n_cells (int): number of cells</span>
+<span class="sd">        n_genes (int): number of genes</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        M - genes x clusters</span>
+<span class="sd">        W - clusters x cells</span>
+<span class="sd">        R - genes x 1 - randint(1, 100)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">dirichlet</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">n_states</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,))</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">n_genes</span><span class="p">,</span> <span class="n">n_states</span><span class="p">))</span><span class="o">*</span><span class="mi">100</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">R</span></div>
+
+<div class="viewcode-block" id="generate_poisson_states"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_poisson_states">[docs]</a><span class="k">def</span> <span class="nf">generate_poisson_states</span><span class="p">(</span><span class="n">n_states</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates means and weights for the Poisson Convex Mixture Model.</span>
+<span class="sd">    Weights are distributed Dirichlet(1,1,...), means are rand(0, 100).</span>
+<span class="sd">    Returned values can be passed to generate_state_data(M, W).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n_states (int): number of states or clusters</span>
+<span class="sd">        n_cells (int): number of cells</span>
+<span class="sd">        n_genes (int): number of genes</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        M - genes x clusters</span>
+<span class="sd">        W - clusters x cells</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">dirichlet</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">n_states</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,))</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">n_genes</span><span class="p">,</span> <span class="n">n_states</span><span class="p">))</span><span class="o">*</span><span class="mi">100</span>
+    <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span></div>
+
+<div class="viewcode-block" id="generate_poisson_lineage"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_poisson_lineage">[docs]</a><span class="k">def</span> <span class="nf">generate_poisson_lineage</span><span class="p">(</span><span class="n">n_states</span><span class="p">,</span> <span class="n">n_cells_per_cluster</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">,</span> <span class="n">means</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a lineage for each state- assumes that each state has a common</span>
+<span class="sd">    ancestor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        M - genes x clusters</span>
+<span class="sd">        W - clusters x cells</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># means...</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">n_genes</span><span class="p">,</span> <span class="n">n_states</span><span class="p">))</span><span class="o">*</span><span class="n">means</span>
+    <span class="n">center</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_states</span><span class="p">,</span> <span class="n">n_cells_per_cluster</span><span class="o">*</span><span class="n">n_states</span><span class="p">))</span>
+    <span class="c1"># TODO</span>
+    <span class="c1"># start at a center where all the clusters have equal probability, and for</span>
+    <span class="c1"># each cluster, interpolate linearly towards the cluster.</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="o">/</span><span class="n">n_states</span><span class="p">]</span><span class="o">*</span><span class="n">n_states</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_states</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells_per_cluster</span><span class="p">):</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">means</span><span class="p">)</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">+</span> <span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">n_states</span><span class="p">)</span><span class="o">/</span><span class="n">n_cells_per_cluster</span>
+            <span class="n">w</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">new_value</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">n_states</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">w</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span>
+            <span class="n">W</span><span class="p">[:,</span> <span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span></div>
+
+<div class="viewcode-block" id="generate_nb_data"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_nb_data">[docs]</a><span class="k">def</span> <span class="nf">generate_nb_data</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">,</span> <span class="n">assignments</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates negative binomial data</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        P (array): genes x clusters</span>
+<span class="sd">        R (array): genes x clusters</span>
+<span class="sd">        n_cells (int): number of cells</span>
+<span class="sd">        assignments (list): cluster assignment of each cell. Default:</span>
+<span class="sd">            random uniform</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        data array with shape genes x cells</span>
+<span class="sd">        labels - array of cluster labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">clusters</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">n_cells</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">assignments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cluster_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span><span class="o">/</span><span class="n">clusters</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">assignments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="n">cluster_probs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">assignments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="c1"># because numpy&#39;s negative binomial, r is the number of successes</span>
+        <span class="n">output</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">negative_binomial</span><span class="p">(</span><span class="n">R</span><span class="p">[:,</span><span class="n">c</span><span class="p">],</span> <span class="mf">1.0</span><span class="o">-</span><span class="n">P</span><span class="p">[:,</span><span class="n">c</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

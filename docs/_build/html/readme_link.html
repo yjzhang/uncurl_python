@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>UNCURL &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="UNCURL public functions" href="uncurl_pub.html" />
+    <link rel="prev" title="Welcome to UNCURL’s documentation!" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl_pub.html" title="UNCURL public functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to UNCURL’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="uncurl">
+<h1>UNCURL<a class="headerlink" href="#uncurl" title="Permalink to this headline">¶</a></h1>
+<p>TODO: pypi</p>
+<p>To install after cloning the repo: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
+<p>To run tests: <code class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">test</span></code></p>
+<p>Examples: see the examples folder.</p>
+</div>
+<div class="section" id="features">
+<h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="clustering">
+<h2>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">poisson_cluster</span></code> function does Poisson clustering with hard assignments. It takes an array of features by examples and the number of clusters, and returns two arrays: an array of cluster assignments and an array of cluster centers.</p>
+<p>The <code class="docutils literal"><span class="pre">nb_cluster</span></code> function is used for negative binomial clustering with the same parameters. It returns three arrays: P and R, the negative binomial parameters for all genes and clusters, and the cluster assignments for each cell.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_cluster</span><span class="p">,</span> <span class="n">nb_cluster</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c1"># data is a 2d array of floats, with dimensions genes x cells</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+<span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">assignments_nb</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">nb_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="qualitative-to-quantitative-framework">
+<h2>Qualitative to Quantitative Framework<a class="headerlink" href="#qualitative-to-quantitative-framework" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">qualNorm</span></code> function is used to convert binary data into starting points for clustering.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">qualNorm</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+<span class="n">bin_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;binary.txt&#39;</span><span class="p">)</span>
+<span class="n">starting_centers</span> <span class="o">=</span> <span class="n">qualNorm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bin_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="state-estimation">
+<h2>State Estimation<a class="headerlink" href="#state-estimation" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code> function is used to estimate cell types using the Poisson Convex Mixture Model. The <code class="docutils literal"><span class="pre">nb_estimate_state</span></code> function has a similar output, but uses a negative binomial distribution.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">nb_estimate_state</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">M2</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">nb_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dimensionality-reduction">
+<h2>Dimensionality Reduction<a class="headerlink" href="#dimensionality-reduction" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">dim_reduce_data</span></code> function performs dimensionality reduction using MDS.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">dim_reduce_data</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="lineage-estimation-pseudotime">
+<h2>Lineage Estimation &amp; Pseudotime<a class="headerlink" href="#lineage-estimation-pseudotime" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">lineage</span></code> function performs lineage estimation from the output of <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code>. It fits the data to a different 5th degree polynomial for each cell type.</p>
+<p>The <code class="docutils literal"><span class="pre">pseudotime</span></code> function calculates the pseudotime for each cell given the output of <code class="docutils literal"><span class="pre">lineage</span></code> and a starting cell.</p>
+<p>Example (including visualization):</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">dim_reduce_data</span><span class="p">,</span> <span class="n">lineage</span><span class="p">,</span> <span class="n">pseudotime</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+<span class="c1"># pretend that there are three natural clusters in the dataset.</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">curve_params</span><span class="p">,</span> <span class="n">smoothed_points</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">cell_assignments</span> <span class="o">=</span> <span class="n">lineage</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+
+<span class="c1"># assume the &quot;root&quot; is cell 0</span>
+<span class="n">ptime</span> <span class="o">=</span> <span class="n">pseudotime</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">smoothed_points</span><span class="p">)</span>
+
+<span class="c1"># visualizing the lineage</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce_data</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">proj</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span> <span class="n">proj</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">cell_assignments</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">smoothed_points</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span> <span class="n">smoothed_points</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">cell_assignments</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="c1"># connect the lines</span>
+<span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">((</span><span class="n">smoothed_points</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">smoothed_points</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]),</span>
+            <span class="p">(</span><span class="n">smoothed_points</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">smoothed_points</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]),</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;dim 1&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;dim 2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">UNCURL</a></li>
+<li><a class="reference internal" href="#features">Features</a><ul>
+<li><a class="reference internal" href="#clustering">Clustering</a></li>
+<li><a class="reference internal" href="#qualitative-to-quantitative-framework">Qualitative to Quantitative Framework</a></li>
+<li><a class="reference internal" href="#state-estimation">State Estimation</a></li>
+<li><a class="reference internal" href="#dimensionality-reduction">Dimensionality Reduction</a></li>
+<li><a class="reference internal" href="#lineage-estimation-pseudotime">Lineage Estimation &amp; Pseudotime</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to UNCURL&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="uncurl_pub.html"
+                        title="next chapter">UNCURL public functions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/readme_link.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl_pub.html" title="UNCURL public functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to UNCURL’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>
