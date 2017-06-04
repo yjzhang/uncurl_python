@@ -1,6 +1,11 @@
 UNCURL public functions
 =======================
 
+uncurl.max_variance_genes
+-----------------
+
+.. autofunction:: uncurl.max_variance_genes
+
 uncurl.qualNorm
 -----------------
 
@@ -20,6 +25,11 @@ uncurl.poisson_estimate_state
 -----------------------------
 
 .. autofunction:: uncurl.poisson_estimate_state
+
+uncurl.nb_estimate_state
+-----------------------------
+
+.. autofunction:: uncurl.nb_estimate_state
 
 uncurl.dim_reduce
 -----------------
