@@ -57,10 +57,10 @@
             
   <div class="section" id="uncurl">
 <h1>UNCURL<a class="headerlink" href="#uncurl" title="Permalink to this headline">¶</a></h1>
-<p>TODO: pypi</p>
 <p>To install after cloning the repo: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
 <p>To run tests: <code class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">test</span></code></p>
 <p>Examples: see the examples folder.</p>
+<p><a class="reference external" href="https://yjzhang.github.io/uncurl_python/">Full documentation</a></p>
 </div>
 <div class="section" id="features">
 <h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
@@ -99,8 +99,8 @@
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">nb_estimate_state</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
-<span class="n">M</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">M2</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">nb_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">M2</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">ll2</span> <span class="o">=</span> <span class="n">nb_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
