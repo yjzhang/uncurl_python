@@ -70,9 +70,9 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         reps (int, optional): number of random initializations. Default: 1.
 
     Returns:
-        two matrices, M and W: M is genes x clusters, W is clusters x cells.
-        M is the state centers and W is the state mixing components for each
-        cell.
+        M (array): genes x clusters - state means
+        W (array): clusters x cells - state mixing components for each cell
+        ll (float): final log-likelihood
     """
     genes, cells = data.shape
     if init_means is None:
@@ -85,6 +85,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         w_init = init_weights.reshape(cells*clusters)
     m_init = means.reshape(genes*clusters)
     # repeat steps 1 and 2 until convergence:
+    ll = np.inf
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
@@ -102,6 +103,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         # method could be 'L-BFGS-B' or 'SLSQP'... SLSQP gives a memory error...
         # or use TNC...
         m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=True, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
+        ll = m_res.fun
         m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))/m_init.size
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x
@@ -109,4 +111,4 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         if w_diff < tol and m_diff < tol:
             break
     w_new = w_new/w_new.sum(0)
-    return m_new, w_new
+    return m_new, w_new, ll

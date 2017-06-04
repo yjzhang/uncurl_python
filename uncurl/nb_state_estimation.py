@@ -83,9 +83,10 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
 
     Returns:
-        M: genes x clusters - state centers
-        W: clusters x cells - state mixing components for each cell
-        R: 1 x genes - NB dispersion parameter for each gene
+        M (array): genes x clusters - state centers
+        W (array): clusters x cells - state mixing components for each cell
+        R (array): 1 x genes - NB dispersion parameter for each gene
+        ll (float): Log-likelihood of final iteration
     """
     genes, cells = data.shape
     # 1. use nb_fit to get inital Rs
@@ -100,6 +101,7 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
     if init_weights is not None:
         w_init = init_weights.reshape(cells*clusters)
     m_init = means.reshape(genes*clusters)
+    ll = np.inf
     # repeat steps 1 and 2 until convergence:
     for i in range(max_iters):
         if disp:
@@ -120,8 +122,9 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))/m_init.size
         m_new = m_res.x.reshape((genes, clusters))
         m_init = m_res.x
+        ll = m_res.fun
         means = m_new
         if w_diff < tol and m_diff < tol:
             break
     w_new = w_new/w_new.sum(0)
-    return m_new, w_new, R
+    return m_new, w_new, R, ll

@@ -84,7 +84,8 @@ def generate_nb_state_data(means, weights, R):
     """
     cells = weights.shape[1]
     x_true = np.dot(means, weights)
-    sample = np.random.negative_binomial(np.tile(R, (cells, 1)).T, x_true)
+    P_true = x_true/(1.0+x_true)
+    sample = np.random.negative_binomial(np.tile(R, (cells, 1)).T, P_true)
     return sample.astype(float)
 
 def generate_nb_states(n_states, n_cells, n_genes):
@@ -105,7 +106,7 @@ def generate_nb_states(n_states, n_cells, n_genes):
     """
     W = np.random.dirichlet([1]*n_states, size=(n_cells,))
     W = W.T
-    M = np.random.random((n_genes, n_states))
+    M = np.random.random((n_genes, n_states))*100
     R = np.random.randint(1, 100, n_genes)
     return M, W, R
 

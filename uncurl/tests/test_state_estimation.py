@@ -28,7 +28,7 @@ class StateEstimationTest(TestCase):
         print sim_data
         # add noise to the mean
         sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
-        m, w = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         print m
         print w
         print w.sum(0)
@@ -60,7 +60,7 @@ class StateEstimationTest(TestCase):
         print sim_data
         # add noise to the mean
         sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
-        m, w = state_estimation.poisson_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False)
         print m
         print w
         print w.sum(0)
@@ -79,7 +79,7 @@ class StateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         self.assertTrue(np.mean(np.abs(sim_m-m))<50.0)
         self.assertTrue(np.mean(np.abs(sim_w-w))<0.4)
@@ -93,7 +93,7 @@ class StateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 20, 200)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         self.assertTrue(np.mean(np.abs(sim_m-m))<60.0)
         self.assertTrue(np.mean(np.abs(sim_w-w))<0.5)

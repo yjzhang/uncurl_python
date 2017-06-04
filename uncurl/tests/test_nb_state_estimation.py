@@ -17,9 +17,12 @@ class StateEstimationTest(TestCase):
         M, W, R = simulation.generate_nb_states(2, 200, 20)
         data = simulation.generate_nb_state_data(M, W, R)
         M_noised = M + 0.1*(np.random.random(M.shape)-0.5)
-        M_, W_, R_ = nb_state_estimation.nb_estimate_state(data, 2, init_means=M_noised, R = R, disp=False)
+        M_, W_, R_, ll = nb_state_estimation.nb_estimate_state(data, 2, init_means=M_noised, R = R, disp=False)
         c1 = W.argmax(0)
         c2 = W_.argmax(0)
         p = purity(c2, c1, 2)
         print p
-        self.assertTrue(p > 0.7)
+        print data
+        print M
+        print M_
+        self.assertTrue(p > 0.8)
