@@ -89,29 +89,42 @@
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
 <span class="n">bin_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;binary.txt&#39;</span><span class="p">)</span>
 <span class="n">starting_centers</span> <span class="o">=</span> <span class="n">qualNorm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bin_data</span><span class="p">)</span>
+<span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="n">starting_centers</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="state-estimation">
 <h2>State Estimation<a class="headerlink" href="#state-estimation" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code> function is used to estimate cell types using the Poisson Convex Mixture Model. The <code class="docutils literal"><span class="pre">nb_estimate_state</span></code> function has a similar output, but uses a negative binomial distribution.</p>
+<p>The <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code> function is used to estimate cell types using the Poisson Convex Mixture Model. The <code class="docutils literal"><span class="pre">nb_estimate_state</span></code> function has a similar output, but uses a negative binomial distribution. These functions can be initialized using the outputs of Poisson clustering.</p>
 <p>Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">nb_estimate_state</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+
 <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">M2</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">ll2</span> <span class="o">=</span> <span class="n">nb_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># initializations - first, performing clustering</span>
+<span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="n">centers</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="n">assignments_p</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="dimensionality-reduction">
 <h2>Dimensionality Reduction<a class="headerlink" href="#dimensionality-reduction" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">dim_reduce_data</span></code> function performs dimensionality reduction using MDS.</p>
+<p>The <code class="docutils literal"><span class="pre">dim_reduce_data</span></code> function performs dimensionality reduction using MDS. Alternatively, dimensionality reduction can be performed using the results of state estimation, by converting the output means of state estimation into a projection matrix.</p>
 <p>Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">dim_reduce_data</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">dim_reduce</span><span class="p">,</span> <span class="n">dim_reduce_data</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">data_reduced</span> <span class="o">=</span> <span class="n">dim_reduce_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># dimensionality reduction using MDS on state estimation means</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="c1"># proj is a 2d projection of the data.</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

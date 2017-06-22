@@ -103,6 +103,28 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="n">X</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">d</span><span class="p">))</span><span class="o">/</span><span class="n">genes</span><span class="p">,</span> <span class="n">deriv</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">/</span><span class="n">genes</span>
     <span class="k">return</span> <span class="n">objective</span>
 
+<div class="viewcode-block" id="initialize_from_assignments"><a class="viewcode-back" href="../../uncurl.html#uncurl.state_estimation.initialize_from_assignments">[docs]</a><span class="k">def</span> <span class="nf">initialize_from_assignments</span><span class="p">(</span><span class="n">assignments</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a weight initialization matrix from Poisson clustering assignments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        assignments (array): 1D array of integers, of length cells</span>
+<span class="sd">        k (int): number of states/clusters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        init_W (array): k x cells</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cells</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">assignments</span><span class="p">)</span>
+    <span class="n">init_W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">cells</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">assignments</span><span class="p">):</span>
+        <span class="c1"># entirely arbitrary... maybe it would be better to scale</span>
+        <span class="c1"># the weights based on k?</span>
+        <span class="n">init_W</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.75</span>
+        <span class="k">for</span> <span class="n">a2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">a2</span><span class="o">!=</span><span class="n">a</span><span class="p">:</span>
+                <span class="n">init_W</span><span class="p">[</span><span class="n">a2</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.25</span><span class="o">/</span><span class="p">(</span><span class="n">k</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">init_W</span></div>
+
 <span class="c1"># TODO: add reps - number of starting points</span>
 <div class="viewcode-block" id="poisson_estimate_state"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.state_estimation.poisson_estimate_state">[docs]</a><span class="k">def</span> <span class="nf">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inner_max_iters</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">reps</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -113,7 +135,7 @@
 <span class="sd">        data (array): genes x cells</span>
 <span class="sd">        clusters (int): number of mixture components</span>
 <span class="sd">        init_means (array, optional): initial centers - genes x clusters. Default: kmeans++ initializations</span>
-<span class="sd">        init_weights (array, optional): initial weights - clusters x cells. Default: random(0,1)</span>
+<span class="sd">        init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)</span>
 <span class="sd">        max_iters (int, optional): maximum number of iterations. Default: 10</span>
 <span class="sd">        tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4</span>
 <span class="sd">        disp (bool, optional): whether or not to display optimization parameters. Default: True</span>
@@ -133,6 +155,8 @@
     <span class="n">clusters</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">w_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">cells</span><span class="o">*</span><span class="n">clusters</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">init_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">init_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">init_weights</span> <span class="o">=</span> <span class="n">initialize_from_assignments</span><span class="p">(</span><span class="n">init_weights</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
         <span class="n">w_init</span> <span class="o">=</span> <span class="n">init_weights</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cells</span><span class="o">*</span><span class="n">clusters</span><span class="p">)</span>
     <span class="n">m_init</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">genes</span><span class="o">*</span><span class="n">clusters</span><span class="p">)</span>
     <span class="c1"># repeat steps 1 and 2 until convergence:</span>
