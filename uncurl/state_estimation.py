@@ -52,6 +52,28 @@ def _create_m_objective(w, X):
         return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
     return objective
 
+def initialize_from_assignments(assignments, k):
+    """
+    Creates a weight initialization matrix from Poisson clustering assignments.
+
+    Args:
+        assignments (array): 1D array of integers, of length cells
+        k (int): number of states/clusters
+
+    Returns:
+        init_W (array): k x cells
+    """
+    cells = len(assignments)
+    init_W = np.zeros((k, cells))
+    for i, a in enumerate(assignments):
+        # entirely arbitrary... maybe it would be better to scale
+        # the weights based on k?
+        init_W[a, i] = 0.75
+        for a2 in range(k):
+            if a2!=a:
+                init_W[a2, i] = 0.25/(k-1)
+    return init_W
+
 # TODO: add reps - number of starting points
 def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1):
     """
@@ -62,7 +84,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         data (array): genes x cells
         clusters (int): number of mixture components
         init_means (array, optional): initial centers - genes x clusters. Default: kmeans++ initializations
-        init_weights (array, optional): initial weights - clusters x cells. Default: random(0,1)
+        init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)
         max_iters (int, optional): maximum number of iterations. Default: 10
         tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4
         disp (bool, optional): whether or not to display optimization parameters. Default: True
@@ -82,6 +104,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     clusters = means.shape[1]
     w_init = np.random.random(cells*clusters)
     if init_weights is not None:
+        if len(init_weights.shape)==1:
+            init_weights = initialize_from_assignments(init_weights, clusters)
         w_init = init_weights.reshape(cells*clusters)
     m_init = means.reshape(genes*clusters)
     # repeat steps 1 and 2 until convergence:

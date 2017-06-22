@@ -1,0 +1,22 @@
+uncurl.scalable package
+=======================
+
+Submodules
+----------
+
+uncurl.scalable.state_estimation module
+---------------------------------------
+
+.. automodule:: uncurl.scalable.state_estimation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: uncurl.scalable
+    :members:
+    :undoc-members:
+    :show-inheritance:

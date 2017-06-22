@@ -47,11 +47,12 @@ Example:
     data = np.loadtxt('counts.txt')
     bin_data = np.loadtxt('binary.txt')
     starting_centers = qualNorm(data, bin_data)
+    assignments, centers = poisson_cluster(data, 2, init=starting_centers)
 
 State Estimation
 ----------------
 
-The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution.
+The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution. These functions can be initialized using the outputs of Poisson clustering.
 
 Example:
 
@@ -60,22 +61,35 @@ Example:
     from uncurl import poisson_estimate_state, nb_estimate_state
 
     data = np.loadtxt('counts.txt')
+
     M, W, ll = poisson_estimate_state(data, 2)
     M2, W2, R, ll2 = nb_estimate_state(data, 2)
+
+    # initializations - first, performing clustering
+    assignments_p, centers = poisson_cluster(data, 2)
+    M, W, ll = poisson_estimate_state(data, 2, init_means=centers, init_weights=assignments_p)
 
 Dimensionality Reduction
 ------------------------
 
-The ``dim_reduce_data`` function performs dimensionality reduction using MDS.
+The ``dim_reduce_data`` function performs dimensionality reduction using MDS. Alternatively, dimensionality reduction can be performed using the results of state estimation, by converting the output means of state estimation into a projection matrix. 
 
 Example:
 
 .. code-block:: python
 
-    from uncurl import dim_reduce_data
+    import numpy as np
+    from uncurl import dim_reduce, dim_reduce_data
 
     data = np.loadtxt('counts.txt')
-    X = dim_reduce_data(data, 2)
+    data_reduced = dim_reduce_data(data, 2)
+
+    # dimensionality reduction using MDS on state estimation means
+    M, W, ll = poisson_estimate_state(data, 2)
+    X = dim_reduce(M, W, 2)
+    # proj is a 2d projection of the data.
+    proj = np.dot(X, W)
+
 
 Lineage Estimation & Pseudotime
 -------------------------------
