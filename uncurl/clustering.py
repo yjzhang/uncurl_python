@@ -1,6 +1,7 @@
 # poisson clustering
 
 import numpy as np
+from scipy import sparse
 
 from pois_ll import poisson_ll, poisson_dist, zip_ll
 
@@ -32,7 +33,10 @@ def kmeans_pp(data, k, centers=None):
     distances[:] = np.inf
     if num_known_centers == 0:
         init = np.random.randint(0, cells)
-        centers[:,0] = data[:, init]
+        if sparse.issparse(data):
+            centers[:,0] = data[:, init].toarray().flatten()
+        else:
+            centers[:,0] = data[:, init]
         num_known_centers+=1
     for c in range(num_known_centers, k):
         for c2 in range(c):

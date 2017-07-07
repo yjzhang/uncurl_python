@@ -1,6 +1,7 @@
 # Poisson log-likelihood
 
 import numpy as np
+from scipy import sparse
 from scipy.stats import poisson
 from scipy.special import xlogy, gammaln
 
