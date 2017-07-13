@@ -2,6 +2,7 @@
 
 from clustering import kmeans_pp
 from nb_cluster import nb_fit
+from state_estimation import initialize_from_assignments
 
 import numpy as np
 from scipy.optimize import minimize
@@ -66,7 +67,7 @@ def _create_m_objective(w, X, R):
         return deriv.flatten()/genes
     return objective, deriv
 
-def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400):
+def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, normalize=True):
     """
     Uses a Negative Binomial Mixture model to estimate cell states and
     cell state mixing weights.
@@ -81,6 +82,7 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         tol (float, optional): if both M and W change by less than tol (in RMSE), then the iteration is stopped. Default: 1e-4
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
+        normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
 
     Returns:
         M (array): genes x clusters - state centers
@@ -99,6 +101,8 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
     clusters = means.shape[1]
     w_init = np.random.random(cells*clusters)
     if init_weights is not None:
+        if len(init_weights.shape)==1:
+            init_weights = initialize_from_assignments(init_weights, clusters)
         w_init = init_weights.reshape(cells*clusters)
     m_init = means.reshape(genes*clusters)
     ll = np.inf
@@ -126,5 +130,6 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         means = m_new
         if w_diff < tol and m_diff < tol:
             break
-    w_new = w_new/w_new.sum(0)
+    if normalize:
+        w_new = w_new/w_new.sum(0)
     return m_new, w_new, R, ll

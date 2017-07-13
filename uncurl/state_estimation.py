@@ -75,7 +75,7 @@ def initialize_from_assignments(assignments, k):
     return init_W
 
 # TODO: add reps - number of starting points
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1, normalize=True):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -90,6 +90,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
         reps (int, optional): number of random initializations. Default: 1.
+        normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
 
     Returns:
         M (array): genes x clusters - state means
@@ -134,5 +135,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         means = m_new
         if w_diff < tol and m_diff < tol:
             break
-    w_new = w_new/w_new.sum(0)
+    if normalize:
+        w_new = w_new/w_new.sum(0)
     return m_new, w_new, ll
