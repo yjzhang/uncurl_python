@@ -54,6 +54,12 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             for p1, p2 in points:
                 x = data[p1,p2]
                 cost, grad = cost_grad(W[:,p2], x, M[p1,:], 1)
+                W[:,p2] += grad*eta
             # 2. estimate M
+            for p1, p2 in points:
+                x = data[p1,p2]
+                cost, grad = cost_grad(M[p1,:], x, W[:,p2], 1)
+                M[p1,:] += grad*eta
+        return M, W
     else:
-        print('Warning: data is not sparse')
+        print('Warning: data is not sparse.')
