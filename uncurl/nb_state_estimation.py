@@ -1,7 +1,7 @@
 # state estimation with NB convex mixture model
 
 from clustering import kmeans_pp
-from nb_cluster import nb_fit
+from nb_cluster import nb_fit, find_nb_genes
 from state_estimation import initialize_from_assignments
 
 import numpy as np
@@ -72,6 +72,9 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
     Uses a Negative Binomial Mixture model to estimate cell states and
     cell state mixing weights.
 
+    If some of the genes do not fit a negative binomial distribution
+    (mean > var), then the genes are discarded from the analysis.
+
     Args:
         data (array): genes x cells
         clusters (int): number of mixture components
@@ -90,12 +93,18 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         R (array): 1 x genes - NB dispersion parameter for each gene
         ll (float): Log-likelihood of final iteration
     """
-    genes, cells = data.shape
+    # TODO: deal with non-NB data... just ignore it? or do something else?
+    data_subset = data.copy()
+    genes, cells = data_subset.shape
     # 1. use nb_fit to get inital Rs
     if R is None:
-        P, R = nb_fit(data)
+        nb_indices = find_nb_genes(data)
+        data_subset = data[nb_indices, :]
+        genes, cells = data_subset.shape
+        R = np.zeros(genes)
+        P, R = nb_fit(data_subset)
     if init_means is None:
-        means, assignments = kmeans_pp(data, clusters)
+        means, assignments = kmeans_pp(data_subset, clusters)
     else:
         means = init_means.copy()
     clusters = means.shape[1]
@@ -113,13 +122,13 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         w_bounds = [(0, 1.0) for x in w_init]
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
-        w_objective, w_deriv = _create_w_objective(means, data, R)
+        w_objective, w_deriv = _create_w_objective(means, data_subset, R)
         w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=w_deriv, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
-        m_objective, m_deriv = _create_m_objective(w_new, data, R)
+        m_objective, m_deriv = _create_m_objective(w_new, data_subset, R)
         # method could be 'L-BFGS-B' or 'SLSQP'... SLSQP gives a memory error...
         # or use TNC...
         m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=m_deriv, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
