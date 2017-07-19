@@ -19,13 +19,14 @@ def _create_w_objective(m, X, R):
         R (array): 1 x genes
     """
     genes, clusters = m.shape
-    R1 = R.dot(np.ones((genes, 1)))
+    cells = X.shape[1]
+    R1 = R.reshape((genes, 1)).dot(np.ones((1, cells)))
     def objective(w):
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
         w = w.reshape((m.shape[1], X.shape[1]))
         d = m.dot(w)+eps
-        return np.sum((X+R1)*np.log(d + R1) - X*np.log(d))/genes
+        return np.sum((X + R1)*np.log(d + R1) - X*np.log(d))/genes
     def deriv(w):
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
@@ -51,7 +52,7 @@ def _create_m_objective(w, X, R):
     """
     clusters, cells = w.shape
     genes = X.shape[0]
-    R1 = R.dot(np.ones((genes, 1)))
+    R1 = R.reshape((genes, 1)).dot(np.ones((1, cells)))
     def objective(m):
         m = m.reshape((X.shape[0], w.shape[0]))
         d = m.dot(w)+eps
@@ -100,6 +101,8 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
     if R is None:
         nb_indices = find_nb_genes(data)
         data_subset = data[nb_indices, :]
+        if init_means is not None and len(init_means) > sum(nb_indices):
+            init_means = init_means[nb_indices, :]
         genes, cells = data_subset.shape
         R = np.zeros(genes)
         P, R = nb_fit(data_subset)

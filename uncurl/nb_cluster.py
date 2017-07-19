@@ -1,7 +1,7 @@
 # Negative binomial clustering
 
 import numpy as np
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve, minimize
 from scipy.special import gammaln, digamma, xlog1py
 
 from clustering import kmeans_pp
@@ -59,6 +59,38 @@ def nb_ll(data, P, R):
         lls[:,c] = ll.sum(0)
     return lls
 
+def nb_ll_row(params, data_row):
+    """
+    returns the negative LL of a single row.
+
+    Args:
+        params (array) - [p, r]
+        data_row (array) - 1d array of data
+
+    Returns:
+        LL of row
+    """
+    p = params[0]
+    r = params[1]
+    n = len(data_row)
+    ll = np.sum(gammaln(data_row + r)) - np.sum(gammaln(data_row + 1))
+    ll -= n*gammaln(r)
+    ll += np.sum(data_row)*np.log(p)
+    ll += n*r*np.log(1-p)
+    return -ll
+
+def nb_ll_objective(r, data_row):
+    """
+    mu = 
+    """
+    n = len(data_row)
+    p = data_row.mean()/(data_row.mean() + r)
+    ll = np.sum(gammaln(data_row + r)) - np.sum(gammaln(data_row + 1))
+    ll -= n*gammaln(r)
+    ll += np.sum(data_row)*np.log(p)
+    ll += n*r*np.log(1-p)
+    return -ll
+
 def nb_r_deriv(r, data_row):
     """
     Derivative of log-likelihood wrt r (formula from wikipedia)
@@ -83,18 +115,23 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
     Returns:
         P, R - fit to data
     """
-    # method of moments
     means = data.mean(1)
     variances = data.var(1)
     if (means > variances).any():
         raise ValueError("For NB fit, means must be less than variances")
     genes, cells = data.shape
+    # method of moments
     P = 1.0 - means/variances
     R = means*(1-P)/P
-    for i in range(genes):
-        R[i] = fsolve(nb_r_deriv, R[i], args = (data[i,:],))
-        P[i] = data[i,:].sum()/(data[i,:].sum() + cells*R[i])
     # TODO: do something better - use gradient descent to get better estimates?
+    for i in range(genes):
+        result = minimize(nb_ll_row, [P[i], R[i]], args=(data[i,:],),
+                bounds = [(0, 1), (0, None)])
+        params = result.x
+        P[i] = params[0]
+        R[i] = params[1]
+        #R[i] = fsolve(nb_r_deriv, R[i], args = (data[i,:],))
+        #P[i] = data[i,:].mean()/(data[i,:].mean() + R[i])
     return P,R
 
 def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, means=None, max_iters=10):
