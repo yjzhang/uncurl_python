@@ -1,9 +1,8 @@
 # Negative binomial clustering
 
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import fsolve
 from scipy.special import gammaln, digamma, xlog1py
-from scipy.stats import nbinom
 
 from clustering import kmeans_pp
 import pois_ll
@@ -60,11 +59,17 @@ def nb_ll(data, P, R):
         lls[:,c] = ll.sum(0)
     return lls
 
-def nb_obj():
+def nb_r_deriv(r, data_row):
     """
-    Gets NB objective function for a 1d NB distribution.
+    Derivative of log-likelihood wrt r (formula from wikipedia)
+
+    Args:
+        r (float): the R paramemter in the NB distribution
+        data_row (array): 1d array of length cells
     """
-    # TODO
+    n = len(data_row)
+    d = sum(digamma(data_row + r)) - n*digamma(r) + n*np.log(r/(r+np.mean(data_row)))
+    return d
 
 def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
     """
@@ -83,12 +88,16 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
     variances = data.var(1)
     if (means > variances).any():
         raise ValueError("For NB fit, means must be less than variances")
+    genes, cells = data.shape
     P = 1.0 - means/variances
     R = means*(1-P)/P
+    for i in range(genes):
+        R[i] = fsolve(nb_r_deriv, R[i], args = (data[i,:],))
+        P[i] = data[i,:].sum()/(data[i,:].sum() + cells*R[i])
     # TODO: do something better - use gradient descent to get better estimates?
     return P,R
 
-def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10):
+def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, means=None, max_iters=10):
     """
     Performs negative binomial clustering on the given data. If some genes have mean > variance, then these genes are fitted to a Poisson distribution.
 
@@ -98,6 +107,7 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
         P_init (array): NB success prob param - genes x k. Default: random
         R_init (array): NB stopping param - genes x k. Default: random
         assignments (array): cells x 1 array of integers 0...k-1. Default: kmeans-pp (poisson)
+        means (array): initial cluster means (for use with kmeans-pp to create initial assignments). Default: None
         max_iters (int): default: 100
 
     Returns:
@@ -112,7 +122,7 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
         R_init = np.random.randint(1, data.max(), (genes, k))
         R_init = R_init.astype(float)
     if assignments is None:
-        _, assignments = kmeans_pp(data, k)
+        _, assignments = kmeans_pp(data, k, means)
     means = np.zeros((genes, k))
         #assignments = np.array([np.random.randint(0,k) for i in range(cells)])
     old_assignments = np.copy(assignments)
