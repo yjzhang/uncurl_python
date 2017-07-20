@@ -54,7 +54,7 @@ def nb_ll(data, P, R):
         P_c = P[:,c].reshape((genes, 1))
         R_c = R[:,c].reshape((genes, 1))
         ll = gammaln(R_c + data) - gammaln(data + 1) - gammaln(R_c)
-        ll += R_c*np.log(P_c) + xlog1py(data, -P_c)
+        ll += data*np.log(P_c) + xlog1py(R_c, -P_c)
         #new_ll = np.sum(nbinom.logpmf(data, R_c, P_c), 0)
         lls[:,c] = ll.sum(0)
     return lls
@@ -79,18 +79,6 @@ def nb_ll_row(params, data_row):
     ll += n*r*np.log(1-p)
     return -ll
 
-def nb_ll_objective(r, data_row):
-    """
-    mu = 
-    """
-    n = len(data_row)
-    p = data_row.mean()/(data_row.mean() + r)
-    ll = np.sum(gammaln(data_row + r)) - np.sum(gammaln(data_row + 1))
-    ll -= n*gammaln(r)
-    ll += np.sum(data_row)*np.log(p)
-    ll += n*r*np.log(1-p)
-    return -ll
-
 def nb_r_deriv(r, data_row):
     """
     Derivative of log-likelihood wrt r (formula from wikipedia)
@@ -109,8 +97,8 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
 
     Args:
         data (array): genes x cells
-        P (array): NB success prob param - genes x 1
-        R (array): NB stopping param - genes x 1
+        P_init (array, optional): NB success prob param - genes x 1
+        R_init (array, optional): NB stopping param - genes x 1
 
     Returns:
         P, R - fit to data
@@ -126,7 +114,7 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
     # TODO: do something better - use gradient descent to get better estimates?
     for i in range(genes):
         result = minimize(nb_ll_row, [P[i], R[i]], args=(data[i,:],),
-                bounds = [(0, 1), (0, None)])
+                bounds = [(0, 1), (eps, None)])
         params = result.x
         P[i] = params[0]
         R[i] = params[1]
