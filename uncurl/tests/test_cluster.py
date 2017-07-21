@@ -67,6 +67,10 @@ class ClusterTest(TestCase):
             M = np.random.random((3,1))
             data, labs = generate_zip_data(centers, M, 300)
             L_, M_ = zip_fit_params(data)
+            self.assertFalse(np.isnan(L_).any())
+            self.assertFalse(np.isnan(M_).any())
+            self.assertFalse(np.isnan(L_).any())
+            self.assertFalse(np.isnan(M_).any())
             self.assertTrue(np.mean(np.abs(M.flatten() - M_)) < 0.2)
             self.assertTrue(np.mean(np.abs(centers.flatten() - L_)) < 10)
 

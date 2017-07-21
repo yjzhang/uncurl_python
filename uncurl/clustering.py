@@ -1,8 +1,9 @@
 # poisson clustering
 
 import numpy as np
+from scipy.optimize import minimize
 
-from pois_ll import poisson_ll, poisson_dist, zip_ll
+from pois_ll import poisson_ll, poisson_dist, zip_ll, zip_ll_row
 
 eps = 1e-8
 
@@ -103,11 +104,22 @@ def zip_fit_params(data):
     M = (v-m)/(m**2+v-m)
     #M = v/(v+m**2)
     #M[np.isnan(M)] = 0.0
-    M = np.array([min(0.9, max(0.0,x)) for x in M])
+    M = np.array([min(1.0, max(0.0, x)) for x in M])
     L = m + v/m - 1.0
     #L = (v + m**2)/m
     #L[np.isnan(L)] = 0.0
     L = np.array([max(0.0, x) for x in L])
+    return L, M
+
+def zip_fit_params_mle(data):
+    genes, cells = data.shape
+    L, M = zip_fit_params(data)
+    for i in range(genes):
+        result = minimize(zip_ll_row, [L[i], M[i]], args=(data[i,:],),
+                bounds=[(eps, None),(0,1)])
+        params = result.x
+        L[i] = params[0]
+        M[i] = params[1]
     return L, M
 
 def zip_cluster(data, k, init=None, max_iters=100):
@@ -122,7 +134,7 @@ def zip_cluster(data, k, init=None, max_iters=100):
 
     Returns:
         assignments (array): integer assignments of cells to clusters (length cells)
-        L (array): means (genes x k)
+        L (array): Poisson parameter (genes x k)
         M (array): zero-inflation parameter (genes x k)
     """
     genes, cells = data.shape
@@ -131,13 +143,13 @@ def zip_cluster(data, k, init=None, max_iters=100):
     M = np.zeros(centers.shape)
     assignments = new_assignments
     for c in range(k):
-        centers[:,c], M[:,c] = zip_fit_params(data[:, assignments==c]+eps)
+        centers[:,c], M[:,c] = zip_fit_params_mle(data[:, assignments==c])
     for it in range(max_iters):
         lls = zip_ll(data, centers, M)
         new_assignments = np.argmax(lls, 1)
         if np.equal(assignments, new_assignments).all():
             return assignments, centers, M
         for c in range(k):
-            centers[:,c], M[:,c] = zip_fit_params(data[:, assignments==c]+eps)
+            centers[:,c], M[:,c] = zip_fit_params_mle(data[:, assignments==c])
         assignments = new_assignments
     return assignments, centers, M

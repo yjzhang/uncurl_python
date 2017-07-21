@@ -93,4 +93,4 @@ class NBTest(TestCase):
             self.assertFalse(np.isinf(p).any())
             self.assertFalse(np.isinf(r).any())
             self.assertTrue(np.sum(np.abs(p - P.flatten())**2)/3 < 0.5)
- 
+
