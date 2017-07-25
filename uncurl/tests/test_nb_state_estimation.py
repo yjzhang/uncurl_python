@@ -25,4 +25,4 @@ class StateEstimationTest(TestCase):
         print data
         print M
         print M_
-        self.assertTrue(p > 0.8)
+        self.assertTrue(p > 0.7)

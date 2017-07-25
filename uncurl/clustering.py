@@ -107,7 +107,7 @@ def zip_fit_params(data):
     M = np.array([min(1.0, max(0.0, x)) for x in M])
     L = m + v/m - 1.0
     #L = (v + m**2)/m
-    #L[np.isnan(L)] = 0.0
+    L[np.isnan(L)] = 0.0
     L = np.array([max(0.0, x) for x in L])
     return L, M
 

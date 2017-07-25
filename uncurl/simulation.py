@@ -101,8 +101,11 @@ def generate_nb_state_data(means, weights, R):
         data matrix - genes x cells
     """
     cells = weights.shape[1]
+    # x_true = true means
     x_true = np.dot(means, weights)
-    P_true = x_true/(1.0+x_true)
+    # convert means into P
+    R_ = np.tile(R, (cells, 1)).T
+    P_true = x_true/(R_ + x_true)
     sample = np.random.negative_binomial(np.tile(R, (cells, 1)).T, P_true)
     return sample.astype(float)
 

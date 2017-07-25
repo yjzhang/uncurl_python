@@ -67,7 +67,8 @@ def zip_ll(data, means, M):
         L_i = L_i.transpose()
         ll_0 = np.log(L_i + (1 - L_i)*np.exp(-means_i))
         ll_0 = np.where((L_i==0) & (means_i==0), -means_i, ll_0)
-        ll_1 = np.log(1 - L_i) + xlogy(data, means_i) - gammaln(data+1) - means_i
+        # not including constant factors
+        ll_1 = np.log(1 - L_i) + xlogy(data, means_i) -  means_i
         ll_0 = np.where(d0, ll_0, 0.0)
         ll_1 = np.where(d1, ll_1, 0.0)
         ll[:,i] = np.sum(ll_0 + ll_1, 0)

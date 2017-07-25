@@ -53,7 +53,8 @@ def nb_ll(data, P, R):
     for c in range(clusters):
         P_c = P[:,c].reshape((genes, 1))
         R_c = R[:,c].reshape((genes, 1))
-        ll = gammaln(R_c + data) - gammaln(data + 1) - gammaln(R_c)
+        # don't need constant factors...
+        ll = gammaln(R_c + data) - gammaln(R_c) #- gammaln(data + 1)
         ll += data*np.log(P_c) + xlog1py(R_c, -P_c)
         #new_ll = np.sum(nbinom.logpmf(data, R_c, P_c), 0)
         lls[:,c] = ll.sum(0)
@@ -121,6 +122,11 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
         #R[i] = fsolve(nb_r_deriv, R[i], args = (data[i,:],))
         #P[i] = data[i,:].mean()/(data[i,:].mean() + R[i])
     return P,R
+
+def zinb_ll_row(params, data_row):
+    """
+    For use with optimization - returns ZINB parameters for a given row
+    """
 
 def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, means=None, max_iters=10):
     """
