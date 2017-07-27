@@ -20,21 +20,22 @@ def _create_poiss_w_objective(m, X, selected_genes):
     """
     # TODO: excluded genes
     m_ = m[selected_genes, :]
+    X_ = X[selected_genes, :]
     genes, clusters = m_.shape
     cells = X.shape[1]
     def objective(w):
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
-        w = w.reshape((m_.shape[1], X.shape[1]))
+        w = w.reshape((m_.shape[1], X_.shape[1]))
         d = m_.dot(w)+eps
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
         # x_ij
-        temp = X/d
+        temp = X_/d
         m_sum = m_.sum(0)
         m2 = m_.T.dot(temp)
         deriv = m_sum.reshape((clusters, 1)) - m2
-        return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
+        return np.sum(d - X_*np.log(d))/genes, deriv.flatten()/genes
     return objective
 
 def _create_poiss_m_objective(w, X):
@@ -117,6 +118,7 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         M (array): genes x clusters - state means
         W (array): clusters x cells - state mixing components for each cell
         ll (float): final log-likelihood
+        genes (array): 1d array of all genes used in final iteration.
     """
     genes, cells = data.shape
     if init_means is None:
@@ -137,7 +139,7 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
     m_obj = _create_poiss_m_objective
     ll_func = _poisson_calculate_lls
     included_genes = np.arange(genes)
-    num_genes = int(gene_portion*genes)
+    num_genes = int(np.ceil(gene_portion*genes))
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
@@ -167,4 +169,4 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         included_genes = lls.argsort()[:num_genes]
     if normalize:
         w_new = w_new/w_new.sum(0)
-    return m_new, w_new, ll
+    return m_new, w_new, ll, included_genes

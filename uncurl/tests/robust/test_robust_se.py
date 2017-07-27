@@ -3,14 +3,19 @@ from unittest import TestCase
 import numpy as np
 from scipy.io import loadmat
 
-from uncurl import robust_estimate_state, robust, simulation
+from uncurl import simulation
+from uncurl.robust import robust_estimate_state
 
 class RobustStateEstimationTest(TestCase):
+    """
+    These tests are exactly the same as the Poisson SE tests, but
+    they use the robust algorithm with hard thresholding.
+    """
 
     def setUp(self):
         pass
 
-    def test_state_estimation(self):
+    def test_robust_state_estimation(self):
         """
         Generate sample data from a small set to see that the state
         estimation is accurate.
@@ -28,7 +33,7 @@ class RobustStateEstimationTest(TestCase):
         print sim_data
         # add noise to the mean
         sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
-        m, w, ll = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll, genes = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         print m
         print w
         print w.sum(0)
@@ -38,7 +43,7 @@ class RobustStateEstimationTest(TestCase):
         # mean error in W is less than 0.2 (arbitrary boundary)
         self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.3)
 
-    def test_state_estimation_2(self):
+    def test_robust_state_estimation_2(self):
         """
         Generate sample data from a slightly larger set to see that the state
         estimation is accurate.
@@ -60,7 +65,7 @@ class RobustStateEstimationTest(TestCase):
         print sim_data
         # add noise to the mean
         sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
-        m, w, ll = robust_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll, genes = robust_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False)
         print m
         print w
         print w.sum(0)
@@ -79,7 +84,7 @@ class RobustStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll, genes = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         self.assertTrue(np.mean(np.abs(sim_m-m))<50.0)
         self.assertTrue(np.mean(np.abs(sim_w-w))<0.4)
@@ -93,7 +98,7 @@ class RobustStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 20, 200)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll, genes = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         self.assertTrue(np.mean(np.abs(sim_m-m))<60.0)
         self.assertTrue(np.mean(np.abs(sim_w-w))<0.5)
