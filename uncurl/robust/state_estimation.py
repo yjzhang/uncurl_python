@@ -9,7 +9,7 @@ from scipy.special import gammaln
 eps=1e-8
 
 
-def _create_poiss_w_objective(m, X, selected_genes):
+def _create_poiss_w_objective(m, X):
     """
     Creates an objective function and its derivative for W, given M and X (data)
 
@@ -19,23 +19,20 @@ def _create_poiss_w_objective(m, X, selected_genes):
         selected_genes (array): array of ints - genes to be selected
     """
     # TODO: excluded genes
-    m_ = m[selected_genes, :]
-    X_ = X[selected_genes, :]
-    genes, clusters = m_.shape
-    cells = X.shape[1]
+    genes, clusters = m.shape
     def objective(w):
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
-        w = w.reshape((m_.shape[1], X_.shape[1]))
-        d = m_.dot(w)+eps
+        w = w.reshape((m.shape[1], X.shape[1]))
+        d = m.dot(w)+eps
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
         # x_ij
-        temp = X_/d
-        m_sum = m_.sum(0)
-        m2 = m_.T.dot(temp)
+        temp = X/d
+        m_sum = m.sum(0)
+        m2 = m.T.dot(temp)
         deriv = m_sum.reshape((clusters, 1)) - m2
-        return np.sum(d - X_*np.log(d))/genes, deriv.flatten()/genes
+        return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
     return objective
 
 def _create_poiss_m_objective(w, X):
@@ -45,6 +42,7 @@ def _create_poiss_m_objective(w, X):
     Args:
         w (array): clusters x cells
         X (array): genes x cells
+        selected_genes (array): array of ints - genes to be selected
     """
     clusters, cells = w.shape
     genes = X.shape[0]
@@ -64,12 +62,14 @@ def _poisson_calculate_lls(X, M, W):
     gene, and returns a list of log-likelihoods.
     """
     genes, cells = X.shape
-    clusters = W.shape[0]
     L = np.zeros(genes)
     d = M.dot(W)
-    l2 = gammaln(X)
+    l2 = gammaln(X+1)
+    print l2
     for i in range(genes):
-        L[i] = np.sum(np.log(d[i,:]) - d[i,:] - l2[i,:])
+        L[i] = np.sum(X[i,:]*np.log(d[i,:]) - d[i,:] - l2[i,:])
+        if np.isnan(L[i]):
+            L[i] = -np.inf
     return L
 
 def initialize_from_assignments(assignments, k):
@@ -93,6 +93,9 @@ def initialize_from_assignments(assignments, k):
             if a2!=a:
                 init_W[a2, i] = 0.25/(k-1)
     return init_W
+
+def one_round(data, M, W, selected_genes):
+    pass
 
 # TODO: add hard thresholding
 def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1, normalize=True, gene_portion=0.2):
@@ -146,7 +149,7 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         w_bounds = [(0, None) for x in w_init]
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
-        w_objective = w_obj(means, data, included_genes)
+        w_objective = w_obj(means[included_genes,:], data[included_genes,:])
         # TODO: select between L-BFGS-B or SLSQP optimization methods
         w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=True, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
@@ -165,8 +168,12 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         if w_diff < tol and m_diff < tol:
             break
         # step 3: hard thresholding/gene subset selection
-        lls = ll_func(data, means, w_new)
-        included_genes = lls.argsort()[:num_genes]
+        lls = ll_func(data, m_new, w_new)
+        included_genes = lls.argsort()[::-1][:num_genes]
+        if disp:
+            print(lls[included_genes])
+            print(sum(~np.isnan(lls)))
+            print(included_genes)
     if normalize:
         w_new = w_new/w_new.sum(0)
     return m_new, w_new, ll, included_genes
