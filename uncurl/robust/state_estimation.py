@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.special import gammaln
 
-eps=1e-8
+eps=1e-10
 
 
 def _create_poiss_w_objective(m, X):
@@ -56,7 +56,7 @@ def _create_poiss_m_objective(w, X):
         return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
     return objective
 
-def _poisson_calculate_lls(X, M, W):
+def _poisson_calculate_lls(X, M, W, use_constant=False):
     """
     For hard thresholding: this calculates the log-likelihood of each
     gene, and returns a list of log-likelihoods.
@@ -64,12 +64,12 @@ def _poisson_calculate_lls(X, M, W):
     genes, cells = X.shape
     L = np.zeros(genes)
     d = M.dot(W)
-    l2 = gammaln(X+1)
-    print l2
-    for i in range(genes):
-        L[i] = np.sum(X[i,:]*np.log(d[i,:]) - d[i,:] - l2[i,:])
-        if np.isnan(L[i]):
-            L[i] = -np.inf
+    # d[d==0] = np.min(d[d>0])/1e4
+    LLs = X*np.log(d) - d
+    if use_constant:
+        LLs -= gammaln(X+1)
+    L = np.sum(LLs, 1)
+    L[np.isnan(L)] = -np.inf
     return L
 
 def initialize_from_assignments(assignments, k):
@@ -98,7 +98,7 @@ def one_round(data, M, W, selected_genes):
     pass
 
 # TODO: add hard thresholding
-def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1, normalize=True, gene_portion=0.2):
+def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, reps=1, normalize=True, gene_portion=0.2, use_constant=True):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -168,12 +168,13 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         if w_diff < tol and m_diff < tol:
             break
         # step 3: hard thresholding/gene subset selection
-        lls = ll_func(data, m_new, w_new)
-        included_genes = lls.argsort()[::-1][:num_genes]
-        if disp:
-            print(lls[included_genes])
-            print(sum(~np.isnan(lls)))
-            print(included_genes)
+        lls = ll_func(data, m_new, w_new, use_constant)
+        if i < max_iters - 1:
+            included_genes = lls.argsort()[::-1][:num_genes]
+            if disp:
+                print(lls[included_genes])
+                print(sum(~np.isinf(lls)))
+                print(included_genes)
     if normalize:
         w_new = w_new/w_new.sum(0)
     return m_new, w_new, ll, included_genes
