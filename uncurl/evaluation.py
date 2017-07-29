@@ -17,7 +17,7 @@ def purity(labels, true_labels, k):
         purity score - a float bewteen 0 and 1. Closer to 1 is better.
     """
     purity = 0.0
-    for i in range(k):
+    for i in set(labels).union(true_labels):
         indices = labels==i
         true_clusters = true_labels[indices]
         if len(true_clusters)==0:
