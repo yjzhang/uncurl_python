@@ -45,7 +45,7 @@ class ClusterTest(TestCase):
         for i in range(3):
             for j in range(3):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
-        self.assertTrue(purity(assignments, labs, 3) > 0.8)
+        self.assertTrue(purity(assignments, labs) > 0.8)
 
     def test_zip_simulation(self):
         """
@@ -56,7 +56,7 @@ class ClusterTest(TestCase):
         data, labs = generate_poisson_data(centers, 500)
         data = data.astype(float)
         assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
-        self.assertTrue(purity(assignments, labs, 3) > 0.8)
+        self.assertTrue(purity(assignments, labs) > 0.8)
 
     def test_zip_fit(self):
         """
@@ -94,7 +94,7 @@ class ClusterTest(TestCase):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
         print c_centers
         print c_zeros
-        print purity(assignments, labs, 3)
-        self.assertTrue(purity(assignments, labs, 3) > 0.6)
+        print purity(assignments, labs)
+        self.assertTrue(purity(assignments, labs) > 0.6)
         #self.assertFalse(correspond[0]==correspond[1])
         #self.assertFalse(correspond[1]==correspond[2])

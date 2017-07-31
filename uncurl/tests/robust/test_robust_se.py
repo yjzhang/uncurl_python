@@ -41,7 +41,7 @@ class RobustStateEstimationTest(TestCase):
         # mean error in M is less than 5
         self.assertTrue(np.mean(np.abs(sim_means-m))<10.0)
         # mean error in W is less than 0.2 (arbitrary boundary)
-        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.3)
+        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.2)
 
     def test_robust_state_estimation_2(self):
         """

@@ -41,7 +41,7 @@ class NBTest(TestCase):
         self.assertFalse(r_nans.any())
         # assert that all the points aren't being put into
         # the same cluster.
-        self.assertTrue(purity(labels, a, 3) > 0.8)
+        self.assertTrue(purity(labels, a) > 0.8)
         self.assertFalse((a==a[0]).all())
 
 
