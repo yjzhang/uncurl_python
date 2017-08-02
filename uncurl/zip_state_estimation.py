@@ -1,8 +1,7 @@
 # state estimation with Zero-Inflated Poisson model
 # TODO
 
-from clustering import kmeans_pp
-from nb_cluster import nb_fit
+from clustering import kmeans_pp, zip_fit_params_mle
 from state_estimation import initialize_from_assignments
 
 import numpy as np
@@ -10,13 +9,14 @@ from scipy.optimize import minimize
 
 eps=1e-8
 
-def _create_w_objective(m, X):
+def _create_w_objective(m, X, Z=None):
     """
     Creates an objective function and its derivative for W, given M and X (data)
 
     Args:
         m (array): genes x clusters
         X (array): genes x cells
+        Z (array): zero-inflation parameters - genes x 1
     """
     genes, clusters = m.shape
     cells = X.shape[1]
@@ -36,13 +36,14 @@ def _create_w_objective(m, X):
         return np.sum(nonzeros*(d - X*np.log(d)))/genes, deriv.flatten()/genes
     return objective
 
-def _create_m_objective(w, X):
+def _create_m_objective(w, X, Z=None):
     """
     Creates an objective function and its derivative for M, given W and X
 
     Args:
         w (array): clusters x cells
         X (array): genes x cells
+        Z (array): zero-inflation parameters - genes x 1
     """
     clusters, cells = w.shape
     genes = X.shape[0]
@@ -81,7 +82,7 @@ def zip_estimate_state(data, clusters, init_means=None, init_weights=None, max_i
         ll: final log-likelihood
     """
     genes, cells = data.shape
-    # 1. use nb_fit to get inital Rs
+    # TODO: estimate ZIP parameter?
     if init_means is None:
         means, assignments = kmeans_pp(data, clusters)
     else:
@@ -93,6 +94,8 @@ def zip_estimate_state(data, clusters, init_means=None, init_weights=None, max_i
             init_weights = initialize_from_assignments(init_weights, clusters)
         w_init = init_weights.reshape(cells*clusters)
     m_init = means.reshape(genes*clusters)
+    # using zero-inflated parameters...
+    L, Z = zip_fit_params_mle(data)
     # repeat steps 1 and 2 until convergence:
     ll = np.inf
     for i in range(max_iters):
@@ -101,13 +104,13 @@ def zip_estimate_state(data, clusters, init_means=None, init_weights=None, max_i
         w_bounds = [(0, 1.0) for x in w_init]
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
-        w_objective = _create_w_objective(means, data)
+        w_objective = _create_w_objective(means, data, Z)
         w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=True, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
-        m_objective = _create_m_objective(w_new, data)
+        m_objective = _create_m_objective(w_new, data, Z)
         # method could be 'L-BFGS-B' or 'SLSQP'... SLSQP gives a memory error...
         # or use TNC...
         m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=True, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
@@ -118,5 +121,6 @@ def zip_estimate_state(data, clusters, init_means=None, init_weights=None, max_i
         means = m_new
         if w_diff < tol and m_diff < tol:
             break
-    w_new = w_new/w_new.sum(0)
+    if normalize:
+        w_new = w_new/w_new.sum(0)
     return m_new, w_new, ll

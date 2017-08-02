@@ -60,6 +60,16 @@ def nb_ll(data, P, R):
         lls[:,c] = ll.sum(0)
     return lls
 
+def zinb_ll(data, P, R, Z):
+    """
+    Returns the zero-inflated negative binomial log-likelihood of the data.
+    """
+    lls = nb_ll(data, P, R)
+    clusters = P.shape[1]
+    for c in range(clusters):
+        pass
+    return lls
+
 def nb_ll_row(params, data_row):
     """
     returns the negative LL of a single row.
@@ -112,7 +122,6 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
     # method of moments
     P = 1.0 - means/variances
     R = means*(1-P)/P
-    # TODO: do something better - use gradient descent to get better estimates?
     for i in range(genes):
         result = minimize(nb_ll_row, [P[i], R[i]], args=(data[i,:],),
                 bounds = [(0, 1), (eps, None)])
@@ -127,6 +136,7 @@ def zinb_ll_row(params, data_row):
     """
     For use with optimization - returns ZINB parameters for a given row
     """
+    # TODO
 
 def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, means=None, max_iters=10):
     """
