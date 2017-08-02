@@ -56,7 +56,7 @@ def _create_poiss_m_objective(w, X):
         return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
     return objective
 
-def _poisson_calculate_lls(X, M, W, use_constant=False):
+def _poisson_calculate_lls(X, M, W, use_constant=True, add_eps=True):
     """
     For hard thresholding: this calculates the log-likelihood of each
     gene, and returns a list of log-likelihoods.
@@ -64,6 +64,8 @@ def _poisson_calculate_lls(X, M, W, use_constant=False):
     genes, cells = X.shape
     L = np.zeros(genes)
     d = M.dot(W)
+    if add_eps:
+        d += 1e-30
     # d[d==0] = np.min(d[d>0])/1e4
     LLs = X*np.log(d) - d
     if use_constant:
