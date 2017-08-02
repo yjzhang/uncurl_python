@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='uncurl',
       version='0.2.3',
@@ -7,7 +7,7 @@ setup(name='uncurl',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
       license='MIT',
-      packages=['uncurl, uncurl.robust'],
+      packages=find_packages("."),
       install_requires=[
           'numpy',
           'scipy',
