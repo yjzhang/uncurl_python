@@ -7,7 +7,7 @@ setup(name='uncurl',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
       license='MIT',
-      packages=['uncurl'],
+      packages=['uncurl, uncurl.robust'],
       install_requires=[
           'numpy',
           'scipy',
