@@ -1,6 +1,7 @@
 # state estimation with poisson convex mixture model
 
-from clustering import kmeans_pp
+from clustering import kmeans_pp, poisson_cluster
+from nolips import nolips_update_w
 
 import numpy as np
 from scipy.optimize import minimize
@@ -52,29 +53,26 @@ def _create_m_objective(w, X):
         return np.sum(d - X*np.log(d))/genes, deriv.flatten()/genes
     return objective
 
-# TODO: nolips
-
+"""
 def nolips_update_w(X, M, W, disp=False):
-    """
     Iteratively runs nolips updates.
-    """
     genes, cells = X.shape
     k = W.shape[0]
     MW = M.dot(W)
     W_new = np.copy(W)
     R = M.sum(0)
+    z = np.zeros(k)
     for i in range(cells):
-        if disp:
-            print('cell: {0}'.format(i))
-        eta = 1./(2*X[:,i].sum())
+        lam = 1./(2*X[:,i].sum())
         w = W[:,i]
         x = np.tile(X[:,i], (k,1)).T
         mw = np.tile(MW[:,i], (k,1)).T
         y2 = M*x
         C = np.sum(y2/mw, 0)
-        p = w/(1 + eta*w*(R - C))
-        W_new[:,i] = np.max(np.array([np.zeros(k), p]), 0)
+        p = w/(1 + lam*w*(R - C))
+        W_new[:,i] = np.max(np.array([z, p]), 0)
     return W_new
+"""
 
 def initialize_from_assignments(assignments, k, max_assign_weight=0.75):
     """
@@ -100,7 +98,7 @@ def initialize_from_assignments(assignments, k, max_assign_weight=0.75):
     return init_W
 
 # TODO: add reps - number of starting points
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=25, reps=1, normalize=True):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-20, disp=True, inner_max_iters=25, reps=1, normalize=True):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -111,7 +109,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         init_means (array, optional): initial centers - genes x clusters. Default: kmeans++ initializations
         init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)
         max_iters (int, optional): maximum number of iterations. Default: 10
-        tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4
+        tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-4
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
         reps (int, optional): number of random initializations. Default: 1.
@@ -124,51 +122,54 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     """
     genes, cells = data.shape
     if init_means is None:
-        means, assignments = kmeans_pp(data, clusters)
+        assignments, means = poisson_cluster(data, clusters)
+        if init_weights is None:
+            init_weights = initialize_from_assignments(assignments, clusters)
     else:
         means = init_means.copy()
-    clusters = means.shape[1]
-    w_init = np.random.random((clusters,cells))
+    means = means.astype(float)
     if init_weights is not None:
         if len(init_weights.shape)==1:
             init_weights = initialize_from_assignments(init_weights, clusters)
         w_init = init_weights.copy()
-    m_init = means.reshape(genes*clusters)
+    else:
+        w_init = np.random.random((clusters, cells))
     # repeat steps 1 and 2 until convergence:
-    ll = np.inf
-    # arbitrary argument
     nolips_iters = inner_max_iters
+    Xsum = (data).sum(0).astype(float)
+    Xsum_m = (data).sum(1).astype(float)
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
         # step 1: given M, estimate W
         w_objective = _create_w_objective(means, data)
-        # TODO: select between L-BFGS-B or SLSQP optimization methods
         #w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=True, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         #w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
-        for i in range(nolips_iters):
-            w_new = nolips_update_w(data+eps, means, w_init)
+        for j in range(nolips_iters):
+            w_new = nolips_update_w(data.astype(float), means, w_init, Xsum)
             #w_new = w_res.x.reshape((clusters, cells))
             #w_new = w_new/w_new.sum(0)
+            w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
             w_init = w_new
+            if w_diff < tol:
+                break
         w_ll, w_deriv = w_objective(w_new.reshape(clusters*cells))
         if disp:
             print('Finished updating W. Objective value: {0}'.format(w_ll))
         # step 2: given W, update M
-        for i in range(nolips_iters):
-            m_new = nolips_update_w(data.T+eps, w_new.T, means.T)
+        for j in range(nolips_iters):
+            m_new = nolips_update_w(data.T.astype(float), w_new.T, means.T, Xsum_m)
+            m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
             means = m_new.T
+            if m_diff <= tol:
+                break
         m_objective = _create_m_objective(w_new, data)
         m_ll, m_deriv = m_objective(means.reshape(genes*clusters))
         if disp:
             print('Finished updating M. Objective value: {0}'.format(m_ll))
-        # method could be 'L-BFGS-B' or 'SLSQP'... SLSQP gives a memory error...
-        # or use TNC...
         #m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=True, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         #ll = m_res.fun
         #m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))/m_init.size
-        #if w_diff < tol and m_diff < tol:
-        #    break
     if normalize:
         w_new = w_new/w_new.sum(0)
-    return means, w_new, ll
+    return means, w_new, m_ll

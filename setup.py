@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from Cython.Build import cythonize
 
 setup(name='uncurl',
       version='0.2.3',
@@ -7,10 +8,12 @@ setup(name='uncurl',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
       license='MIT',
+      ext_modules = cythonize("uncurl/nolips.pyx"),
       packages=find_packages("."),
       install_requires=[
           'numpy',
           'scipy',
+          'cython',
       ],
       test_suite='nose.collector',
       tests_require=['nose'],

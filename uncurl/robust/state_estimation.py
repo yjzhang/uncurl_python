@@ -23,6 +23,7 @@ def _create_poiss_w_objective(m, X):
     m_sum = m.sum(0)
     ms2 = m_sum.reshape((clusters, 1))
     const = gammaln(X+1)
+    const = 0
     def objective(w):
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
@@ -50,6 +51,7 @@ def _create_poiss_m_objective(w, X):
     genes = X.shape[0]
     w_sum = w.sum(1)
     const = gammaln(X+1)
+    const = 0
     def objective(m):
         m = m.reshape((genes, clusters))
         d = m.dot(w)+eps
@@ -126,15 +128,16 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
     if disp:
         print('num_genes: {0}'.format(num_genes))
     nolips_iters = 25
+    Xsum = (data).sum(0).astype(float)
+    Xsum_m = (data).sum(1).astype(float)
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
-        w_bounds = [(0, None) for x in w_init]
         # step 1: given M, estimate W
         w_objective = w_obj(means[included_genes,:], data[included_genes,:])
         # convert to nolips
-        for i in range(nolips_iters):
-            w_new = nolips_update_w(data[included_genes,:]+eps, means[included_genes,:], w_init)
+        for j in range(nolips_iters):
+            w_new = nolips_update_w(data[included_genes,:].astype(float), means[included_genes,:], w_init, Xsum)
             #w_new = w_res.x.reshape((clusters, cells))
             #w_new = w_new/w_new.sum(0)
             w_init = w_new
@@ -148,11 +151,11 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         if disp:
             print('Finished updating W. Objective value: {0}'.format(w_ll))
         # step 2: given W, update M
-        for i in range(nolips_iters):
-            m_new = nolips_update_w(data[included_genes,:].T+eps, w_new.T, means[included_genes,:].T)
+        for j in range(nolips_iters):
+            m_new = nolips_update_w(data[included_genes,:].T.astype(float), w_new.T, means[included_genes,:].T, Xsum_m)
             means[included_genes,:] = m_new.T
         m_objective = m_obj(w_new, data[included_genes,:])
-        m_ll, m_deriv = m_objective(means.reshape(genes*clusters))
+        m_ll, m_deriv = m_objective(means[included_genes,:].reshape(len(included_genes)*clusters))
         if disp:
             print('Finished updating M. Objective value: {0}'.format(m_ll))
 
@@ -162,9 +165,8 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
             included_genes = lls.argsort()[::-1][:num_genes]
             if disp:
                 print(lls[included_genes])
-                print(sum(~np.isinf(lls)))
                 print(included_genes)
                 print('selected number of genes: ' + str(len(included_genes)))
     if normalize:
         w_new = w_new/w_new.sum(0)
-    return means, w_new, ll, included_genes
+    return means, w_new, m_ll, included_genes
