@@ -121,6 +121,24 @@
     <span class="n">sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">x_true</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">sample</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="generate_zip_state_data"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_zip_state_data">[docs]</a><span class="k">def</span> <span class="nf">generate_zip_state_data</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates data according to the Zero-inflated Poisson Convex Mixture Model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        means (array): Cell types- genes x clusters</span>
+<span class="sd">        weights (array): Cell cluster assignments- clusters x cells</span>
+<span class="sd">        z (float): zero-inflation parameter</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        data matrix - genes x cells</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">x_true</span><span class="p">)</span>
+    <span class="n">random</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">x_true</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">x_true</span><span class="p">[</span><span class="n">random</span> <span class="o">&lt;</span> <span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">sample</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="generate_nb_state_data"><a class="viewcode-back" href="../../uncurl.html#uncurl.simulation.generate_nb_state_data">[docs]</a><span class="k">def</span> <span class="nf">generate_nb_state_data</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates data according to the Negative Binomial Convex Mixture Model.</span>
@@ -134,8 +152,11 @@
 <span class="sd">        data matrix - genes x cells</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cells</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># x_true = true means</span>
     <span class="n">x_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
-    <span class="n">P_true</span> <span class="o">=</span> <span class="n">x_true</span><span class="o">/</span><span class="p">(</span><span class="mf">1.0</span><span class="o">+</span><span class="n">x_true</span><span class="p">)</span>
+    <span class="c1"># convert means into P</span>
+    <span class="n">R_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">P_true</span> <span class="o">=</span> <span class="n">x_true</span><span class="o">/</span><span class="p">(</span><span class="n">R_</span> <span class="o">+</span> <span class="n">x_true</span><span class="p">)</span>
     <span class="n">sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">negative_binomial</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">P_true</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">sample</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span></div>
 

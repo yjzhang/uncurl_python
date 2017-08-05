@@ -74,7 +74,8 @@
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
         <span class="n">means_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">means</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
         <span class="n">means_i</span> <span class="o">=</span> <span class="n">means_i</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
-        <span class="n">ll</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">xlogy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">means_i</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">data</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">means_i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="c1">#ll[:,i] = np.sum(xlogy(data, means_i) - gammaln(data+1) - means_i, 0)</span>
+        <span class="n">ll</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">xlogy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">means_i</span><span class="p">)</span> <span class="o">-</span> <span class="n">means_i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ll</span></div>
 
 <div class="viewcode-block" id="poisson_ll_2"><a class="viewcode-back" href="../../uncurl.html#uncurl.pois_ll.poisson_ll_2">[docs]</a><span class="k">def</span> <span class="nf">poisson_ll_2</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
@@ -101,7 +102,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        data (array): genes x cells</span>
 <span class="sd">        means (array): genes x k</span>
-<span class="sd">        M (array): genes x k - this is the probability of having a count of zero.</span>
+<span class="sd">        M (array): genes x k - this is the zero-inflation parameter.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        cells x k array of log-likelihood for each cell/cluster pair.</span>
@@ -117,12 +118,30 @@
         <span class="n">L_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">M</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
         <span class="n">L_i</span> <span class="o">=</span> <span class="n">L_i</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
         <span class="n">ll_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">L_i</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">L_i</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">means_i</span><span class="p">))</span>
-        <span class="n">ll_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ll_0</span><span class="o">==-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">means_i</span><span class="p">,</span> <span class="n">ll_0</span><span class="p">)</span>
-        <span class="n">ll_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">L_i</span><span class="p">)</span> <span class="o">+</span> <span class="n">xlogy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">means_i</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">data</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">means_i</span>
+        <span class="n">ll_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">L_i</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">means_i</span><span class="o">==</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="n">means_i</span><span class="p">,</span> <span class="n">ll_0</span><span class="p">)</span>
+        <span class="c1"># not including constant factors</span>
+        <span class="n">ll_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">L_i</span><span class="p">)</span> <span class="o">+</span> <span class="n">xlogy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">means_i</span><span class="p">)</span> <span class="o">-</span>  <span class="n">means_i</span>
         <span class="n">ll_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d0</span><span class="p">,</span> <span class="n">ll_0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="n">ll_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">ll_1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="n">ll</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ll_0</span> <span class="o">+</span> <span class="n">ll_1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ll</span></div>
+
+<div class="viewcode-block" id="zip_ll_row"><a class="viewcode-back" href="../../uncurl.html#uncurl.pois_ll.zip_ll_row">[docs]</a><span class="k">def</span> <span class="nf">zip_ll_row</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">data_row</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the negative log-likelihood of a row given ZIP data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        params (list): [lambda zero-inf]</span>
+<span class="sd">        data_row (array): 1d array</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        negative log-likelihood</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">d0</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_row</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">likelihood</span> <span class="o">=</span> <span class="n">d0</span><span class="o">*</span><span class="n">pi</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">pi</span><span class="p">)</span><span class="o">*</span><span class="n">poisson</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span><span class="n">data_row</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">likelihood</span><span class="o">+</span><span class="n">eps</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
 </pre></div>
 
           </div>
