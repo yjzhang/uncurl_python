@@ -1,3 +1,4 @@
+import itertools
 from unittest import TestCase
 
 import numpy as np
@@ -38,10 +39,13 @@ class RobustStateEstimationTest(TestCase):
         print w
         print w.sum(0)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.01)
-        # mean error in M is less than 5
-        self.assertTrue(np.mean(np.abs(sim_means-m))<10.0)
-        # mean error in W is less than 0.2 (arbitrary boundary)
-        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.2)
+        means_good = False
+        weights_good = False
+        for p in itertools.permutations(range(w.shape[0])):
+            means_good = means_good or (np.mean(np.abs(sim_means-m[:,p]))<10.0)
+            weights_good = weights_good or (np.mean(np.abs(sim_assignments-w[p,:]))<0.3)
+        self.assertTrue(means_good)
+        self.assertTrue(weights_good)
 
     def test_robust_state_estimation_2(self):
         """
@@ -69,11 +73,13 @@ class RobustStateEstimationTest(TestCase):
         print m
         print w
         print w.sum(0)
-        self.assertTrue(np.max(w.sum(0) - 1.0)<0.01)
-        # mean error in M is less than 10
-        self.assertTrue(np.mean(np.abs(sim_means-m))<10.0)
-        # mean error in W is less than 0.4 (arbitrary boundary)
-        self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.4)
+        means_good = False
+        weights_good = False
+        for p in itertools.permutations(range(w.shape[0])):
+            means_good = means_good or (np.mean(np.abs(sim_means-m[:,p]))<20.0)
+            weights_good = weights_good or (np.mean(np.abs(sim_assignments-w[p,:]))<0.3)
+        self.assertTrue(means_good)
+        self.assertTrue(weights_good)
 
     def test_random_means(self):
         """
@@ -84,10 +90,14 @@ class RobustStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll, genes = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
-        self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        self.assertTrue(np.mean(np.abs(sim_m-m))<50.0)
-        self.assertTrue(np.mean(np.abs(sim_w-w))<0.4)
+        m, w, ll, genes = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False, method='L-BFGS-B')
+        means_good = False
+        weights_good = False
+        for p in itertools.permutations(range(w.shape[0])):
+            means_good = means_good or (np.mean(np.abs(sim_m-m[:,p]))<20.0)
+            weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.3)
+        self.assertTrue(means_good)
+        self.assertTrue(weights_good)
 
     def test_random_means_2(self):
         """
@@ -99,6 +109,11 @@ class RobustStateEstimationTest(TestCase):
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
         m, w, ll, genes = robust_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
-        self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        self.assertTrue(np.mean(np.abs(sim_m-m))<60.0)
-        self.assertTrue(np.mean(np.abs(sim_w-w))<0.5)
+        means_good = False
+        weights_good = False
+        for p in itertools.permutations(range(w.shape[0])):
+            means_good = means_good or (np.mean(np.abs(sim_m-m[:,p]))<20.0)
+            weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.3)
+        self.assertTrue(means_good)
+        self.assertTrue(weights_good)
+

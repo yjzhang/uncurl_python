@@ -87,7 +87,7 @@ class StateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False, method='L-BFGS-B')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         means_good = False
         weights_good = False
@@ -111,6 +111,6 @@ class StateEstimationTest(TestCase):
         weights_good = False
         for p in itertools.permutations([0,1]):
             means_good = means_good or (np.mean(np.abs(sim_m-m[:,p]))<20.0)
-            weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.3)
+            weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.2)
         self.assertTrue(means_good)
         self.assertTrue(weights_good)

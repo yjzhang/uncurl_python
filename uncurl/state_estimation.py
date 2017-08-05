@@ -98,7 +98,7 @@ def initialize_from_assignments(assignments, k, max_assign_weight=0.75):
     return init_W
 
 # TODO: add reps - number of starting points
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, max_iters=10, tol=1e-20, disp=True, inner_max_iters=25, reps=1, normalize=True):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-20, disp=True, inner_max_iters=25, reps=1, normalize=True):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -108,6 +108,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         clusters (int): number of mixture components
         init_means (array, optional): initial centers - genes x clusters. Default: kmeans++ initializations
         init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)
+        method (str, optional): optimization method. Current options are 'NoLips' and 'L-BFGS-B'. Default: 'NoLips'.
         max_iters (int, optional): maximum number of iterations. Default: 10
         tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-4
         disp (bool, optional): whether or not to display optimization parameters. Default: True
@@ -143,31 +144,45 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             print('iter: {0}'.format(i))
         # step 1: given M, estimate W
         w_objective = _create_w_objective(means, data)
-        #w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=True, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         #w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
-        for j in range(nolips_iters):
-            w_new = nolips_update_w(data.astype(float), means, w_init, Xsum)
-            #w_new = w_res.x.reshape((clusters, cells))
-            #w_new = w_new/w_new.sum(0)
-            w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
+        if method=='NoLips':
+            for j in range(nolips_iters):
+                w_new = nolips_update_w(data.astype(float), means, w_init, Xsum)
+                #w_new = w_res.x.reshape((clusters, cells))
+                #w_new = w_new/w_new.sum(0)
+                w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
+                w_init = w_new
+                if w_diff < tol:
+                    break
+        elif method=='L-BFGS-B':
+            w_bounds = [(0, None) for c in range(clusters*cells)]
+            w_res = minimize(w_objective, w_init.flatten(),
+                    method='L-BFGS-B', jac=True, bounds=w_bounds,
+                    options={'disp':disp, 'maxiter':inner_max_iters})
+            w_new = w_res.x.reshape((clusters, cells))
             w_init = w_new
-            if w_diff < tol:
-                break
         w_ll, w_deriv = w_objective(w_new.reshape(clusters*cells))
         if disp:
             print('Finished updating W. Objective value: {0}'.format(w_ll))
         # step 2: given W, update M
-        for j in range(nolips_iters):
-            m_new = nolips_update_w(data.T.astype(float), w_new.T, means.T, Xsum_m)
-            m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
-            means = m_new.T
-            if m_diff <= tol:
-                break
         m_objective = _create_m_objective(w_new, data)
+        if method=='NoLips':
+            for j in range(nolips_iters):
+                m_new = nolips_update_w(data.T.astype(float), w_new.T, means.T, Xsum_m)
+                m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
+                means = m_new.T
+                if m_diff <= tol:
+                    break
+        elif method=='L-BFGS-B':
+            m_init = means.flatten()
+            m_bounds = [(0,None) for c in range(genes*clusters)]
+            m_res = minimize(m_objective, m_init,
+                    method='L-BFGS-B', jac=True, bounds=m_bounds,
+                    options={'disp':disp, 'maxiter':inner_max_iters})
+            means = m_res.x.reshape((genes, clusters))
         m_ll, m_deriv = m_objective(means.reshape(genes*clusters))
         if disp:
             print('Finished updating M. Objective value: {0}'.format(m_ll))
-        #m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=True, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         #ll = m_res.fun
         #m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))/m_init.size
     if normalize:
