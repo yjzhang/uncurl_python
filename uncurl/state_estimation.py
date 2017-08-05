@@ -137,8 +137,9 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         w_init = np.random.random((clusters, cells))
     # repeat steps 1 and 2 until convergence:
     nolips_iters = inner_max_iters
-    Xsum = (data).sum(0).astype(float)
-    Xsum_m = (data).sum(1).astype(float)
+    X = data.astype(float)
+    Xsum = X.sum(0)
+    Xsum_m = X.sum(1)
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
@@ -147,7 +148,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         #w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         if method=='NoLips':
             for j in range(nolips_iters):
-                w_new = nolips_update_w(data.astype(float), means, w_init, Xsum)
+                w_new = nolips_update_w(X, means, w_init, Xsum)
                 #w_new = w_res.x.reshape((clusters, cells))
                 #w_new = w_new/w_new.sum(0)
                 w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
@@ -168,7 +169,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         m_objective = _create_m_objective(w_new, data)
         if method=='NoLips':
             for j in range(nolips_iters):
-                m_new = nolips_update_w(data.T.astype(float), w_new.T, means.T, Xsum_m)
+                m_new = nolips_update_w(X.T, w_new.T, means.T, Xsum_m)
                 m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
                 means = m_new.T
                 if m_diff <= tol:

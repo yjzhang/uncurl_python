@@ -27,8 +27,6 @@ def _poisson_calculate_lls(X, M, W, use_constant=True, add_eps=True):
     L[np.isnan(L)] = -np.inf
     return L
 
-def one_round(data, M, W, selected_genes):
-    pass
 
 def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=25, reps=1, normalize=True, gene_portion=0.2, use_constant=True):
     """
@@ -75,9 +73,10 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
     num_genes = int(np.ceil(gene_portion*genes))
     if disp:
         print('num_genes: {0}'.format(num_genes))
-    nolips_iters = 25
-    Xsum = (data).sum(0).astype(float)
-    Xsum_m = (data).sum(1).astype(float)
+    nolips_iters = inner_max_iters
+    X = data.astype(float)
+    Xsum = X.sum(0)
+    Xsum_m = X.sum(1)
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
@@ -85,7 +84,7 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         w_objective = w_obj(means[included_genes,:], data[included_genes,:])
         if method == 'NoLips':
             for j in range(nolips_iters):
-                w_new = nolips_update_w(data[included_genes,:].astype(float), means[included_genes,:], w_init, Xsum)
+                w_new = nolips_update_w(X[included_genes,:], means[included_genes,:], w_init, Xsum)
                 #w_new = w_res.x.reshape((clusters, cells))
                 #w_new = w_new/w_new.sum(0)
                 w_init = w_new
@@ -108,7 +107,7 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         m_objective = m_obj(w_new, data[included_genes,:])
         if method == 'NoLips':
             for j in range(nolips_iters):
-                m_new = nolips_update_w(data[included_genes,:].T.astype(float), w_new.T, means[included_genes,:].T, Xsum_m)
+                m_new = nolips_update_w(X[included_genes,:].T, w_new.T, means[included_genes,:].T, Xsum_m)
                 means[included_genes,:] = m_new.T
         elif method == 'L-BFGS-B':
             m_bounds = [(0, None) for c in range(clusters*len(included_genes))]
