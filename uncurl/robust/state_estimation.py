@@ -28,7 +28,7 @@ def _poisson_calculate_lls(X, M, W, use_constant=True, add_eps=True):
     return L
 
 
-def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=25, reps=1, normalize=True, gene_portion=0.2, use_constant=True):
+def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=100, reps=1, normalize=True, gene_portion=0.2, use_constant=True):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -41,9 +41,9 @@ def robust_estimate_state(data, clusters, dist='Poiss', init_means=None, init_we
         init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)
         method (str, optional): optimization method. Options include 'NoLips' or 'L-BFGS-B'. Default: 'NoLips'.
         max_iters (int, optional): maximum number of iterations. Default: 10
-        tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4
+        tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-10
         disp (bool, optional): whether or not to display optimization parameters. Default: True
-        inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
+        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
         gene_portion (float, optional): The proportion of genes to use for estimating W after hard thresholding. Default: 0.2
 
