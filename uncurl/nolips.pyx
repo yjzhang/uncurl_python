@@ -28,7 +28,7 @@ def nolips_update_w(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M
     cells = X.shape[1]
     genes = X.shape[0]
     k = W.shape[0]
-    use_mx_cache = False
+    cdef int use_mx_cache = False
     if M_old[0].shape[0] == M.shape[0] and M_old[0].shape[1] == M.shape[1]:
         if (M_old[0] == M).all():
             use_mx_cache = True
@@ -43,9 +43,10 @@ def nolips_update_w(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M
     cdef np.ndarray[DTYPE_t, ndim=1] z = np.zeros(k)
     cdef double lam, ci
     cdef np.ndarray[DTYPE_t, ndim=1] lams = 1/(2*Xsum)
-    cdef np.ndarray[DTYPE_t, ndim=2] W_new = np.zeros((k, cells))
+    cdef double[:,:] Wnew_view = np.empty((k, cells), dtype=np.double)
     cdef double[:,:] W_view = W
     cdef np.ndarray[DTYPE_t, ndim=2] y2
+    cdef Py_ssize_t i, g, j
     for i in range(cells):
         lam = lams[i]
         if use_mx_cache:
@@ -61,6 +62,6 @@ def nolips_update_w(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M
             ci = 0
             for g in range(genes):
                 ci += y2[j,g]/mw_view[i,g]
-            W_new[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-ci)))
-    return W_new
+            Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-ci)))
+    return np.asarray(Wnew_view)
 
