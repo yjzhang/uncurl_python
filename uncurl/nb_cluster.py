@@ -1,9 +1,8 @@
 # Negative binomial clustering
 
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import fsolve, minimize
 from scipy.special import gammaln, digamma, xlog1py
-from scipy.stats import nbinom
 
 from clustering import kmeans_pp
 import pois_ll
@@ -54,17 +53,54 @@ def nb_ll(data, P, R):
     for c in range(clusters):
         P_c = P[:,c].reshape((genes, 1))
         R_c = R[:,c].reshape((genes, 1))
-        ll = gammaln(R_c + data) - gammaln(data + 1) - gammaln(R_c)
-        ll += R_c*np.log(P_c) + xlog1py(data, -P_c)
+        # don't need constant factors...
+        ll = gammaln(R_c + data) - gammaln(R_c) #- gammaln(data + 1)
+        ll += data*np.log(P_c) + xlog1py(R_c, -P_c)
         #new_ll = np.sum(nbinom.logpmf(data, R_c, P_c), 0)
         lls[:,c] = ll.sum(0)
     return lls
 
-def nb_obj():
+def zinb_ll(data, P, R, Z):
     """
-    Gets NB objective function for a 1d NB distribution.
+    Returns the zero-inflated negative binomial log-likelihood of the data.
     """
-    # TODO
+    lls = nb_ll(data, P, R)
+    clusters = P.shape[1]
+    for c in range(clusters):
+        pass
+    return lls
+
+def nb_ll_row(params, data_row):
+    """
+    returns the negative LL of a single row.
+
+    Args:
+        params (array) - [p, r]
+        data_row (array) - 1d array of data
+
+    Returns:
+        LL of row
+    """
+    p = params[0]
+    r = params[1]
+    n = len(data_row)
+    ll = np.sum(gammaln(data_row + r)) - np.sum(gammaln(data_row + 1))
+    ll -= n*gammaln(r)
+    ll += np.sum(data_row)*np.log(p)
+    ll += n*r*np.log(1-p)
+    return -ll
+
+def nb_r_deriv(r, data_row):
+    """
+    Derivative of log-likelihood wrt r (formula from wikipedia)
+
+    Args:
+        r (float): the R paramemter in the NB distribution
+        data_row (array): 1d array of length cells
+    """
+    n = len(data_row)
+    d = sum(digamma(data_row + r)) - n*digamma(r) + n*np.log(r/(r+np.mean(data_row)))
+    return d
 
 def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
     """
@@ -72,23 +108,37 @@ def nb_fit(data, P_init=None, R_init=None, epsilon=1e-8, max_iters=100):
 
     Args:
         data (array): genes x cells
-        P (array): NB success prob param - genes x 1
-        R (array): NB stopping param - genes x 1
+        P_init (array, optional): NB success prob param - genes x 1
+        R_init (array, optional): NB stopping param - genes x 1
 
     Returns:
         P, R - fit to data
     """
-    # method of moments
     means = data.mean(1)
     variances = data.var(1)
     if (means > variances).any():
         raise ValueError("For NB fit, means must be less than variances")
+    genes, cells = data.shape
+    # method of moments
     P = 1.0 - means/variances
     R = means*(1-P)/P
-    # TODO: do something better - use gradient descent to get better estimates?
+    for i in range(genes):
+        result = minimize(nb_ll_row, [P[i], R[i]], args=(data[i,:],),
+                bounds = [(0, 1), (eps, None)])
+        params = result.x
+        P[i] = params[0]
+        R[i] = params[1]
+        #R[i] = fsolve(nb_r_deriv, R[i], args = (data[i,:],))
+        #P[i] = data[i,:].mean()/(data[i,:].mean() + R[i])
     return P,R
 
-def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10):
+def zinb_ll_row(params, data_row):
+    """
+    For use with optimization - returns ZINB parameters for a given row
+    """
+    # TODO
+
+def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, means=None, max_iters=10):
     """
     Performs negative binomial clustering on the given data. If some genes have mean > variance, then these genes are fitted to a Poisson distribution.
 
@@ -98,6 +148,7 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
         P_init (array): NB success prob param - genes x k. Default: random
         R_init (array): NB stopping param - genes x k. Default: random
         assignments (array): cells x 1 array of integers 0...k-1. Default: kmeans-pp (poisson)
+        means (array): initial cluster means (for use with kmeans-pp to create initial assignments). Default: None
         max_iters (int): default: 100
 
     Returns:
@@ -112,7 +163,7 @@ def nb_cluster(data, k, P_init=None, R_init=None, assignments=None, max_iters=10
         R_init = np.random.randint(1, data.max(), (genes, k))
         R_init = R_init.astype(float)
     if assignments is None:
-        _, assignments = kmeans_pp(data, k)
+        _, assignments = kmeans_pp(data, k, means)
     means = np.zeros((genes, k))
         #assignments = np.array([np.random.randint(0,k) for i in range(cells)])
     old_assignments = np.copy(assignments)

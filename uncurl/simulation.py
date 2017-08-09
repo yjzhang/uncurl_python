@@ -70,6 +70,24 @@ def generate_state_data(means, weights):
     sample = np.random.poisson(x_true)
     return sample.astype(float)
 
+def generate_zip_state_data(means, weights, z):
+    """
+    Generates data according to the Zero-inflated Poisson Convex Mixture Model.
+
+    Args:
+        means (array): Cell types- genes x clusters
+        weights (array): Cell cluster assignments- clusters x cells
+        z (float): zero-inflation parameter
+
+    Returns:
+        data matrix - genes x cells
+    """
+    x_true = np.dot(means, weights)
+    sample = np.random.poisson(x_true)
+    random = np.random.random(x_true.shape)
+    x_true[random < z] = 0
+    return sample.astype(float)
+
 def generate_nb_state_data(means, weights, R):
     """
     Generates data according to the Negative Binomial Convex Mixture Model.
@@ -83,8 +101,11 @@ def generate_nb_state_data(means, weights, R):
         data matrix - genes x cells
     """
     cells = weights.shape[1]
+    # x_true = true means
     x_true = np.dot(means, weights)
-    P_true = x_true/(1.0+x_true)
+    # convert means into P
+    R_ = np.tile(R, (cells, 1)).T
+    P_true = x_true/(R_ + x_true)
     sample = np.random.negative_binomial(np.tile(R, (cells, 1)).T, P_true)
     return sample.astype(float)
 

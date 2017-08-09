@@ -142,7 +142,7 @@ and a genes x k array of cluster means.</p>
 <h2>uncurl.nb_cluster<a class="headerlink" href="#uncurl-nb-cluster" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.nb_cluster">
-<code class="descclassname">uncurl.</code><code class="descname">nb_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>P_init=None</em>, <em>R_init=None</em>, <em>assignments=None</em>, <em>max_iters=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">nb_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>P_init=None</em>, <em>R_init=None</em>, <em>assignments=None</em>, <em>means=None</em>, <em>max_iters=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs negative binomial clustering on the given data. If some genes have mean &gt; variance, then these genes are fitted to a Poisson distribution.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -154,6 +154,7 @@ and a genes x k array of cluster means.</p>
 <li><strong>P_init</strong> (<em>array</em>) &#8211; NB success prob param - genes x k. Default: random</li>
 <li><strong>R_init</strong> (<em>array</em>) &#8211; NB stopping param - genes x k. Default: random</li>
 <li><strong>assignments</strong> (<em>array</em>) &#8211; cells x 1 array of integers 0...k-1. Default: kmeans-pp (poisson)</li>
+<li><strong>means</strong> (<em>array</em>) &#8211; initial cluster means (for use with kmeans-pp to create initial assignments). Default: None</li>
 <li><strong>max_iters</strong> (<em>int</em>) &#8211; default: 100</li>
 </ul>
 </td>
@@ -175,7 +176,7 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 <h2>uncurl.poisson_estimate_state<a class="headerlink" href="#uncurl-poisson-estimate-state" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.poisson_estimate_state">
-<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>reps=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=10</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>reps=1</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -185,13 +186,15 @@ cell state mixing weights.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
 <li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
-<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: kmeans++ initializations</li>
-<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: from Poisson kmeans</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans</li>
+<li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
 <li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
 <li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the scipy minimizer for M and W. Default: 400</li>
-<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of random initializations. Default: 1.</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 100</li>
+<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of random initializations. NOT YET IMPLEMENTED. Default: 1.</li>
+<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
 </ul>
 </td>
 </tr>
@@ -212,9 +215,11 @@ ll (float): final log-likelihood</p>
 <h2>uncurl.nb_estimate_state<a class="headerlink" href="#uncurl-nb-estimate-state" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.nb_estimate_state">
-<code class="descclassname">uncurl.</code><code class="descname">nb_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>R=None</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_state_estimation.html#nb_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">nb_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>R=None</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_state_estimation.html#nb_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Negative Binomial Mixture model to estimate cell states and
 cell state mixing weights.</p>
+<p>If some of the genes do not fit a negative binomial distribution
+(mean &gt; var), then the genes are discarded from the analysis.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -229,6 +234,7 @@ cell state mixing weights.</p>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (in RMSE), then the iteration is stopped. Default: 1e-4</li>
 <li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
 <li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the scipy minimizer for M and W. Default: 400</li>
+<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
 </ul>
 </td>
 </tr>

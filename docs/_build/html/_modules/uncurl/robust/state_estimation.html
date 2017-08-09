@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.robust.state_estimation &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.robust.state_estimation</h1><div class="highlight"><pre>
+<span></span><span class="c1"># state estimation with poisson convex mixture model</span>
+
+<span class="kn">from</span> <span class="nn">uncurl.clustering</span> <span class="k">import</span> <span class="n">kmeans_pp</span>
+<span class="kn">from</span> <span class="nn">uncurl.state_estimation</span> <span class="k">import</span> <span class="n">initialize_from_assignments</span><span class="p">,</span> <span class="n">nolips_update_w</span><span class="p">,</span> <span class="n">_create_w_objective</span><span class="p">,</span> <span class="n">_create_m_objective</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">minimize</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">gammaln</span>
+
+<span class="n">eps</span><span class="o">=</span><span class="mf">1e-10</span>
+
+<span class="k">def</span> <span class="nf">_poisson_calculate_lls</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">use_constant</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_eps</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For hard thresholding: this calculates the log-likelihood of each</span>
+<span class="sd">    gene, and returns a list of log-likelihoods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">add_eps</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">+=</span> <span class="mf">1e-30</span>
+    <span class="c1"># d[d==0] = np.min(d[d&gt;0])/1e4</span>
+    <span class="n">LLs</span> <span class="o">=</span> <span class="n">X</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">-</span> <span class="n">d</span>
+    <span class="k">if</span> <span class="n">use_constant</span><span class="p">:</span>
+        <span class="n">LLs</span> <span class="o">-=</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">X</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">LLs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">L</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">L</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">return</span> <span class="n">L</span>
+
+
+<div class="viewcode-block" id="robust_estimate_state"><a class="viewcode-back" href="../../../uncurl.robust.html#uncurl.robust.state_estimation.robust_estimate_state">[docs]</a><span class="k">def</span> <span class="nf">robust_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="s1">&#39;Poiss&#39;</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;NoLips&#39;</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inner_max_iters</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">reps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">gene_portion</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">use_constant</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses a Poisson Covex Mixture model to estimate cell states and</span>
+<span class="sd">    cell state mixing weights.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): genes x cells</span>
+<span class="sd">        clusters (int): number of mixture components</span>
+<span class="sd">        dist (string, optional): Distribution used - only &#39;Poiss&#39; is implemented. Default: &#39;Poiss&#39;</span>
+<span class="sd">        init_means (array, optional): initial centers - genes x clusters. Default: kmeans++ initializations</span>
+<span class="sd">        init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)</span>
+<span class="sd">        method (str, optional): optimization method. Options include &#39;NoLips&#39; or &#39;L-BFGS-B&#39;. Default: &#39;NoLips&#39;.</span>
+<span class="sd">        max_iters (int, optional): maximum number of iterations. Default: 10</span>
+<span class="sd">        tol (float, optional): if both M and W change by less than tol, then the iteration is stopped. Default: 1e-10</span>
+<span class="sd">        disp (bool, optional): whether or not to display optimization parameters. Default: True</span>
+<span class="sd">        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100</span>
+<span class="sd">        normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.</span>
+<span class="sd">        gene_portion (float, optional): The proportion of genes to use for estimating W after hard thresholding. Default: 0.2</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        M (array): genes x clusters - state means</span>
+<span class="sd">        W (array): clusters x cells - state mixing components for each cell</span>
+<span class="sd">        ll (float): final log-likelihood</span>
+<span class="sd">        genes (array): 1d array of all genes used in final iteration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="n">init_means</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">means</span><span class="p">,</span> <span class="n">assignments</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">init_means</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">clusters</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">w_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cells</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">init_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">init_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">init_weights</span> <span class="o">=</span> <span class="n">initialize_from_assignments</span><span class="p">(</span><span class="n">init_weights</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+    <span class="c1"># repeat steps 1 and 2 until convergence:</span>
+    <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="c1"># objective functions...</span>
+    <span class="n">w_obj</span> <span class="o">=</span> <span class="n">_create_w_objective</span>
+    <span class="n">m_obj</span> <span class="o">=</span> <span class="n">_create_m_objective</span>
+    <span class="n">ll_func</span> <span class="o">=</span> <span class="n">_poisson_calculate_lls</span>
+    <span class="n">included_genes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span>
+    <span class="n">num_genes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">gene_portion</span><span class="o">*</span><span class="n">genes</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;num_genes: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_genes</span><span class="p">))</span>
+    <span class="n">nolips_iters</span> <span class="o">=</span> <span class="n">inner_max_iters</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">Xsum</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">Xsum_m</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;iter: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="c1"># step 1: given M, estimate W</span>
+        <span class="n">w_objective</span> <span class="o">=</span> <span class="n">w_obj</span><span class="p">(</span><span class="n">means</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:],</span> <span class="n">data</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:])</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;NoLips&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nolips_iters</span><span class="p">):</span>
+                <span class="n">w_new</span> <span class="o">=</span> <span class="n">nolips_update_w</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:],</span> <span class="n">means</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:],</span> <span class="n">w_init</span><span class="p">,</span> <span class="n">Xsum</span><span class="p">)</span>
+                <span class="c1">#w_new = w_res.x.reshape((clusters, cells))</span>
+                <span class="c1">#w_new = w_new/w_new.sum(0)</span>
+                <span class="n">w_init</span> <span class="o">=</span> <span class="n">w_new</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;L-BFGS-B&#39;</span><span class="p">:</span>
+            <span class="n">w_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="o">*</span><span class="n">cells</span><span class="p">)]</span>
+            <span class="n">w_res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">w_objective</span><span class="p">,</span> <span class="n">w_init</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s1">&#39;L-BFGS-B&#39;</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">w_bounds</span><span class="p">,</span>
+                    <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;disp&#39;</span><span class="p">:</span><span class="n">disp</span><span class="p">,</span> <span class="s1">&#39;maxiter&#39;</span><span class="p">:</span><span class="n">inner_max_iters</span><span class="p">})</span>
+            <span class="n">w_new</span> <span class="o">=</span> <span class="n">w_res</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cells</span><span class="p">))</span>
+            <span class="n">w_init</span> <span class="o">=</span> <span class="n">w_new</span>
+        <span class="n">w_ll</span><span class="p">,</span> <span class="n">w_deriv</span> <span class="o">=</span> <span class="n">w_objective</span><span class="p">(</span><span class="n">w_new</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">clusters</span><span class="o">*</span><span class="n">cells</span><span class="p">))</span>
+        <span class="c1">#w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size</span>
+        <span class="c1">#w_init = w_res.x</span>
+        <span class="c1">#w_new = w_res.x.reshape((clusters, cells))</span>
+        <span class="c1"># step 2: given W, update M</span>
+        <span class="n">w_ll</span><span class="p">,</span> <span class="n">w_deriv</span> <span class="o">=</span> <span class="n">w_objective</span><span class="p">(</span><span class="n">w_new</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">clusters</span><span class="o">*</span><span class="n">cells</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Finished updating W. Objective value: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w_ll</span><span class="p">))</span>
+        <span class="c1"># step 2: given W, update M</span>
+        <span class="n">m_objective</span> <span class="o">=</span> <span class="n">m_obj</span><span class="p">(</span><span class="n">w_new</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:])</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;NoLips&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nolips_iters</span><span class="p">):</span>
+                <span class="n">m_new</span> <span class="o">=</span> <span class="n">nolips_update_w</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">w_new</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">means</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Xsum_m</span><span class="p">)</span>
+                <span class="n">means</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">m_new</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;L-BFGS-B&#39;</span><span class="p">:</span>
+            <span class="n">m_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">included_genes</span><span class="p">))]</span>
+            <span class="n">m_res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">m_objective</span><span class="p">,</span> <span class="n">means</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s1">&#39;L-BFGS-B&#39;</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">m_bounds</span><span class="p">,</span>
+                    <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;disp&#39;</span><span class="p">:</span><span class="n">disp</span><span class="p">,</span> <span class="s1">&#39;maxiter&#39;</span><span class="p">:</span><span class="n">inner_max_iters</span><span class="p">})</span>
+            <span class="n">means</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">m_res</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">included_genes</span><span class="p">),</span> <span class="n">clusters</span><span class="p">))</span>
+        <span class="n">m_ll</span><span class="p">,</span> <span class="n">m_deriv</span> <span class="o">=</span> <span class="n">m_objective</span><span class="p">(</span><span class="n">means</span><span class="p">[</span><span class="n">included_genes</span><span class="p">,:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">included_genes</span><span class="p">)</span><span class="o">*</span><span class="n">clusters</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Finished updating M. Objective value: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">m_ll</span><span class="p">))</span>
+
+        <span class="c1"># step 3: hard thresholding/gene subset selection</span>
+        <span class="n">lls</span> <span class="o">=</span> <span class="n">ll_func</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">w_new</span><span class="p">,</span> <span class="n">use_constant</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max_iters</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">included_genes</span> <span class="o">=</span> <span class="n">lls</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="n">num_genes</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">lls</span><span class="p">[</span><span class="n">included_genes</span><span class="p">])</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">included_genes</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;selected number of genes: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">included_genes</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+        <span class="n">w_new</span> <span class="o">=</span> <span class="n">w_new</span><span class="o">/</span><span class="n">w_new</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">means</span><span class="p">,</span> <span class="n">w_new</span><span class="p">,</span> <span class="n">m_ll</span><span class="p">,</span> <span class="n">included_genes</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

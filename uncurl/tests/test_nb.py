@@ -41,7 +41,7 @@ class NBTest(TestCase):
         self.assertFalse(r_nans.any())
         # assert that all the points aren't being put into
         # the same cluster.
-        self.assertTrue(purity(labels, a, 3) > 0.8)
+        self.assertTrue(purity(labels, a) > 0.8)
         self.assertFalse((a==a[0]).all())
 
 
@@ -82,15 +82,15 @@ class NBTest(TestCase):
                 continue
             p_nans = np.isnan(p)
             r_nans = np.isnan(r)
-            self.assertFalse(p_nans.any())
-            self.assertFalse(r_nans.any())
-            self.assertFalse(np.isinf(p).any())
-            self.assertFalse(np.isinf(r).any())
-            self.assertTrue(np.sum(np.abs(p - P.flatten())**2)/3 < 0.5)
             print P
             print R
             print p
             print r
             print np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3
             self.assertTrue(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3 < 35)
+            self.assertFalse(p_nans.any())
+            self.assertFalse(r_nans.any())
+            self.assertFalse(np.isinf(p).any())
+            self.assertFalse(np.isinf(r).any())
+            self.assertTrue(np.sum(np.abs(p - P.flatten())**2)/3 < 0.5)
 

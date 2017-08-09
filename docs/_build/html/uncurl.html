@@ -125,7 +125,7 @@ and a genes x k array of cluster means.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">integer assignments of cells to clusters (length cells)
-L (array): means (genes x k)
+L (array): Poisson parameter (genes x k)
 M (array): zero-inflation parameter (genes x k)</p>
 </td>
 </tr>
@@ -154,6 +154,11 @@ M (array): 1d array of zero-inflation parameter</td>
 </tbody>
 </table>
 </dd></dl>
+
+<dl class="function">
+<dt id="uncurl.clustering.zip_fit_params_mle">
+<code class="descclassname">uncurl.clustering.</code><code class="descname">zip_fit_params_mle</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/clustering.html#zip_fit_params_mle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.clustering.zip_fit_params_mle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="module-uncurl.dim_reduce">
@@ -207,7 +212,7 @@ of the cluster centers.</p>
 <span id="uncurl-evaluation-module"></span><h2>uncurl.evaluation module<a class="headerlink" href="#module-uncurl.evaluation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.evaluation.purity">
-<code class="descclassname">uncurl.evaluation.</code><code class="descname">purity</code><span class="sig-paren">(</span><em>labels</em>, <em>true_labels</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/evaluation.html#purity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.evaluation.purity" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.evaluation.</code><code class="descname">purity</code><span class="sig-paren">(</span><em>labels</em>, <em>true_labels</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/evaluation.html#purity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.evaluation.purity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the purity score for the given labels.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -216,7 +221,6 @@ of the cluster centers.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>labels</strong> (<em>array</em>) &#8211; 1D array of integers</li>
 <li><strong>true_labels</strong> (<em>array</em>) &#8211; 1D array of integers - true labels</li>
-<li><strong>k</strong> (<em>int</em>) &#8211; number of clusters</li>
 </ul>
 </td>
 </tr>
@@ -350,7 +354,7 @@ are integers (uses log-gamma).</p>
 
 <dl class="function">
 <dt id="uncurl.nb_cluster.nb_cluster">
-<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>P_init=None</em>, <em>R_init=None</em>, <em>assignments=None</em>, <em>max_iters=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_cluster" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_cluster</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>P_init=None</em>, <em>R_init=None</em>, <em>assignments=None</em>, <em>means=None</em>, <em>max_iters=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_cluster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs negative binomial clustering on the given data. If some genes have mean &gt; variance, then these genes are fitted to a Poisson distribution.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -362,6 +366,7 @@ are integers (uses log-gamma).</p>
 <li><strong>P_init</strong> (<em>array</em>) &#8211; NB success prob param - genes x k. Default: random</li>
 <li><strong>R_init</strong> (<em>array</em>) &#8211; NB stopping param - genes x k. Default: random</li>
 <li><strong>assignments</strong> (<em>array</em>) &#8211; cells x 1 array of integers 0...k-1. Default: kmeans-pp (poisson)</li>
+<li><strong>means</strong> (<em>array</em>) &#8211; initial cluster means (for use with kmeans-pp to create initial assignments). Default: None</li>
 <li><strong>max_iters</strong> (<em>int</em>) &#8211; default: 100</li>
 </ul>
 </td>
@@ -388,8 +393,8 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
-<li><strong>P</strong> (<em>array</em>) &#8211; NB success prob param - genes x 1</li>
-<li><strong>R</strong> (<em>array</em>) &#8211; NB stopping param - genes x 1</li>
+<li><strong>P_init</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; NB success prob param - genes x 1</li>
+<li><strong>R_init</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; NB stopping param - genes x 1</li>
 </ul>
 </td>
 </tr>
@@ -423,9 +428,54 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="uncurl.nb_cluster.nb_obj">
-<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_obj</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_obj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets NB objective function for a 1d NB distribution.</p>
+<dt id="uncurl.nb_cluster.nb_ll_row">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_ll_row</code><span class="sig-paren">(</span><em>params</em>, <em>data_row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_ll_row"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_ll_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the negative LL of a single row.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>params</strong> (<em>array</em>) &#8211; </li>
+<li><strong>data_row</strong> (<em>array</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">LL of row</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.nb_r_deriv">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">nb_r_deriv</code><span class="sig-paren">(</span><em>r</em>, <em>data_row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#nb_r_deriv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.nb_r_deriv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Derivative of log-likelihood wrt r (formula from wikipedia)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>r</strong> (<em>float</em>) &#8211; the R paramemter in the NB distribution</li>
+<li><strong>data_row</strong> (<em>array</em>) &#8211; 1d array of length cells</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.zinb_ll">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">zinb_ll</code><span class="sig-paren">(</span><em>data</em>, <em>P</em>, <em>R</em>, <em>Z</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#zinb_ll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.zinb_ll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the zero-inflated negative binomial log-likelihood of the data.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nb_cluster.zinb_ll_row">
+<code class="descclassname">uncurl.nb_cluster.</code><code class="descname">zinb_ll_row</code><span class="sig-paren">(</span><em>params</em>, <em>data_row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_cluster.html#zinb_ll_row"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_cluster.zinb_ll_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>For use with optimization - returns ZINB parameters for a given row</p>
 </dd></dl>
 
 </div>
@@ -433,9 +483,11 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 <span id="uncurl-nb-state-estimation-module"></span><h2>uncurl.nb_state_estimation module<a class="headerlink" href="#module-uncurl.nb_state_estimation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.nb_state_estimation.nb_estimate_state">
-<code class="descclassname">uncurl.nb_state_estimation.</code><code class="descname">nb_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>R=None</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_state_estimation.html#nb_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_state_estimation.nb_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.nb_state_estimation.</code><code class="descname">nb_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>R=None</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nb_state_estimation.html#nb_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nb_state_estimation.nb_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Negative Binomial Mixture model to estimate cell states and
 cell state mixing weights.</p>
+<p>If some of the genes do not fit a negative binomial distribution
+(mean &gt; var), then the genes are discarded from the analysis.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -450,6 +502,7 @@ cell state mixing weights.</p>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (in RMSE), then the iteration is stopped. Default: 1e-4</li>
 <li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
 <li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the scipy minimizer for M and W. Default: 400</li>
+<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
 </ul>
 </td>
 </tr>
@@ -513,11 +566,32 @@ ll (float): Log-likelihood of final iteration</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
 <li><strong>means</strong> (<em>array</em>) &#8211; genes x k</li>
-<li><strong>M</strong> (<em>array</em>) &#8211; genes x k - this is the probability of having a count of zero.</li>
+<li><strong>M</strong> (<em>array</em>) &#8211; genes x k - this is the zero-inflation parameter.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">cells x k array of log-likelihood for each cell/cluster pair.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.pois_ll.zip_ll_row">
+<code class="descclassname">uncurl.pois_ll.</code><code class="descname">zip_ll_row</code><span class="sig-paren">(</span><em>params</em>, <em>data_row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#zip_ll_row"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.zip_ll_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the negative log-likelihood of a row given ZIP data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>params</strong> (<em>list</em>) &#8211; [lambda zero-inf]</li>
+<li><strong>data_row</strong> (<em>array</em>) &#8211; 1d array</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">negative log-likelihood</p>
 </td>
 </tr>
 </tbody>
@@ -763,6 +837,28 @@ labels - array of cluster labels</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="uncurl.simulation.generate_zip_state_data">
+<code class="descclassname">uncurl.simulation.</code><code class="descname">generate_zip_state_data</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>z</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/simulation.html#generate_zip_state_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.simulation.generate_zip_state_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates data according to the Zero-inflated Poisson Convex Mixture Model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; Cell types- genes x clusters</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; Cell cluster assignments- clusters x cells</li>
+<li><strong>z</strong> (<em>float</em>) &#8211; zero-inflation parameter</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">data matrix - genes x cells</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 <div class="section" id="module-uncurl.spatial_inference">
 <span id="uncurl-spatial-inference-module"></span><h2>uncurl.spatial_inference module<a class="headerlink" href="#module-uncurl.spatial_inference" title="Permalink to this headline">¶</a></h2>
@@ -776,7 +872,7 @@ labels - array of cluster labels</p>
 <span id="uncurl-state-estimation-module"></span><h2>uncurl.state_estimation module<a class="headerlink" href="#module-uncurl.state_estimation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.state_estimation.initialize_from_assignments">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_from_assignments</code><span class="sig-paren">(</span><em>assignments</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_from_assignments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_from_assignments" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_from_assignments</code><span class="sig-paren">(</span><em>assignments</em>, <em>k</em>, <em>max_assign_weight=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_from_assignments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_from_assignments" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a weight initialization matrix from Poisson clustering assignments.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -785,6 +881,7 @@ labels - array of cluster labels</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>assignments</strong> (<em>array</em>) &#8211; 1D array of integers, of length cells</li>
 <li><strong>k</strong> (<em>int</em>) &#8211; number of states/clusters</li>
+<li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; between 0 and 1 - how much weight to assign to the highest cluster. Default: 0.75</li>
 </ul>
 </td>
 </tr>
@@ -800,7 +897,7 @@ labels - array of cluster labels</p>
 
 <dl class="function">
 <dt id="uncurl.state_estimation.poisson_estimate_state">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>max_iters=10</em>, <em>tol=0.0001</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>reps=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=10</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>reps=1</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -810,13 +907,15 @@ cell state mixing weights.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
 <li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
-<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: kmeans++ initializations</li>
-<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: from Poisson kmeans</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans</li>
+<li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
 <li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol, then the iteration is stopped. Default: 1e-4</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
 <li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the scipy minimizer for M and W. Default: 400</li>
-<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of random initializations. Default: 1.</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 100</li>
+<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of random initializations. NOT YET IMPLEMENTED. Default: 1.</li>
+<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
 </ul>
 </td>
 </tr>

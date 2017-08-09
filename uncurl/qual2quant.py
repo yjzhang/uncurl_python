@@ -41,5 +41,6 @@ def qualNorm(data, qualitative):
     if missing_indices:
         assignments, means = poisson_cluster(data[qual_indices, :], clusters, output[qual_indices, :], max_iters=1)
         for ind in missing_indices:
-            output[ind, :] = means[ind, :]
+            for k in range(clusters):
+                output[ind, k] = np.mean(data[ind, assignments==k])
     return output

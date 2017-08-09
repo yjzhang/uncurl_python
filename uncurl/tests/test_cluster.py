@@ -6,7 +6,7 @@ from scipy.io import loadmat
 import uncurl
 from uncurl.simulation import generate_poisson_data, generate_zip_data
 from uncurl.evaluation import purity
-from uncurl.clustering import zip_fit_params
+from uncurl.clustering import zip_fit_params_mle
 
 class ClusterTest(TestCase):
 
@@ -45,7 +45,7 @@ class ClusterTest(TestCase):
         for i in range(3):
             for j in range(3):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
-        self.assertTrue(purity(assignments, labs, 3) > 0.8)
+        self.assertTrue(purity(assignments, labs) > 0.8)
 
     def test_zip_simulation(self):
         """
@@ -56,7 +56,7 @@ class ClusterTest(TestCase):
         data, labs = generate_poisson_data(centers, 500)
         data = data.astype(float)
         assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
-        self.assertTrue(purity(assignments, labs, 3) > 0.8)
+        self.assertTrue(purity(assignments, labs) > 0.8)
 
     def test_zip_fit(self):
         """
@@ -66,7 +66,11 @@ class ClusterTest(TestCase):
             centers = np.random.randint(10, 1000, (3,1))
             M = np.random.random((3,1))
             data, labs = generate_zip_data(centers, M, 300)
-            L_, M_ = zip_fit_params(data)
+            L_, M_ = zip_fit_params_mle(data)
+            self.assertFalse(np.isnan(L_).any())
+            self.assertFalse(np.isnan(M_).any())
+            self.assertFalse(np.isnan(L_).any())
+            self.assertFalse(np.isnan(M_).any())
             self.assertTrue(np.mean(np.abs(M.flatten() - M_)) < 0.2)
             self.assertTrue(np.mean(np.abs(centers.flatten() - L_)) < 10)
 
@@ -88,22 +92,9 @@ class ClusterTest(TestCase):
         for i in range(3):
             for j in range(3):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
-        correspond = []
         print c_centers
         print c_zeros
-        print purity(assignments, labs, 3)
-        for i in range(3):
-            correspond.append(np.argmin(distances[i,:]))
-            # assert that the learned clusters are close to the actual clusters
-            c = correspond[i]
-            learned_means = c_centers[:,c]
-            learned_zs = c_zeros[:,c]
-            print c
-            print learned_means
-            print centers[:,i]
-            print learned_zs
-            print L[:,i]
-            #self.assertTrue(np.sum(np.abs(learned_means - centers[:,i])) <= sum(centers[:,i])/2)
-        self.assertTrue(purity(assignments, labs, 3) > 0.6)
+        print purity(assignments, labs)
+        self.assertTrue(purity(assignments, labs) > 0.6)
         #self.assertFalse(correspond[0]==correspond[1])
         #self.assertFalse(correspond[1]==correspond[2])

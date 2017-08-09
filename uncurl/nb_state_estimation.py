@@ -1,7 +1,8 @@
 # state estimation with NB convex mixture model
 
 from clustering import kmeans_pp
-from nb_cluster import nb_fit
+from nb_cluster import nb_fit, find_nb_genes
+from state_estimation import initialize_from_assignments
 
 import numpy as np
 from scipy.optimize import minimize
@@ -18,13 +19,14 @@ def _create_w_objective(m, X, R):
         R (array): 1 x genes
     """
     genes, clusters = m.shape
-    R1 = R.dot(np.ones((genes, 1)))
+    cells = X.shape[1]
+    R1 = R.reshape((genes, 1)).dot(np.ones((1, cells)))
     def objective(w):
         # convert w into a matrix first... because it's a vector for
         # optimization purposes
         w = w.reshape((m.shape[1], X.shape[1]))
         d = m.dot(w)+eps
-        return np.sum((X+R1)*np.log(d + R1) - X*np.log(d))/genes
+        return np.sum((X + R1)*np.log(d + R1) - X*np.log(d))/genes
     def deriv(w):
         # derivative of objective wrt all elements of w
         # for w_{ij}, the derivative is... m_j1+...+m_jn sum over genes minus 
@@ -50,7 +52,7 @@ def _create_m_objective(w, X, R):
     """
     clusters, cells = w.shape
     genes = X.shape[0]
-    R1 = R.dot(np.ones((genes, 1)))
+    R1 = R.reshape((genes, 1)).dot(np.ones((1, cells)))
     def objective(m):
         m = m.reshape((X.shape[0], w.shape[0]))
         d = m.dot(w)+eps
@@ -66,10 +68,13 @@ def _create_m_objective(w, X, R):
         return deriv.flatten()/genes
     return objective, deriv
 
-def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400):
+def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None, max_iters=10, tol=1e-4, disp=True, inner_max_iters=400, normalize=True):
     """
     Uses a Negative Binomial Mixture model to estimate cell states and
     cell state mixing weights.
+
+    If some of the genes do not fit a negative binomial distribution
+    (mean > var), then the genes are discarded from the analysis.
 
     Args:
         data (array): genes x cells
@@ -81,6 +86,7 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         tol (float, optional): if both M and W change by less than tol (in RMSE), then the iteration is stopped. Default: 1e-4
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the scipy minimizer for M and W. Default: 400
+        normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
 
     Returns:
         M (array): genes x clusters - state centers
@@ -88,17 +94,27 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         R (array): 1 x genes - NB dispersion parameter for each gene
         ll (float): Log-likelihood of final iteration
     """
-    genes, cells = data.shape
+    # TODO: deal with non-NB data... just ignore it? or do something else?
+    data_subset = data.copy()
+    genes, cells = data_subset.shape
     # 1. use nb_fit to get inital Rs
     if R is None:
-        P, R = nb_fit(data)
+        nb_indices = find_nb_genes(data)
+        data_subset = data[nb_indices, :]
+        if init_means is not None and len(init_means) > sum(nb_indices):
+            init_means = init_means[nb_indices, :]
+        genes, cells = data_subset.shape
+        R = np.zeros(genes)
+        P, R = nb_fit(data_subset)
     if init_means is None:
-        means, assignments = kmeans_pp(data, clusters)
+        means, assignments = kmeans_pp(data_subset, clusters)
     else:
         means = init_means.copy()
     clusters = means.shape[1]
     w_init = np.random.random(cells*clusters)
     if init_weights is not None:
+        if len(init_weights.shape)==1:
+            init_weights = initialize_from_assignments(init_weights, clusters)
         w_init = init_weights.reshape(cells*clusters)
     m_init = means.reshape(genes*clusters)
     ll = np.inf
@@ -109,13 +125,13 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         w_bounds = [(0, 1.0) for x in w_init]
         m_bounds = [(0, None) for x in m_init]
         # step 1: given M, estimate W
-        w_objective, w_deriv = _create_w_objective(means, data, R)
+        w_objective, w_deriv = _create_w_objective(means, data_subset, R)
         w_res = minimize(w_objective, w_init, method='L-BFGS-B', jac=w_deriv, bounds=w_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
         w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_res.x
         # step 2: given W, update M
-        m_objective, m_deriv = _create_m_objective(w_new, data, R)
+        m_objective, m_deriv = _create_m_objective(w_new, data_subset, R)
         # method could be 'L-BFGS-B' or 'SLSQP'... SLSQP gives a memory error...
         # or use TNC...
         m_res = minimize(m_objective, m_init, method='L-BFGS-B', jac=m_deriv, bounds=m_bounds, options={'disp':disp, 'maxiter':inner_max_iters})
@@ -126,5 +142,6 @@ def nb_estimate_state(data, clusters, R=None, init_means=None, init_weights=None
         means = m_new
         if w_diff < tol and m_diff < tol:
             break
-    w_new = w_new/w_new.sum(0)
+    if normalize:
+        w_new = w_new/w_new.sum(0)
     return m_new, w_new, R, ll

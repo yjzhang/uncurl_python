@@ -20,9 +20,9 @@ class StateEstimationTest(TestCase):
         M_, W_, R_, ll = nb_state_estimation.nb_estimate_state(data, 2, init_means=M_noised, R = R, disp=False)
         c1 = W.argmax(0)
         c2 = W_.argmax(0)
-        p = purity(c2, c1, 2)
+        p = purity(c2, c1)
         print p
         print data
         print M
         print M_
-        self.assertTrue(p > 0.8)
+        self.assertTrue(p > 0.7)

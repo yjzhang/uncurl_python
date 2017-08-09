@@ -92,7 +92,8 @@
     <span class="k">if</span> <span class="n">missing_indices</span><span class="p">:</span>
         <span class="n">assignments</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">qual_indices</span><span class="p">,</span> <span class="p">:],</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">output</span><span class="p">[</span><span class="n">qual_indices</span><span class="p">,</span> <span class="p">:],</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">missing_indices</span><span class="p">:</span>
-            <span class="n">output</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">means</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+                <span class="n">output</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">assignments</span><span class="o">==</span><span class="n">k</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">output</span></div>
 </pre></div>
 
