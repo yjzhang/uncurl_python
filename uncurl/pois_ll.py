@@ -5,6 +5,8 @@ from scipy import sparse
 from scipy.stats import poisson
 from scipy.special import xlogy, gammaln
 
+from sparse_utils import sparse_poisson_ll
+
 eps = 1e-8
 
 def poisson_ll(data, means):
@@ -18,6 +20,8 @@ def poisson_ll(data, means):
     Returns:
         cells x k array of log-likelihood for each cell/cluster pair
     """
+    if sparse.issparse(data):
+        return sparse_poisson_ll(data, means)
     genes, cells = data.shape
     clusters = means.shape[1]
     ll = np.zeros((cells, clusters))
@@ -39,6 +43,8 @@ def poisson_ll_2(p1, p2):
 def poisson_dist(p1, p2):
     """
     Calculates the Poisson distance between two vectors.
+
+    p1 can be a sparse matrix, while p2 has to be a dense matrix.
     """
     # ugh...
     p1_ = p1 + eps

@@ -8,7 +8,7 @@ setup(name='uncurl',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
       license='MIT',
-      ext_modules = cythonize("uncurl/nolips.pyx"),
+      ext_modules = cythonize("uncurl/*.pyx"),
       packages=find_packages("."),
       install_requires=[
           'numpy',

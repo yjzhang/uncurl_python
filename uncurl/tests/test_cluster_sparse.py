@@ -11,8 +11,9 @@ from uncurl.evaluation import purity
 class SparseClusterTest(TestCase):
 
     def setUp(self):
-        self.dat = loadmat('data/SCDE_k2_sup.mat')
-        self.data = sparse.csc_matrix(self.dat['Dat'])
+        dat = loadmat('data/SCDE_k2_sup.mat')
+        self.data = sparse.csc_matrix(dat['Dat'])
+        self.labs = dat['Lab'].flatten()
 
     def test_kmeans_pp(self):
         data = self.data
@@ -26,11 +27,12 @@ class SparseClusterTest(TestCase):
 
     def test_cluster(self):
         data = self.data
-        assignments, centers = uncurl.poisson_cluster(data, 3)
+        assignments, centers = uncurl.poisson_cluster(data, 2)
         self.assertEqual(assignments.shape[0], data.shape[1])
         self.assertEqual(centers.shape[0], data.shape[0])
         # just checking that the values are valid
         self.assertFalse(np.isnan(centers).any())
+        self.assertTrue(purity(assignments, self.labs) > 0.7)
 
     def test_simulation(self):
         """
@@ -47,5 +49,8 @@ class SparseClusterTest(TestCase):
         for i in range(3):
             for j in range(3):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
-        self.assertTrue(purity(assignments, labs, 3) > 0.8)
+        print assignments
+        print labs
+        print purity(assignments, labs)
+        self.assertTrue(purity(assignments, labs) > 0.8)
 
