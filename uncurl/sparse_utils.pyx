@@ -1,6 +1,8 @@
+# cython: linetrace=True 
+
 # utilities for csc matrices...
 
-import cython
+#import cython
 cimport cython
 
 import numpy as np
@@ -12,9 +14,10 @@ from scipy.special import xlogy
 DTYPE = np.double
 ctypedef np.double_t DTYPE_t
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.nonecheck(False)
+@cython.binding(True)
 def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
     """
     calculates the Poisson log-likelihood for a sparse matrix data (genes x cells)
@@ -34,5 +37,5 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
     coo = sparse.coo_matrix(data).astype(np.double)
     for i, g, c in zip(coo.data, coo.row, coo.col):
         for k in range(clusters):
-            ll[c, k] += xlogy(i, mv[g, k]) - mv[g, k]
+            ll[c, k] += i*np.log(mv[g, k]) - mv[g, k]
     return np.asarray(ll)

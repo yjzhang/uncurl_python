@@ -90,6 +90,8 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     centers = np.copy(init)
     assignments = np.zeros(cells)
     #print 'starting: ', centers
+    if sparse.issparse(data):
+        data = sparse.lil_matrix(data)
     for it in range(max_iters):
         lls = poisson_ll(data, centers)
         #cluster_dists = np.zeros((cells, k))
@@ -99,7 +101,7 @@ def poisson_cluster(data, k, init=None, max_iters=100):
             return assignments, centers
         for c in range(k):
             if sparse.issparse(data):
-                centers[:,c] = np.asarray(np.mean(data[:,new_assignments==c], 1)).flatten()
+                centers[:,c] = np.asarray(data[:,new_assignments==c].mean(1)).flatten()
             else:
                 centers[:,c] = np.mean(data[:,new_assignments==c], 1)
         assignments = new_assignments

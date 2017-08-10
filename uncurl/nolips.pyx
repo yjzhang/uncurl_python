@@ -1,9 +1,10 @@
+# cython: linetrace=True
 
 # cython implementations of optimization functions
 
 # TODO: implement objective/derivative functions for all the distributions,
 # nolips
-import cython
+#import cython
 cimport cython
 
 from scipy import sparse
@@ -80,6 +81,7 @@ def objective(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.n
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+@cython.binding(True)
 def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
     """
     Calculates the Poisson Mixture objective value for a sparse matrix x.
@@ -93,13 +95,14 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     coo = sparse.coo_matrix(X).astype(np.double)
     for i, g, c in zip(coo.data, coo.row, coo.col):
         for k in range(clusters):
-            d = np.sum(M[g,:]*W[:,c])
+            d = np.sum(M[g,:]*W[:,c]) + eps
             obj += d - i*np.log(d)
     return obj/genes
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+@cython.binding(True)
 def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, disp=False):
     """
     Iteratively runs nolips updates where X is a sparse matrix.
@@ -113,6 +116,9 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
             use_mx_cache = True
     if not use_mx_cache:
         M_old[0] = M.copy()
+    # TODO: what if doing M*W causes memory issues?
+    #cdef np.ndarray[DTYPE_t, ndim=2] MW = (M.dot(W)+eps).T
+    #cdef double[:,:] mw_view = MW
     cdef double[:,:] M_view = M
     cdef np.ndarray[DTYPE_t, ndim=1] R = M.sum(0)
     cdef double[:] R_view = R
@@ -123,6 +129,7 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef double[:,:] W_view = W
     cdef np.ndarray[DTYPE_t, ndim=2] y2
     cdef Py_ssize_t i, g, j, k2
+    X = sparse.lil_matrix(X)
     for i in range(cells):
         lam = lams[i]
         if use_mx_cache:
@@ -137,6 +144,7 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
         for j in range(k):
             ci = 0
             for g in range(genes):
+                #ci += y2[j,g]/mw_view[i,g]
                 mw = 0
                 for k2 in range(k):
                     mw += M_view[g,k2]*W_view[k2,i]
