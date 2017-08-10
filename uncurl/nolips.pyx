@@ -6,6 +6,7 @@
 import cython
 cimport cython
 
+from scipy import sparse
 
 import numpy as np
 cimport numpy as np
@@ -25,9 +26,9 @@ def nolips_update_w(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M
     """
     Iteratively runs nolips updates.
     """
-    cells = X.shape[1]
-    genes = X.shape[0]
-    k = W.shape[0]
+    cdef int cells = X.shape[1]
+    cdef int genes = X.shape[0]
+    cdef int k = W.shape[0]
     cdef int use_mx_cache = False
     if M_old[0].shape[0] == M.shape[0] and M_old[0].shape[1] == M.shape[1]:
         if (M_old[0] == M).all():
@@ -62,6 +63,84 @@ def nolips_update_w(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M
             ci = 0
             for g in range(genes):
                 ci += y2[j,g]/mw_view[i,g]
+            Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-ci)))
+    return np.asarray(Wnew_view)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def objective(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
+    """
+    Calculates the Poisson Mixture objective value.
+    """
+    cdef int genes = X.shape[0]
+    cdef np.ndarray[DTYPE_t, ndim=2] d = M.dot(W)
+    return np.sum(d - X*np.log(d))/genes
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
+    """
+    Calculates the Poisson Mixture objective value for a sparse matrix x.
+    """
+    cdef int cells = X.shape[1]
+    cdef int genes = X.shape[0]
+    cdef int clusters = W.shape[0]
+    cdef double i, d
+    cdef Py_ssize_t j, k
+    cdef double obj = 0
+    coo = sparse.coo_matrix(X).astype(np.double)
+    for i, g, c in zip(coo.data, coo.row, coo.col):
+        for k in range(clusters):
+            d = np.sum(M[g,:]*W[:,c])
+            obj += d - i*np.log(d)
+    return obj/genes
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, disp=False):
+    """
+    Iteratively runs nolips updates where X is a sparse matrix.
+    """
+    cdef int cells = X.shape[1]
+    cdef int genes = X.shape[0]
+    cdef int k = W.shape[0]
+    cdef int use_mx_cache = False
+    if M_old[0].shape[0] == M.shape[0] and M_old[0].shape[1] == M.shape[1]:
+        if (M_old[0] == M).all():
+            use_mx_cache = True
+    if not use_mx_cache:
+        M_old[0] = M.copy()
+    cdef double[:,:] M_view = M
+    cdef np.ndarray[DTYPE_t, ndim=1] R = M.sum(0)
+    cdef double[:] R_view = R
+    cdef np.ndarray[DTYPE_t, ndim=1] z = np.zeros(k)
+    cdef double lam, ci, mw
+    cdef np.ndarray[DTYPE_t, ndim=1] lams = 1/(2*Xsum)
+    cdef double[:,:] Wnew_view = np.empty((k, cells), dtype=np.double)
+    cdef double[:,:] W_view = W
+    cdef np.ndarray[DTYPE_t, ndim=2] y2
+    cdef Py_ssize_t i, g, j, k2
+    for i in range(cells):
+        lam = lams[i]
+        if use_mx_cache:
+            y2 = mx_cache[i]
+        else:
+            y2 = np.zeros((genes, k))
+            for g in range(genes):
+                for j in range(k):
+                    y2[g,j] = M_view[g,j]*X[g,i]
+            y2 = y2.T
+            mx_cache[i] = y2
+        for j in range(k):
+            ci = 0
+            for g in range(genes):
+                mw = 0
+                for k2 in range(k):
+                    mw += M_view[g,k2]*W_view[k2,i]
+                ci += y2[j,g]/(mw+eps)
             Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-ci)))
     return np.asarray(Wnew_view)
 
