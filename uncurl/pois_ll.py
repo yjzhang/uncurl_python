@@ -7,7 +7,7 @@ from scipy.special import xlogy, gammaln
 
 from sparse_utils import sparse_poisson_ll
 
-eps = 1e-8
+eps = 1e-10
 
 def poisson_ll(data, means):
     """
@@ -27,7 +27,7 @@ def poisson_ll(data, means):
     ll = np.zeros((cells, clusters))
     for i in range(clusters):
         means_i = np.tile(means[:,i], (cells, 1))
-        means_i = means_i.transpose()
+        means_i = means_i.transpose() + eps
         #ll[:,i] = np.sum(xlogy(data, means_i) - gammaln(data+1) - means_i, 0)
         ll[:,i] = np.sum(xlogy(data, means_i) - means_i, 0)
     return ll

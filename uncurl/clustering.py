@@ -41,12 +41,9 @@ def kmeans_pp(data, k, centers=None):
         num_known_centers+=1
     for c in range(num_known_centers, k):
         c2 = c-1
-        for i in range(cells):
-            if sparse.issparse(data):
-                di = data[:,i].toarray().flatten()
-            else:
-                di = data[:,i]
-            distances[i,c2] = poisson_dist(di, centers[:,c2])
+        lls = poisson_ll(data, centers[:,c2:c2+1]).flatten()
+        distances[:,c2] = -(lls - lls.max())
+        distances[:,c2] /= distances[:,c2].max()
         # choose a new data point as center... probability proportional
         # to distance^2
         min_distances = np.min(distances, 1)
@@ -57,14 +54,8 @@ def kmeans_pp(data, k, centers=None):
             centers[:,c] = data[:, min_dist].toarray().flatten()
         else:
             centers[:,c] = data[:, min_dist]
-    cluster_dists = np.zeros((cells, k))
-    if sparse.issparse(data):
-        for c in range(k):
-            cluster_dists[:,c] = np.array([poisson_dist(centers[:,c], data[:,i].toarray().flatten()) for i in range(cells)])
-    else:
-        for c in range(k):
-            cluster_dists[:,c] = np.array([poisson_dist(centers[:,c], data[:,i]) for i in range(cells)])
-    new_assignments = np.argmin(cluster_dists, 1)
+    lls = poisson_ll(data, centers)
+    new_assignments = np.argmax(lls, 1)
     centers[centers==0.0] = eps
     return centers, new_assignments
 
@@ -73,7 +64,7 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     Performs Poisson hard EM on the given data.
 
     Args:
-        data (array): A 2d array- genes x cells
+        data (array): A 2d array- genes x cells. Can be dense or sparse; for best performance, sparse matrices should be in CSC format.
         k (int): Number of clusters
         init (array, optional): Initial centers - genes x k array. Default: None, use kmeans++
         max_iters (int, optional): Maximum number of iterations. Default: 100
@@ -86,12 +77,12 @@ def poisson_cluster(data, k, init=None, max_iters=100):
     # e.g., have init values only for certain genes, have a row of all
     # zeros indicating that kmeans++ should be used for that row.
     genes, cells = data.shape
+    #print 'starting: ', centers
+    if sparse.issparse(data) and not sparse.isspmatrix_csc(data):
+        data = sparse.csc_matrix(data)
     init, assignments = kmeans_pp(data, k, centers=init)
     centers = np.copy(init)
     assignments = np.zeros(cells)
-    #print 'starting: ', centers
-    if sparse.issparse(data):
-        data = sparse.lil_matrix(data)
     for it in range(max_iters):
         lls = poisson_ll(data, centers)
         #cluster_dists = np.zeros((cells, k))
