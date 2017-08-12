@@ -40,13 +40,13 @@ def kmeans_pp(data, k, centers=None):
             centers[:,0] = data[:, init]
         num_known_centers+=1
     for c in range(num_known_centers, k):
-        for c2 in range(c):
-            for i in range(cells):
-                if sparse.issparse(data):
-                    di = data[:,i].toarray().flatten()
-                else:
-                    di = data[:,i]
-                distances[i,c2] = poisson_dist(di, centers[:,c2])
+        c2 = c-1
+        for i in range(cells):
+            if sparse.issparse(data):
+                di = data[:,i].toarray().flatten()
+            else:
+                di = data[:,i]
+            distances[i,c2] = poisson_dist(di, centers[:,c2])
         # choose a new data point as center... probability proportional
         # to distance^2
         min_distances = np.min(distances, 1)

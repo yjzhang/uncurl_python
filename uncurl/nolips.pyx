@@ -81,7 +81,6 @@ def objective(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.n
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-@cython.binding(True)
 def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
     """
     Calculates the Poisson Mixture objective value for a sparse matrix x.
@@ -95,14 +94,13 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     coo = sparse.coo_matrix(X).astype(np.double)
     for i, g, c in zip(coo.data, coo.row, coo.col):
         for k in range(clusters):
-            d = np.sum(M[g,:]*W[:,c]) + eps
+            d = np.sum(M[g,:]*W[:,c])
             obj += d - i*np.log(d)
     return obj/genes
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-@cython.binding(True)
 def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, disp=False):
     """
     Iteratively runs nolips updates where X is a sparse matrix.
@@ -127,28 +125,29 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef np.ndarray[DTYPE_t, ndim=1] lams = 1/(2*Xsum)
     cdef double[:,:] Wnew_view = np.empty((k, cells), dtype=np.double)
     cdef double[:,:] W_view = W
+    cdef np.ndarray[DTYPE_t, ndim=1] xrow
     cdef np.ndarray[DTYPE_t, ndim=2] y2
     cdef Py_ssize_t i, g, j, k2
-    X = sparse.lil_matrix(X)
+    X = sparse.csc_matrix(X)
     for i in range(cells):
         lam = lams[i]
         if use_mx_cache:
             y2 = mx_cache[i]
         else:
             y2 = np.zeros((genes, k))
-            for g in range(genes):
-                for j in range(k):
-                    y2[g,j] = M_view[g,j]*X[g,i]
+            xrow = X[:,i].toarray().flatten()
+            for j in range(k):
+                y2[:,j] = xrow*M[:,j]
             y2 = y2.T
             mx_cache[i] = y2
         for j in range(k):
             ci = 0
             for g in range(genes):
-                #ci += y2[j,g]/mw_view[i,g]
                 mw = 0
                 for k2 in range(k):
                     mw += M_view[g,k2]*W_view[k2,i]
                 ci += y2[j,g]/(mw+eps)
+                #ci += y2[j,g]/(mw_view[g]+eps)
             Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-ci)))
     return np.asarray(Wnew_view)
 
