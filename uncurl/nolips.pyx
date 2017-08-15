@@ -85,6 +85,8 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     """
     Calculates the Poisson Mixture objective value for a sparse matrix x.
     """
+    # TODO: I'm not sure how to calculate this efficiently so it's currently zero'ed out.
+    return 0
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
     cdef int clusters = W.shape[0]
@@ -108,13 +110,7 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
     cdef int k = W.shape[0]
-    cdef int use_mx_cache = False
-    if M_old[0].shape[0] == M.shape[0] and M_old[0].shape[1] == M.shape[1]:
-        if (M_old[0] == M).all():
-            use_mx_cache = True
-    if not use_mx_cache:
-        M_old[0] = M.copy()
-    # TODO: what if doing M*W causes memory issues?
+    # what if doing M*W causes memory issues?
     #cdef np.ndarray[DTYPE_t, ndim=2] MW = (M.dot(W)+eps).T
     #cdef double[:,:] mw_view = MW
     cdef double[:,:] M_view = M
@@ -125,29 +121,33 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef np.ndarray[DTYPE_t, ndim=1] lams = 1/(2*Xsum)
     cdef double[:,:] Wnew_view = np.empty((k, cells), dtype=np.double)
     cdef double[:,:] W_view = W
-    cdef np.ndarray[DTYPE_t, ndim=1] xrow
-    cdef np.ndarray[DTYPE_t, ndim=2] y2
+    #cdef np.ndarray[DTYPE_t, ndim=1] xrow
+    #cdef np.ndarray[DTYPE_t, ndim=2] y2
     cdef Py_ssize_t i, g, j, k2
-    X = sparse.csc_matrix(X)
+    #X = sparse.csc_matrix(X)
+    # convert to coo
+    X_coo = sparse.coo_matrix(X)
+    cdef int[:] row, col
+    cdef double[:] data_
+    row = X_coo.row#.astype(np.int32)
+    col = X_coo.col#.astype(np.int32)
+    data_ = X_coo.data#.astype(np.float64)
+    cdef double[:,:] cij = np.zeros((cells, k))
+    for ind in range(len(data_)):
+        i = col[ind]
+        g = row[ind]
+        xig = data_[ind]
+        mw = eps
+        for k2 in range(k):
+            mw += M_view[g,k2]*W_view[k2,i]
+        mw = xig/mw
+        for j in range(k):
+            cij[i,j] += M_view[g,j]*mw
     for i in range(cells):
         lam = lams[i]
-        if use_mx_cache:
-            y2 = mx_cache[i]
-        else:
-            y2 = np.zeros((genes, k))
-            xrow = X[:,i].toarray().flatten()
-            for j in range(k):
-                y2[:,j] = xrow*M[:,j]
-            y2 = y2.T
-            mx_cache[i] = y2
         for j in range(k):
-            ci = 0
-            for g in range(genes):
-                mw = 0
-                for k2 in range(k):
-                    mw += M_view[g,k2]*W_view[k2,i]
-                ci += y2[j,g]/(mw+eps)
-                #ci += y2[j,g]/(mw_view[g]+eps)
-            Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-ci)))
+            Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-cij[i,j])))
     return np.asarray(Wnew_view)
+
+
 

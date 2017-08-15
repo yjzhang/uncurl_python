@@ -30,7 +30,7 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
     genes = data.shape[0]
     cells = data.shape[1]
     clusters = means.shape[1]
-    cdef double[:,:] ll = np.zeros((cells, clusters), dtype=np.double)
+    cdef double[:,:] ll = np.zeros((cells, clusters), dtype=np.double) - means.sum(0)
     cdef double[:,:] mv = means
     cdef int[:] row, col
     cdef double[:] data_
@@ -45,7 +45,8 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
         g = row[ind]
         c = col[ind]
         for k in range(clusters):
-            ll[c,k] += i*logm[g, k] - mv[g, k]
+            ll[c,k] += i*logm[g, k]
+    # TODO: should subtract all means even where x is zero as well...
     return np.asarray(ll)
 
 def poisson_dist(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
