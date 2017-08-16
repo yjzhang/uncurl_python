@@ -5,7 +5,7 @@ from unittest import TestCase
 import numpy as np
 from scipy.io import loadmat
 
-from uncurl import state_estimation, simulation
+from uncurl import state_estimation, simulation, run_state_estimation
 
 class StateEstimationTest(TestCase):
 
@@ -112,5 +112,21 @@ class StateEstimationTest(TestCase):
         for p in itertools.permutations([0,1]):
             means_good = means_good or (np.mean(np.abs(sim_m-m[:,p]))<20.0)
             weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.2)
+        self.assertTrue(means_good)
+        self.assertTrue(weights_good)
+
+    def test_run_se(self):
+        """
+        test the run_state_estimation function
+        """
+        sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
+        sim_data = simulation.generate_state_data(sim_m, sim_w)
+        sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
+        m, w, ll = run_state_estimation(sim_data, 2, dist='Poiss', init_means=sim_means_noised, max_iters=10, disp=False)
+        means_good = False
+        weights_good = False
+        for p in itertools.permutations([0,1]):
+            means_good = means_good or (np.mean(np.abs(sim_m-m[:,p]))<20.0)
+            weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.3)
         self.assertTrue(means_good)
         self.assertTrue(weights_good)

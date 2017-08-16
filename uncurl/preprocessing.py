@@ -3,6 +3,18 @@ Misc functions...
 """
 
 import numpy as np
+from scipy import sparse
+
+def sparse_var(data):
+    """
+    Calculates the variance for each row of a sparse matrix.
+    """
+    data_csr = sparse.csr_matrix(data, dtype=np.float64)
+    means = np.array(data_csr.mean(1)).flatten()
+    sq = data_csr.power(2)
+    means_2 = np.array(sq.mean(1)).flatten()
+    var = means_2 - means**2
+    return var
 
 def max_variance_genes(data, nbins=10, frac=0.1):
     """
@@ -19,7 +31,11 @@ def max_variance_genes(data, nbins=10, frac=0.1):
     """
     indices = []
     means = data.mean(1)
-    var = data.var(1)
+    if sparse.issparse(data):
+        var = sparse_var(data)
+        means = np.array(means).flatten()
+    else:
+        var = data.var(1)
     mean_indices = means.argsort()
     n_elements = data.shape[0]/nbins
     frac_elements = int(n_elements*frac)

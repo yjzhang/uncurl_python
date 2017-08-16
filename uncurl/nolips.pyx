@@ -85,20 +85,35 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     """
     Calculates the Poisson Mixture objective value for a sparse matrix x.
     """
-    # TODO: I'm not sure how to calculate this efficiently so it's currently zero'ed out.
-    return 0
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
     cdef int clusters = W.shape[0]
     cdef double i, d
-    cdef Py_ssize_t j, k
+    cdef Py_ssize_t ind, g, c
     cdef double obj = 0
-    coo = sparse.coo_matrix(X).astype(np.double)
-    for i, g, c in zip(coo.data, coo.row, coo.col):
+    X_coo = sparse.coo_matrix(X)
+    cdef int[:] row, col
+    cdef double[:] data_
+    row = X_coo.row
+    col = X_coo.col
+    data_ = X_coo.data
+    cdef double[:] mw = np.empty(len(data_), dtype=np.double)
+    for ind in range(len(data_)):
+        g = row[ind]
+        c = col[ind]
+        d = 0
         for k in range(clusters):
-            d = np.sum(M[g,:]*W[:,c])
-            obj += d - i*np.log(d)
+            d += M[g,k]*W[k,c]
+        mw[ind] = d
+    cdef np.ndarray[DTYPE_t, ndim=1] D = np.asarray(mw)
+    cdef np.ndarray[DTYPE_t, ndim=1] data = np.asarray(data_)
+    obj = np.sum(-data*np.log(D))
+    M_sparse = sparse.csr_matrix(M)
+    W_sparse = sparse.csr_matrix(W)
+    MW_sparse = M_sparse*W_sparse
+    obj += MW_sparse.sum()
     return obj/genes
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
