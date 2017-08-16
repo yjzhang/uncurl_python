@@ -75,7 +75,7 @@ def objective(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.n
     Calculates the Poisson Mixture objective value.
     """
     cdef int genes = X.shape[0]
-    cdef np.ndarray[DTYPE_t, ndim=2] d = M.dot(W)
+    cdef np.ndarray[DTYPE_t, ndim=2] d = M.dot(W) + eps
     return np.sum(d - X*np.log(d))/genes
 
 @cython.boundscheck(False)
