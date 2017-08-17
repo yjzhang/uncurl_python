@@ -7,7 +7,7 @@ from zip_state_estimation import zip_estimate_state
 import numpy as np
 from scipy import sparse
 
-def run_state_estimation(data, clusters, dist='Poiss', reps=1, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=100, normalize=True):
+def run_state_estimation(data, clusters, dist='Poiss', reps=1, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='cluster'):
     """
     Runs state estimation for multiple initializations, returning the result with the highest log-likelihood. All the arguments are passed to the underlying state estimation functions (poisson_estimate_state, nb_estimate_state, zip_estimate_state).
 
@@ -24,6 +24,8 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, init_means=None, 
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
+        initialization (str, optional): If initial means and weights are not provided
+        , this describes how they are initialized. Options: 'cluster' (poisson kmeans), 'kmpp' (kmeans++ for means, random weights). Default: cluster.
 
     Returns:
         M (array): genes x clusters - state means
@@ -46,7 +48,8 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, init_means=None, 
         results = func(data, clusters,
                 init_means=init_means, init_weights=init_weights,
                 method=method, max_iters=max_iters, tol=tol, disp=disp,
-                inner_max_iters=inner_max_iters, normalize=normalize)
+                inner_max_iters=inner_max_iters, normalize=normalize,
+                initialization=initialization)
         M = results[0]
         W = results[1]
         if dist=='NB':

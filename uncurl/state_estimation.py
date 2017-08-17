@@ -77,44 +77,7 @@ def initialize_from_assignments(assignments, k, max_assign_weight=0.75):
                 init_W[a2, i] = max_assign_weight/(k-1)
     return init_W
 
-def run_state_estimation(data, clusters, dist='Poiss', reps=1, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=100, normalize=True):
-    """
-    Runs state estimation for multiple initializations, returning the result with the highest log-likelihood.
-
-    Args:
-        data (array): genes x cells
-        clusters (int): number of mixture components
-        dist (str, optional): Distribution used in state estimation. Options: 'Poiss', 'NB', 'ZIP'.
-        reps (int, optional): number of random initializations. Default: 10.
-        init_means (array, optional): initial centers - genes x clusters. Default: from Poisson kmeans
-        init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans
-        method (str, optional): optimization method. Current options are 'NoLips' and 'L-BFGS-B'. Default: 'NoLips'.
-        max_iters (int, optional): maximum number of iterations. Default: 10
-        tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10
-        disp (bool, optional): whether or not to display optimization parameters. Default: True
-        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
-        normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
-
-    Returns:
-        M (array): genes x clusters - state means
-        W (array): clusters x cells - state mixing components for each cell
-        ll (float): final log-likelihood
-    """
-    # TODO: add reps - number of starting points
-    func = poisson_estimate_state
-    if dist=='Poiss':
-        pass
-    elif dist=='NB':
-        pass
-    elif dist=='ZIP':
-        pass
-    else:
-        print('dist should be one of Poiss, NB, or ZIP. Using Poiss.')
-    for i in range(reps):
-        pass
-
-
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=100, normalize=True):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='cluster'):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -130,6 +93,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
+        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights). Default: cluster.
 
     Returns:
         M (array): genes x clusters - state means
@@ -138,9 +102,15 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     """
     genes, cells = data.shape
     if init_means is None:
-        assignments, means = poisson_cluster(data, clusters)
-        if init_weights is None:
-            init_weights = initialize_from_assignments(assignments, clusters)
+        if initialization=='cluster':
+            assignments, means = poisson_cluster(data, clusters)
+            if init_weights is None:
+                # TODO: decide on an initialization strategy?
+                init_weights = initialize_from_assignments(assignments, clusters,
+                        max_assign_weight=0.6)
+                #init_weights = np.random.random((clusters, cells))
+        elif initialization=='kmpp':
+            means, assignments = kmeans_pp(data, clusters)
     else:
         means = init_means.copy()
     means = means.astype(float)

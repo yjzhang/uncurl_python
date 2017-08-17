@@ -46,8 +46,18 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
         c = col[ind]
         for k in range(clusters):
             ll[c,k] += i*logm[g, k]
-    # TODO: should subtract all means even where x is zero as well...
     return np.asarray(ll)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def sparse_var(data):
+    """
+    Calculates the variance along each row of a sparse matrix.
+    """
+    # TODO: is this really necessary?
+    data_csr = sparse.csr_matrix(data)
+    cdef double[:] means = np.array(data.mean(1)).flatten()
 
 def poisson_dist(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
     """
