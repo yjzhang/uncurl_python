@@ -77,7 +77,7 @@ def initialize_from_assignments(assignments, k, max_assign_weight=0.75):
                 init_W[a2, i] = max_assign_weight/(k-1)
     return init_W
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='cluster'):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=10, tol=1e-10, disp=True, inner_max_iters=200, normalize=True, initialization='cluster'):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -91,7 +91,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         max_iters (int, optional): maximum number of iterations. Default: 10
         tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10
         disp (bool, optional): whether or not to display optimization parameters. Default: True
-        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
+        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 200
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
         initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights). Default: cluster.
 

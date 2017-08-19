@@ -18,14 +18,14 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, init_means=None, 
         reps (int, optional): number of random initializations. Default: 10.
         init_means (array, optional): initial centers - genes x clusters. Default: from Poisson kmeans
         init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans
-        method (str, optional): optimization method. Current options are 'NoLips' and 'L-BFGS-B'. Default: 'NoLips'.
+        method (str, optional): optimization method. Current options are 'NoLips' and 'L-BFGS-B'. Default: 'NoLips'. Only for Poisson; other methods always use L-BFGS-B.
         max_iters (int, optional): maximum number of iterations. Default: 10
         tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
         initialization (str, optional): If initial means and weights are not provided
-        , this describes how they are initialized. Options: 'cluster' (poisson kmeans), 'kmpp' (kmeans++ for means, random weights). Default: cluster.
+        , this describes how they are initialized. Options: 'cluster' (poisson kmeans), 'kmpp' (kmeans++ for means, random weights). Default: cluster. Currently only for Poisson state estimation.
 
     Returns:
         M (array): genes x clusters - state means
