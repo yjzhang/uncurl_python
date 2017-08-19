@@ -83,7 +83,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     cell state mixing weights.
 
     Args:
-        data (array): genes x cells
+        data (array): genes x cells array or sparse matrix.
         clusters (int): number of mixture components
         init_means (array, optional): initial centers - genes x clusters. Default: from Poisson kmeans
         init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans
@@ -151,7 +151,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         if disp:
             print('iter: {0}'.format(i))
         # step 1: given M, estimate W
-        #w_diff = np.sqrt(np.sum((w_res.x-w_init)**2))/w_init.size
         if method=='NoLips':
             for j in range(nolips_iters):
                 w_new = update_fn(X, means, w_init, Xsum)
@@ -191,8 +190,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         m_ll = objective_fn(X, means, w_new)
         if disp:
             print('Finished updating M. Objective value: {0}'.format(m_ll))
-        #ll = m_res.fun
-        #m_diff = np.sqrt(np.sum((m_res.x-m_init)**2))/m_init.size
     if normalize:
         w_new = w_new/w_new.sum(0)
     return means, w_new, m_ll

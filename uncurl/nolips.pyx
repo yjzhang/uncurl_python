@@ -89,19 +89,15 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     cdef int genes = X.shape[0]
     cdef int clusters = W.shape[0]
     cdef double d
-    cdef int i
-    cdef Py_ssize_t ind, g, c
+    cdef Py_ssize_t i, ind, g, c, start_ind, end_ind
     cdef double obj = 0
-    # TODO: make it work for CSC matrices?
+    # use a csc matrix, iterate through 
     X_csc = sparse.csc_matrix(X)
     cdef int[:] indices, indptr
     indices = X_csc.indices
     indptr = X_csc.indptr
-    cdef double[:] data_
-    data_ = X_csc.data
+    cdef double[:] data_ = X_csc.data
     cdef double[:] mw = np.zeros(len(data_))
-    cdef int start_ind, end_ind
-    # based on timing results, it seems that parallel w/guided schedule and 4 threads only improves runtime by 10%
     for i in range(cells):
         c = i
         start_ind = indptr[i]
@@ -132,9 +128,6 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
     cdef int k = W.shape[0]
-    # what if doing M*W causes memory issues?
-    #cdef np.ndarray[DTYPE_t, ndim=2] MW = (M.dot(W)+eps).T
-    #cdef double[:,:] mw_view = MW
     cdef double[:,:] M_view = M
     cdef np.ndarray[DTYPE_t, ndim=1] R = M.sum(0)
     cdef double[:] R_view = R
@@ -143,19 +136,13 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef np.ndarray[DTYPE_t, ndim=1] lams = 1/(2*Xsum)
     cdef double[:,:] Wnew_view = np.empty((k, cells), dtype=np.double)
     cdef double[:,:] W_view = W
-    #cdef np.ndarray[DTYPE_t, ndim=1] xrow
-    #cdef np.ndarray[DTYPE_t, ndim=2] y2
-    cdef Py_ssize_t i, g, j, k2
-    #X = sparse.csc_matrix(X)
+    cdef Py_ssize_t i, g, j, k2, start_ind, end_ind
     # convert to csc
     X_csc = sparse.csc_matrix(X)
-    cdef int[:] indices, indptr
-    indices = X_csc.indices
-    indptr = X_csc.indptr
-    cdef double[:] data_
-    data_ = X_csc.data
+    cdef int[:] indices = X_csc.indices
+    cdef int[:] indptr = X_csc.indptr
+    cdef double[:] data_ = X_csc.data
     cdef double[:,:] cij = np.zeros((cells, k))
-    cdef int start_ind, end_ind
     # based on timing results, it seems that parallel w/guided schedule and 4 threads only improves runtime by 10%
     for i in range(cells):
     #for i in prange(cells, nogil=True, schedule='guided', num_threads=4):
@@ -174,8 +161,5 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
         for j in range(k):
             Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-cij[i,j])))
     return np.asarray(Wnew_view)
-
-
-
 
 
