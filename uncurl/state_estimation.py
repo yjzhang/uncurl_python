@@ -128,7 +128,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         Xsum = np.asarray(X.sum(0)).flatten()
         Xsum_m = np.asarray(X.sum(1)).flatten()
         # L-BFGS-B won't work right now for sparse matrices
-        X = sparse.coo_matrix(X)
+        # convert to csc
+        X = sparse.csc_matrix(X)
         method = 'NoLips'
         objective_fn = sparse_objective
     else:
@@ -136,6 +137,16 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         update_fn = nolips_update_w
         Xsum = X.sum(0)
         Xsum_m = X.sum(1)
+        # TODO: if method is NoLips, converting to a sparse matrix
+        # will always improve the performance (?) and never lower accuracy...
+        # will almost always improve performance?
+        # if sparsity is below 40%?
+        if method == 'NoLips':
+            if np.count_nonzero(X) < 0.4*genes*cells:
+                update_fn = sparse_nolips_update_w
+                X = sparse.csc_matrix(X)
+                objective_fn = sparse_objective
+    XT = X.T
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
@@ -164,7 +175,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         # step 2: given W, update M
         if method=='NoLips':
             for j in range(nolips_iters):
-                m_new = update_fn(X.T, w_new.T, means.T, Xsum_m)
+                m_new = update_fn(XT, w_new.T, means.T, Xsum_m)
                 m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
                 means = m_new.T
                 if m_diff <= tol:

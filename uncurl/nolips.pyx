@@ -88,23 +88,30 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
     cdef int clusters = W.shape[0]
-    cdef double i, d
+    cdef double d
+    cdef int i
     cdef Py_ssize_t ind, g, c
     cdef double obj = 0
-    X_coo = sparse.coo_matrix(X)
-    cdef int[:] row, col
+    # TODO: make it work for CSC matrices?
+    X_csc = sparse.csc_matrix(X)
+    cdef int[:] indices, indptr
+    indices = X_csc.indices
+    indptr = X_csc.indptr
     cdef double[:] data_
-    row = X_coo.row
-    col = X_coo.col
-    data_ = X_coo.data
-    cdef double[:] mw = np.empty(len(data_), dtype=np.double)
-    for ind in range(len(data_)):
-        g = row[ind]
-        c = col[ind]
-        d = 0
-        for k in range(clusters):
-            d += M[g,k]*W[k,c]
-        mw[ind] = d
+    data_ = X_csc.data
+    cdef double[:] mw = np.zeros(len(data_))
+    cdef int start_ind, end_ind
+    # based on timing results, it seems that parallel w/guided schedule and 4 threads only improves runtime by 10%
+    for i in range(cells):
+        c = i
+        start_ind = indptr[i]
+        end_ind = indptr[i+1]
+        for ind in range(start_ind, end_ind):
+            g = indices[ind]
+            d = 0
+            for k in range(clusters):
+                d += M[g,k]*W[k,c]
+            mw[ind] = d
     cdef np.ndarray[DTYPE_t, ndim=1] D = np.asarray(mw)
     cdef np.ndarray[DTYPE_t, ndim=1] data = np.asarray(data_)
     obj = np.sum(-data*np.log(D))
@@ -140,29 +147,35 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     #cdef np.ndarray[DTYPE_t, ndim=2] y2
     cdef Py_ssize_t i, g, j, k2
     #X = sparse.csc_matrix(X)
-    # convert to coo
-    X_coo = sparse.coo_matrix(X)
-    cdef int[:] row, col
+    # convert to csc
+    X_csc = sparse.csc_matrix(X)
+    cdef int[:] indices, indptr
+    indices = X_csc.indices
+    indptr = X_csc.indptr
     cdef double[:] data_
-    row = X_coo.row#.astype(np.int32)
-    col = X_coo.col#.astype(np.int32)
-    data_ = X_coo.data#.astype(np.float64)
+    data_ = X_csc.data
     cdef double[:,:] cij = np.zeros((cells, k))
-    for ind in range(len(data_)):
-        i = col[ind]
-        g = row[ind]
-        xig = data_[ind]
-        mw = eps
-        for k2 in range(k):
-            mw += M_view[g,k2]*W_view[k2,i]
-        mw = xig/mw
-        for j in range(k):
-            cij[i,j] += M_view[g,j]*mw
+    cdef int start_ind, end_ind
+    # based on timing results, it seems that parallel w/guided schedule and 4 threads only improves runtime by 10%
     for i in range(cells):
+    #for i in prange(cells, nogil=True, schedule='guided', num_threads=4):
+        #i = cells - i - 1
+        start_ind = indptr[i]
+        end_ind = indptr[i+1]
+        for ind in range(start_ind, end_ind):
+            g = indices[ind]
+            mw = eps
+            for k2 in range(k):
+                mw += M_view[g,k2]*W_view[k2,i]
+            mw = data_[ind]/mw
+            for j in range(k):
+                cij[i,j] += M_view[g,j]*mw
         lam = lams[i]
         for j in range(k):
             Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-cij[i,j])))
     return np.asarray(Wnew_view)
+
+
 
 
 
