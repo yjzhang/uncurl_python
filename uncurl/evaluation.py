@@ -25,3 +25,9 @@ def purity(labels, true_labels):
         lab, count = counts.most_common()[0]
         purity += count
     return float(purity)/len(labels)
+
+def mdl(ll, k, data):
+    """
+    Returns the minimum description length score of the model given its
+    log-likelihood and k.
+    """

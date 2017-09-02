@@ -52,4 +52,16 @@ def max_variance_genes(data, nbins=10, frac=0.1):
         indices.extend(ind)
     return indices
 
-
+def cell_normalize(data):
+    """
+    Returns the data where the expression is normalized so that the total
+    count per cell is equal.
+    """
+    data_norm = data.copy().astype(float)
+    total_umis = []
+    for i in range(data.shape[1]):
+        total_umis.append(data_norm[:,i].sum())
+        data_norm[:,i] /= total_umis[i]
+    med = np.median(total_umis)
+    data_norm *= med
+    return data_norm
