@@ -7,6 +7,7 @@ import numpy as np
 from state_estimation import poisson_estimate_state
 
 from sklearn.decomposition import NMF
+from sklearn.model_selection import KFold
 
 def state_estimation_ensemble(data, k, n_runs=10, M_list=[], **se_params):
     """
@@ -59,12 +60,26 @@ def nmf_ensemble(data, k, n_runs=10, W_list=[], **se_params):
     W_stacked = np.hstack(W_list)
     nmf_w = nmf.fit_transform(W_stacked)
     nmf_h = nmf.components_
-    H_new = data.T.dot(nmf_h)
+    H_new = data.T.dot(nmf_w).T
     #W_new = W_new/W_new.sum(0)
+    # alternatively, use nmf_w and h_new as initializations for another NMF round?
     return nmf_w, H_new
 
-def state_estimation_kfold(data, k, **se_params):
+def nmf_kfold(data, k, n_runs=10, **se_params):
     """
-    Runs K-fold ensemble topic modeling
+    Runs K-fold ensemble topic modeling (Belford et al. 2017)
     """
     # TODO
+    nmf = NMF(k)
+    W_list = []
+    kf = KFold(n_splits=n_runs, shuffle=True)
+    # TODO: randomly divide data into n_runs folds
+    for train_index, test_index in kf.split(data.T):
+        W = nmf.fit_transform(data[:,train_index])
+        W_list.append(W)
+    W_stacked = np.hstack(W_list)
+    nmf_w = nmf.fit_transform(W_stacked)
+    nmf_h = nmf.components_
+    H_new = data.T.dot(nmf_w).T
+    #W_new = W_new/W_new.sum(0)
+    return nmf_w, H_new
