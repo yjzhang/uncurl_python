@@ -285,9 +285,9 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
                         purities.append(purity(labels, true_labels))
                         if i==0:
                             names.append(name + '_' + cluster.name)
-                        r += 1
                         print(names[r])
                         print(purity(labels, true_labels))
+                        r += 1
                     except:
                         print('failed to do clustering')
                 elif type(cluster) == list:
@@ -297,9 +297,9 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
                             purities.append(purity(labels, true_labels))
                             if i==0:
                                 names.append(name + '_' + c.name)
-                            r += 1
                             print(names[r])
                             print(purity(labels, true_labels))
+                            r += 1
                         except:
                             print('failed to do clustering')
         print('\t'.join(names))
