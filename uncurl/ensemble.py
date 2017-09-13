@@ -102,26 +102,36 @@ def nmf_kfold(data, k, n_runs=10, **nmf_params):
 # 3. run consensus clustering on km results
 # 4. use semi-supervision to get
 
-def enhanced_nmf_init(data, clusters, k):
+def nmf_init(data, clusters, k, init='enhanced'):
     """
     runs enhanced NMF initialization from clusterings (Gong 2013)
+
+    'init' can be 'enhanced' or 'basic'...
     """
     init_w = np.zeros((data.shape[0], k))
     for i in range(k):
         init_w[:,i] = data[:,clusters==i].mean(1)
     init_h = np.zeros((k, data.shape[1]))
-    distances = np.zeros((k, data.shape[1]))
-    for i in range(k):
-        for j in range(data.shape[1]):
-            distances[i,j] = np.sqrt(((data[:,j] - init_w[:,i])**2).sum())
-    for i in range(k):
-        for j in range(data.shape[1]):
-            init_h[i,j] = 1/((distances[:,j]/distances[i,j])**(-2)).sum()
+    if init == 'enhanced':
+        distances = np.zeros((k, data.shape[1]))
+        for i in range(k):
+            for j in range(data.shape[1]):
+                distances[i,j] = np.sqrt(((data[:,j] - init_w[:,i])**2).sum())
+        for i in range(k):
+            for j in range(data.shape[1]):
+                init_h[i,j] = 1/((distances[:,j]/distances[i,j])**(-2)).sum()
+    else:
+        init_h = initialize_from_assignments(clusters, k)
     return init_w, init_h
 
-def nmf_tsne(data, k, n_runs=10):
+def nmf_tsne(data, k, n_runs=10, init='enhanced', **params):
     """
     runs tsne-consensus-NMF
+
+    1. run a bunch of NMFs, get W and H
+    2. run tsne + km on all WH matrices
+    3. run consensus clustering on all km results
+    4. use consensus clustering as initialization for a new run of NMF
     """
     # TODO
     clusters = []
@@ -138,16 +148,29 @@ def nmf_tsne(data, k, n_runs=10):
     consensus = CE.cluster_ensembles(clusterings, verbose=False, N_clusters_max=k)
     nmf_new = NMF(k, init='custom')
     # TODO: find an initialization for the consensus W and H
-    init_w, init_h = enhanced_nmf_init(data, consensus, k)
+    init_w, init_h = nmf_init(data, consensus, k, init)
     W = nmf_new.fit_transform(data, W=init_w, H=init_h)
     H = nmf_new.components_
     return W, H
 
-def poisson_se_tsne(data, k, n_runs=10, **se_params):
+def poisson_se_tsne(data, k, n_runs=10, init='basic', **se_params):
     """
     runs tsne-consensus-poissonSE
     """
-    # TODO
+    clusters = []
+    tsne = TSNE(2)
+    km = KMeans(k)
+    for i in range(n_runs):
+        m, w, ll = poisson_estimate_state(data, k, **se_params)
+        tsne_mw = tsne.fit_transform(m.dot(w).T)
+        clust = km.fit_predict(tsne_mw)
+        clusters.append(clust)
+    clusterings = np.vstack(clusters)
+    consensus = CE.cluster_ensembles(clusterings, verbose=False, N_clusters_max=k)
+    # TODO: find an initialization for the consensus M and W
+    init_m, init_w = nmf_init(data, consensus, k, init)
+    M, W, ll = poisson_estimate_state(data, k, init_means=init_m, init_weights=init_w, **se_params)
+    return M, W, ll
 
 def lensNMF(data, k, ks=1):
     """

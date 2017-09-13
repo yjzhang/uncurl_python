@@ -11,7 +11,7 @@ import numpy as np
 from state_estimation import poisson_estimate_state
 from evaluation import purity
 from preprocessing import cell_normalize
-from ensemble import nmf_ensemble, nmf_kfold
+from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne
 
 from scipy import sparse
 from scipy.special import log1p
@@ -37,15 +37,17 @@ class Preprocess(object):
     """
 
     def __init__(self, **params):
-        self.output_names = []
+        if 'output_names' in params:
+            self.output_names = params['output_names']
+            params.pop('output_names')
         self.params = params
 
     def run(self, data):
         """
         should return a list of output matrices of the same length
-        as self.output_names.
+        as self.output_names, and an objective value.
         """
-        return data
+        return data, 0
 
 class PoissonSE(Preprocess):
     """
@@ -56,11 +58,11 @@ class PoissonSE(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['Poisson_W', 'Poisson_MW']
-        self.params = params
+        super(PoissonSE, self).__init__(**params)
 
     def run(self, data):
         W, M, ll = poisson_estimate_state(data, **self.params)
-        return [W, M.dot(W)]
+        return [W, M.dot(W)], ll
 
 class LogNMF(Preprocess):
     """
@@ -71,7 +73,7 @@ class LogNMF(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['logNMF_H', 'logNMF_WH']
-        self.params = params
+        super(LogNMF, self).__init__(**params)
         self.nmf = NMF(params['k'])
 
     def run(self, data):
@@ -82,7 +84,7 @@ class LogNMF(Preprocess):
             data_norm = log1p(data_norm)
         W = self.nmf.fit_transform(data_norm)
         H = self.nmf.components_
-        return [H, W.dot(H)]
+        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
 
 class EnsembleNMF(Preprocess):
     """
@@ -94,7 +96,7 @@ class EnsembleNMF(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['H', 'WH']
-        self.params = params
+        super(EnsembleNMF, self).__init__(**params)
 
     def run(self, data):
         data_norm = cell_normalize(data)
@@ -103,7 +105,7 @@ class EnsembleNMF(Preprocess):
         else:
             data_norm = log1p(data_norm)
         W, H = nmf_ensemble(data_norm, **self.params)
-        return [H, W.dot(H)]
+        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
 
 class KFoldNMF(Preprocess):
     """
@@ -115,7 +117,7 @@ class KFoldNMF(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['H', 'WH']
-        self.params = params
+        super(KFoldNMF, self).__init__(**params)
 
     def run(self, data):
         data_norm = cell_normalize(data)
@@ -124,15 +126,16 @@ class KFoldNMF(Preprocess):
         else:
             data_norm = log1p(data_norm)
         W, H = nmf_kfold(data_norm, **self.params)
-        return [H, W.dot(H)]
+        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
 
 class EnsembleTsneNMF(Preprocess):
     """
+    Runs tsne-based ensemble NMF
     """
 
     def __init__(self, **params):
-        self.output_names = ['Ensemble_H', 'Ensemble_WH']
-        self.params = params
+        self.output_names = ['Ensemble_NMF_H', 'Ensemble_NMF_WH']
+        super(EnsembleTsneNMF, self).__init__(**params)
 
     def run(self, data):
         data_norm = cell_normalize(data)
@@ -140,20 +143,34 @@ class EnsembleTsneNMF(Preprocess):
             data_norm = data_norm.log1p()
         else:
             data_norm = log1p(data_norm)
+        W, H = nmf_tsne(data_norm, **self.params)
+        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
 
+class EnsembleTsnePoissonSE(Preprocess):
+    """
+    Runs tsne-based ensemble Poisson state estimation
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['Ensemble_W', 'Ensemble_MW']
+        super(EnsembleTsnePoissonSE, self).__init__(**params)
+
+    def run(self, data):
+        M, W, obj = poisson_se_tsne(data, **self.params)
+        return [W, M.dot(W)], obj
 
 class Simlr(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['PCA50_SIMLR']
-        self.params = params
         # TODO: make params tunable... what do these numbers even mean???
         self.simlr = SIMLR.SIMLR_LARGE(8, 30, 0)
+        super(Simlr, self).__init__(**params)
 
     def run(self, data):
         X = SIMLR.helper.fast_pca(data.T, 50)
         S, F, val, ind = self.simlr.fit(X)
-        return [F.T]
+        return [F.T], 0
 
 class Magic(Preprocess):
     # TODO: this requires python 3
@@ -258,8 +275,9 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
     for i in range(n_runs):
         print('run {0}'.format(i))
         purities = []
+        r = 0
         for preproc, cluster in methods:
-            preprocessed = preproc.run(data)
+            preprocessed, ll = preproc.run(data)
             for name, pre in zip(preproc.output_names, preprocessed):
                 if isinstance(cluster, Cluster):
                     try:
@@ -267,8 +285,11 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
                         purities.append(purity(labels, true_labels))
                         if i==0:
                             names.append(name + '_' + cluster.name)
+                        r += 1
+                        print(names[r])
+                        print(purity(labels, true_labels))
                     except:
-                        pass
+                        print('failed to do clustering')
                 elif type(cluster) == list:
                     for c in cluster:
                         try:
@@ -276,8 +297,12 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
                             purities.append(purity(labels, true_labels))
                             if i==0:
                                 names.append(name + '_' + c.name)
+                            r += 1
+                            print(names[r])
+                            print(purity(labels, true_labels))
                         except:
-                            pass
-        print('\t'.join(map(str, purities)))
+                            print('failed to do clustering')
+        print('\t'.join(names))
+        print('purities: ' + '\t'.join(map(str, purities)))
         results.append(purities)
     return results, names
