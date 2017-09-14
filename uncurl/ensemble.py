@@ -7,10 +7,9 @@ import numpy as np
 from state_estimation import poisson_estimate_state, initialize_from_assignments
 
 from sklearn.cluster import KMeans
-from sklearn.decomposition import NMF
+from sklearn.decomposition import NMF, non_negative_factorization
 from sklearn.manifold import TSNE
 from sklearn.model_selection import KFold
-from sklearn.metrics.pairwise import cosine_similarity
 
 import Cluster_Ensembles as CE
 
@@ -106,7 +105,10 @@ def nmf_init(data, clusters, k, init='enhanced'):
     """
     runs enhanced NMF initialization from clusterings (Gong 2013)
 
-    'init' can be 'enhanced' or 'basic'...
+    There are 3 options for init:
+        enhanced - uses EIn-NMF from Gong 2013
+        basic - uses means for W, assigns H such that the chosen cluster for a given cell has value 0.75 and all others have 0.25/(k-1).
+        nmf - uses means for W, and assigns H using the NMF objective while holding W constant.
     """
     init_w = np.zeros((data.shape[0], k))
     for i in range(k):
@@ -120,8 +122,11 @@ def nmf_init(data, clusters, k, init='enhanced'):
         for i in range(k):
             for j in range(data.shape[1]):
                 init_h[i,j] = 1/((distances[:,j]/distances[i,j])**(-2)).sum()
-    else:
+    elif init == 'basic':
         init_h = initialize_from_assignments(clusters, k)
+    elif init == 'nmf':
+        init_h_, _, n_iter = non_negative_factorization(data.T, n_components=k, init='custom', update_H=False, H=init_w.T)
+        init_h = init_h_.T
     return init_w, init_h
 
 def nmf_tsne(data, k, n_runs=10, init='enhanced', **params):
@@ -132,8 +137,8 @@ def nmf_tsne(data, k, n_runs=10, init='enhanced', **params):
     2. run tsne + km on all WH matrices
     3. run consensus clustering on all km results
     4. use consensus clustering as initialization for a new run of NMF
+    5. return the W and H from the resulting NMF run
     """
-    # TODO
     clusters = []
     nmf = NMF(k)
     tsne = TSNE(2)
@@ -162,13 +167,12 @@ def poisson_se_tsne(data, k, n_runs=10, init='basic', **se_params):
     km = KMeans(k)
     for i in range(n_runs):
         m, w, ll = poisson_estimate_state(data, k, **se_params)
-        tsne_mw = tsne.fit_transform(m.dot(w).T)
-        clust = km.fit_predict(tsne_mw)
+        tsne_w = tsne.fit_transform(w.T)
+        clust = km.fit_predict(tsne_w)
         clusters.append(clust)
     clusterings = np.vstack(clusters)
     consensus = CE.cluster_ensembles(clusterings, verbose=False, N_clusters_max=k)
-    # TODO: find an initialization for the consensus M and W
-    init_m, init_w = nmf_init(data, consensus, k, init)
+    init_m, init_w = nmf_init(data, consensus, k, 'basic')
     M, W, ll = poisson_estimate_state(data, k, init_means=init_m, init_weights=init_w, **se_params)
     return M, W, ll
 
