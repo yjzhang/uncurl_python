@@ -41,13 +41,15 @@ class Preprocess(object):
             self.output_names = params['output_names']
             params.pop('output_names')
         self.params = params
+        if not hasattr(self, 'output_names'):
+            self.output_name = ['Data']
 
     def run(self, data):
         """
         should return a list of output matrices of the same length
         as self.output_names, and an objective value.
         """
-        return data, 0
+        return [data], 0
 
 class PoissonSE(Preprocess):
     """
@@ -61,7 +63,7 @@ class PoissonSE(Preprocess):
         super(PoissonSE, self).__init__(**params)
 
     def run(self, data):
-        W, M, ll = poisson_estimate_state(data, **self.params)
+        M, W, ll = poisson_estimate_state(data, **self.params)
         return [W, M.dot(W)], ll
 
 class LogNMF(Preprocess):
@@ -84,7 +86,13 @@ class LogNMF(Preprocess):
             data_norm = log1p(data_norm)
         W = self.nmf.fit_transform(data_norm)
         H = self.nmf.components_
-        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
+        if sparse.issparse(data_norm):
+            ws = sparse.csr_matrix(W)
+            hs = sparse.csr_matrix(H)
+            cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
+        else:
+            cost = 0.5*((data_norm - W.dot(H))**2).sum()
+        return [H, W.dot(H)], cost
 
 class EnsembleNMF(Preprocess):
     """
@@ -105,7 +113,13 @@ class EnsembleNMF(Preprocess):
         else:
             data_norm = log1p(data_norm)
         W, H = nmf_ensemble(data_norm, **self.params)
-        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
+        if sparse.issparse(data_norm):
+            ws = sparse.csr_matrix(W)
+            hs = sparse.csr_matrix(H)
+            cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
+        else:
+            cost = 0.5*((data_norm - W.dot(H))**2).sum()
+        return [H, W.dot(H)], cost
 
 class KFoldNMF(Preprocess):
     """
@@ -126,7 +140,13 @@ class KFoldNMF(Preprocess):
         else:
             data_norm = log1p(data_norm)
         W, H = nmf_kfold(data_norm, **self.params)
-        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
+        if sparse.issparse(data_norm):
+            ws = sparse.csr_matrix(W)
+            hs = sparse.csr_matrix(H)
+            cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
+        else:
+            cost = 0.5*((data_norm - W.dot(H))**2).sum()
+        return [H, W.dot(H)], cost
 
 class EnsembleTsneNMF(Preprocess):
     """
@@ -144,7 +164,13 @@ class EnsembleTsneNMF(Preprocess):
         else:
             data_norm = log1p(data_norm)
         W, H = nmf_tsne(data_norm, **self.params)
-        return [H, W.dot(H)], 0.5*((data_norm - W.dot(H))**2).sum()
+        if sparse.issparse(data_norm):
+            ws = sparse.csr_matrix(W)
+            hs = sparse.csr_matrix(H)
+            cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
+        else:
+            cost = 0.5*((data_norm - W.dot(H))**2).sum()
+        return [H, W.dot(H)], cost
 
 class EnsembleTsnePoissonSE(Preprocess):
     """
