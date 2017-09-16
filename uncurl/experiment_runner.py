@@ -12,11 +12,12 @@ from state_estimation import poisson_estimate_state
 from evaluation import purity
 from preprocessing import cell_normalize
 from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne
+from clustering import poisson_cluster
 
 from scipy import sparse
 from scipy.special import log1p
 
-from sklearn.decomposition import NMF
+from sklearn.decomposition import NMF, TruncatedSVD
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
@@ -42,14 +43,62 @@ class Preprocess(object):
             params.pop('output_names')
         self.params = params
         if not hasattr(self, 'output_names'):
-            self.output_name = ['Data']
+            self.output_names = ['Data']
 
     def run(self, data):
         """
         should return a list of output matrices of the same length
         as self.output_names, and an objective value.
+
+        data is of shape (genes, cells).
         """
         return [data], 0
+
+class Log(Preprocess):
+    """
+    Takes the natural log of the data+1.
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['LogData']
+        super(Log, self).__init__(**params)
+
+    def run(self, data):
+        if sparse.issparse(data):
+            return [data.log1p()], 0
+        else:
+            return [np.log1p(data)], 0
+
+class LogNorm(Preprocess):
+    """
+    First, normalizes the counts per cell, and then takes log(normalized_counts+1).
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['LogNorm']
+        super(LogNorm, self).__init__(**params)
+
+    def run(self, data):
+        data_norm = cell_normalize(data)
+        if sparse.issparse(data_norm):
+            return [data_norm.log1p()], 0
+        else:
+            return [np.log1p(data_norm)], 0
+
+class TSVD(Preprocess):
+    """
+    Runs truncated SVD on the data. the input param k is the number of
+    dimensions.
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['TSVD']
+        self.tsvd = TruncatedSVD(params['k'])
+        super(TSVD, self).__init__(**params)
+
+    def run(self, data):
+        return [self.tsvd.fit_transform(data.T)], 0
+
 
 class PoissonSE(Preprocess):
     """
@@ -68,7 +117,7 @@ class PoissonSE(Preprocess):
 
 class LogNMF(Preprocess):
     """
-    Runs NMF on log(data+1), returning H and W*H.
+    Runs NMF on log(normalize(data)+1), returning H and W*H.
 
     Requires a 'k' parameter, which is the rank of the matrices.
     """
@@ -92,6 +141,29 @@ class LogNMF(Preprocess):
             cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
         else:
             cost = 0.5*((data_norm - W.dot(H))**2).sum()
+        return [H, W.dot(H)], cost
+
+class BasicNMF(Preprocess):
+    """
+    Runs NMF on data, returning H and W*H.
+
+    Requires a 'k' parameter, which is the rank of the matrices.
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['NMF_H', 'NMF_WH']
+        super(BasicNMF, self).__init__(**params)
+        self.nmf = NMF(params['k'])
+
+    def run(self, data):
+        W = self.nmf.fit_transform(data)
+        H = self.nmf.components_
+        if sparse.issparse(data):
+            ws = sparse.csr_matrix(W)
+            hs = sparse.csr_matrix(H)
+            cost = 0.5*((data - ws.dot(hs)).power(2)).sum()
+        else:
+            cost = 0.5*((data - W.dot(H))**2).sum()
         return [H, W.dot(H)], cost
 
 class EnsembleNMF(Preprocess):
@@ -232,6 +304,33 @@ class Argmax(Cluster):
     def run(self, data):
         assert(data.shape[0]==self.n_classes)
         return data.argmax(0)
+
+class KM(Cluster):
+    """
+    k-means clustering
+    """
+
+    def __init__(self, n_classes, **params):
+        super(KM, self).__init__(n_classes, **params)
+        self.name = 'km'
+        self.km = KMeans(n_classes)
+
+    def run(self, data):
+        return self.km.fit_predict(data.T)
+
+class PoissonCluster(Cluster):
+    """
+    Poisson k-means clustering
+    """
+
+    def __init__(self, n_classes, **params):
+        super(PoissonCluster, self).__init__(n_classes, **params)
+        self.name = 'poisson_km'
+
+    def run(self, data):
+        assignments, means = poisson_cluster(data, self.n_classes)
+        return assignments
+
 
 class PcaKm(Cluster):
     """
