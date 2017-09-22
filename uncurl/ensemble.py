@@ -3,11 +3,15 @@
 # method based on https://arxiv.org/abs/1702.07186
 # combine all the means produced...
 
-import numpy as np
+from preprocessing import cell_normalize
 from state_estimation import poisson_estimate_state, initialize_from_assignments
 
+import numpy as np
+
+from scipy import sparse
+
 from sklearn.cluster import KMeans
-from sklearn.decomposition import NMF, non_negative_factorization
+from sklearn.decomposition import NMF, non_negative_factorization, TruncatedSVD
 from sklearn.manifold import TSNE
 from sklearn.model_selection import KFold
 
@@ -111,8 +115,12 @@ def nmf_init(data, clusters, k, init='enhanced'):
         nmf - uses means for W, and assigns H using the NMF objective while holding W constant.
     """
     init_w = np.zeros((data.shape[0], k))
-    for i in range(k):
-        init_w[:,i] = data[:,clusters==i].mean(1)
+    if sparse.issparse(data):
+        for i in range(k):
+            init_w[:,i] = np.array(data[:,clusters==i].mean(1)).flatten()
+    else:
+        for i in range(k):
+            init_w[:,i] = data[:,clusters==i].mean(1)
     init_h = np.zeros((k, data.shape[1]))
     if init == 'enhanced':
         distances = np.zeros((k, data.shape[1]))
@@ -175,6 +183,45 @@ def poisson_se_tsne(data, k, n_runs=10, init='basic', **se_params):
     init_m, init_w = nmf_init(data, consensus, k, 'basic')
     M, W, ll = poisson_estimate_state(data, k, init_means=init_m, init_weights=init_w, **se_params)
     return M, W, ll
+
+def poisson_se_multiclust(data, k, n_runs=10, **se_params):
+    """
+    Initializes state estimation using a consensus of several
+    fast clustering/dimensionality reduction algorithms.
+
+    It does a consensus of 8 truncated SVD - k-means rounds, and uses the
+    basic nmf_init to create starting points.
+    """
+    clusters = []
+    norm_data = cell_normalize(data)
+    if sparse.issparse(data):
+        log_data = data.log1p()
+        log_norm = norm_data.log1p()
+    else:
+        log_data = np.log1p(data)
+        log_norm = np.log1p(norm_data)
+    tsvd_50 = TruncatedSVD(50)
+    tsvd_k = TruncatedSVD(k)
+    km = KMeans(k)
+    tsvd1 = tsvd_50.fit_transform(data.T)
+    tsvd2 = tsvd_k.fit_transform(data.T)
+    tsvd3 = tsvd_50.fit_transform(log_data.T)
+    tsvd4 = tsvd_k.fit_transform(log_data.T)
+    tsvd5 = tsvd_50.fit_transform(norm_data.T)
+    tsvd6 = tsvd_k.fit_transform(norm_data.T)
+    tsvd7 = tsvd_50.fit_transform(log_norm.T)
+    tsvd8 = tsvd_k.fit_transform(log_norm.T)
+    tsvd_results = [tsvd1, tsvd2, tsvd3, tsvd4, tsvd5, tsvd6, tsvd7, tsvd8]
+    clusters = []
+    for t in tsvd_results:
+        clust = km.fit_predict(t)
+        clusters.append(clust)
+    clusterings = np.vstack(clusters)
+    consensus = CE.cluster_ensembles(clusterings, verbose=False, N_clusters_max=k)
+    init_m, init_w = nmf_init(data, consensus, k, 'basic')
+    M, W, ll = poisson_estimate_state(data, k, init_means=init_m, init_weights=init_w, **se_params)
+    return M, W, ll
+
 
 def lensNMF(data, k, ks=1):
     """

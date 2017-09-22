@@ -11,16 +11,20 @@ import numpy as np
 from state_estimation import poisson_estimate_state
 from evaluation import purity
 from preprocessing import cell_normalize
-from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne
+from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust
 from clustering import poisson_cluster
 
 from scipy import sparse
 from scipy.special import log1p
 
-from sklearn.decomposition import NMF, TruncatedSVD
-from sklearn.decomposition import PCA
+from sklearn.metrics.cluster import normalized_mutual_info_score as nmi
+from sklearn.metrics.cluster import adjusted_rand_score as ari
+
+from sklearn.decomposition import NMF, TruncatedSVD, PCA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
+
+import Cluster_Ensembles as CE
 
 import SIMLR
 
@@ -112,6 +116,11 @@ class PoissonSE(Preprocess):
         super(PoissonSE, self).__init__(**params)
 
     def run(self, data):
+        """
+        Returns:
+            list of W, M*W
+            ll
+        """
         M, W, ll = poisson_estimate_state(data, **self.params)
         return [W, M.dot(W)], ll
 
@@ -257,16 +266,36 @@ class EnsembleTsnePoissonSE(Preprocess):
         M, W, obj = poisson_se_tsne(data, **self.params)
         return [W, M.dot(W)], obj
 
+class EnsembleTSVDPoissonSE(Preprocess):
+    """
+    Runs Poisson state estimation initialized from 8 runs of tsvd-km.
+
+    params: k - dimensionality
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['TSVDEnsemble_W', 'TSVDEnsemble_MW']
+        super(EnsembleTSVDPoissonSE, self).__init__(**params)
+
+    def run(self, data):
+        M, W, obj = poisson_se_multiclust(data, **self.params)
+        return [W, M.dot(W)], obj
+
 class Simlr(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['PCA50_SIMLR']
         # TODO: make params tunable... what do these numbers even mean???
-        self.simlr = SIMLR.SIMLR_LARGE(8, 30, 0)
+        self.simlr = SIMLR.SIMLR_LARGE(params['k'], 30, 0)
         super(Simlr, self).__init__(**params)
 
     def run(self, data):
-        X = SIMLR.helper.fast_pca(data.T, 50)
+        X = np.log1p(data)
+        if 'n_pca_components' in self.params:
+            n_components = self.params['n_pca_components']
+        else:
+            n_components = 50
+        X = SIMLR.helper.fast_pca(data.T, n_components)
         S, F, val, ind = self.simlr.fit(X)
         return [F.T], 0
 
@@ -358,7 +387,10 @@ class TsneKm(Cluster):
 
     def __init__(self, n_classes, **params):
         super(TsneKm, self).__init__(n_classes, **params)
-        self.tsne = TSNE(2)
+        if 'k' in self.params:
+            self.tsne = TSNE(self.params['k'])
+        else:
+            self.tsne = TSNE(2)
         self.km = KMeans(n_classes)
         self.name = 'tsne_km'
 
@@ -383,13 +415,29 @@ class SimlrKm(Cluster):
         y_pred = self.simlr.fast_minibatch_kmeans(data.T, 8)
         return y_pred
 
-def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
+class EnsembleNMFKm(Cluster):
+    """
+    Returns the result of ensemble clustering of 10 NMF-tSNE-KMeans runs.
+    """
+    # TODO
+
+class EnsembleTSVDKm(Cluster):
+    """
+    Returns the result of ensemble clustering of 10 TSVD-KMeans runs.
+    """
+    # TODO
+
+def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=True, use_nmi=False, use_ari=False, consensus=False, visualize=False):
     """
     runs a pre-processing + clustering experiment...
+
+    exactly one of use_purity, use_nmi, or use_ari can be true
 
     Args:
         methods: list of pairs of Preprocess, (list of) Cluster objects
         data: genes x cells array
+        true_labels: 1d array of length cells
+        consensus: if true, runs a consensus on cluster results for each method at the very end.
 
     Returns:
         purities
@@ -397,6 +445,8 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
     """
     results = []
     names = []
+    clusterings = {}
+    other_results = {}
     for i in range(n_runs):
         print('run {0}'.format(i))
         purities = []
@@ -407,11 +457,18 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
                 if isinstance(cluster, Cluster):
                     try:
                         labels = cluster.run(pre)
-                        purities.append(purity(labels, true_labels))
+                        if use_purity:
+                            purities.append(purity(labels, true_labels))
+                        if use_nmi:
+                            purities.append(nmi(true_labels, labels))
+                        if use_ari:
+                            purities.append(ari(true_labels, labels))
                         if i==0:
                             names.append(name + '_' + cluster.name)
+                            clusterings[names[-1]] = []
                         print(names[r])
-                        print(purity(labels, true_labels))
+                        clusterings[names[r]].append(labels)
+                        print(purities[-1])
                         r += 1
                     except:
                         print('failed to do clustering')
@@ -419,15 +476,41 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10):
                     for c in cluster:
                         try:
                             labels = c.run(pre)
-                            purities.append(purity(labels, true_labels))
+                            if use_purity:
+                                purities.append(purity(labels, true_labels))
+                            if use_nmi:
+                                purities.append(nmi(true_labels, labels))
+                            if use_ari:
+                                purities.append(ari(true_labels, labels))
                             if i==0:
                                 names.append(name + '_' + c.name)
                             print(names[r])
-                            print(purity(labels, true_labels))
+                            clusterings[names[r]].append(labels)
+                            print(purities[-1])
                             r += 1
                         except:
                             print('failed to do clustering')
         print('\t'.join(names))
         print('purities: ' + '\t'.join(map(str, purities)))
         results.append(purities)
-    return results, names
+    consensus_purities = []
+    if consensus:
+        k = len(np.unique(true_labels))
+        for name, clusts in clusterings.iteritems():
+            print(name)
+            clusts = np.vstack(clusts)
+            consensus_clust = CE.cluster_ensembles(clusts, verbose=False, N_clusters_max=k)
+            if use_purity:
+                consensus_purity = purity(consensus_clust.flatten(), true_labels)
+                print('consensus purity: ' + str(consensus_purity))
+                consensus_purities.append(consensus_purity)
+            if use_nmi:
+                consensus_nmi = nmi(true_labels, consensus_clust)
+                print('consensus NMI: ' + str(consensus_nmi))
+                consensus_purities.append(consensus_nmi)
+            if use_ari:
+                consensus_ari = ari(true_labels, consensus_clust)
+                print('consensus ARI: ' + str(consensus_ari))
+                consensus_purities.append(consensus_ari)
+        print('consensus results: ' + '\t'.join(map(str, consensus_purities)))
+    return results, names, other_results
