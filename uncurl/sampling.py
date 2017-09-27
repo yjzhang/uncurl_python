@@ -30,4 +30,5 @@ def downsample(data, percent):
         if sparse.issparse(data):
             genes_selected = sparse.csc_matrix(genes_selected).T
         new_data[:,i] -= genes_selected
+    new_data[new_data < 0] = 0
     return new_data
