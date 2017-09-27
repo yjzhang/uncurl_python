@@ -9,6 +9,7 @@
 import numpy as np
 
 from state_estimation import poisson_estimate_state
+from dim_reduce import dim_reduce
 from evaluation import purity
 from preprocessing import cell_normalize
 from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust
@@ -109,10 +110,28 @@ class PoissonSE(Preprocess):
     Runs Poisson State Estimation, returning W and MW.
 
     Requires a 'k' parameter.
+
+    Optional args: return_m=True: returns M in outputs
+    return_mw=True: returns MW in outputs
     """
 
     def __init__(self, **params):
-        self.output_names = ['Poisson_W', 'Poisson_MW']
+        self.output_names = ['Poisson_W']
+        self.return_m = False
+        self.return_mw = False
+        self.return_mds = False
+        if 'return_m' in params and params['return_m']:
+            self.output_names.append('Poisson_M')
+            self.return_m = True
+            params.pop('return_m')
+        if 'return_mw' in params and params['return_mw']:
+            self.output_names.append('Poisson_MW')
+            self.return_mw = True
+            params.pop('return_mw')
+        if 'return_mds' in params and params['return_mds']:
+            self.output_names.append('Poisson_MDS')
+            self.return_mds = True
+            params.pop('return_mds')
         super(PoissonSE, self).__init__(**params)
 
     def run(self, data):
@@ -122,7 +141,16 @@ class PoissonSE(Preprocess):
             ll
         """
         M, W, ll = poisson_estimate_state(data, **self.params)
-        return [W, M.dot(W)], ll
+        outputs = []
+        outputs.append(W)
+        if self.return_m:
+            outputs.append(M)
+        if self.return_mw:
+            outputs.append(M.dot(W))
+        if self.return_mds:
+            X = dim_reduce(M, W, 2)
+            outputs.append(X.T.dot(W))
+        return outputs, ll
 
 class LogNMF(Preprocess):
     """
@@ -264,7 +292,13 @@ class EnsembleTsnePoissonSE(Preprocess):
 
     def run(self, data):
         M, W, obj = poisson_se_tsne(data, **self.params)
-        return [W, M.dot(W)], obj
+        outputs = []
+        outputs.append(W)
+        if 'return_m' in self.params and self.params['return_m']:
+            outputs.append(M)
+        if 'return_mw' in self.params and self.params['return_mw']:
+            outputs.append(M.dot(W))
+        return outputs, obj
 
 class EnsembleTSVDPoissonSE(Preprocess):
     """
@@ -274,12 +308,36 @@ class EnsembleTSVDPoissonSE(Preprocess):
     """
 
     def __init__(self, **params):
-        self.output_names = ['TSVDEnsemble_W', 'TSVDEnsemble_MW']
+        self.output_names = ['TSVDEnsemble_W']
+        self.return_m = False
+        self.return_mw = False
+        self.return_mds = False
+        if 'return_m' in params and params['return_m']:
+            self.output_names.append('TSVDEnsemble_M')
+            self.return_m = True
+            params.pop('return_m')
+        if 'return_mw' in params and params['return_mw']:
+            self.output_names.append('TSVDEnsemble_MW')
+            self.return_mw = True
+            params.pop('return_mw')
+        if 'return_mds' in params and params['return_mds']:
+            self.output_names.append('TSVDEnsemble_MDS')
+            self.return_mds = True
+            params.pop('return_mds')
         super(EnsembleTSVDPoissonSE, self).__init__(**params)
 
     def run(self, data):
         M, W, obj = poisson_se_multiclust(data, **self.params)
-        return [W, M.dot(W)], obj
+        outputs = []
+        outputs.append(W)
+        if self.return_m:
+            outputs.append(M)
+        if self.return_mw:
+            outputs.append(M.dot(W))
+        if self.return_mds:
+            X = dim_reduce(M, W, 2)
+            outputs.append(X.T.dot(W))
+        return outputs, obj
 
 class Simlr(Preprocess):
 
@@ -287,6 +345,27 @@ class Simlr(Preprocess):
         self.output_names = ['PCA50_SIMLR']
         # TODO: make params tunable... what do these numbers even mean???
         self.simlr = SIMLR.SIMLR_LARGE(params['k'], 30, 0)
+        super(Simlr, self).__init__(**params)
+
+    def run(self, data):
+        X = np.log1p(data)
+        if 'n_pca_components' in self.params:
+            n_components = self.params['n_pca_components']
+        else:
+            n_components = 50
+        X = SIMLR.helper.fast_pca(data.T, n_components)
+        S, F, val, ind = self.simlr.fit(X)
+        return [F.T], 0
+
+class SimlrSmall(Preprocess):
+    """
+    Simlr for small-scale datasets (no PCA preprocessing)
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['SIMLR']
+        # TODO: make params tunable... what do these numbers even mean???
+        self.simlr = SIMLR.SIMLR(params['k'], 30, 0)
         super(Simlr, self).__init__(**params)
 
     def run(self, data):
@@ -357,7 +436,7 @@ class PoissonCluster(Cluster):
         self.name = 'poisson_km'
 
     def run(self, data):
-        assignments, means = poisson_cluster(data, self.n_classes)
+        assignments, means = poisson_cluster(data, self.n_classes, **self.params)
         return assignments
 
 
@@ -484,6 +563,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                                 purities.append(ari(true_labels, labels))
                             if i==0:
                                 names.append(name + '_' + c.name)
+                                clusterings[names[-1]] = []
                             print(names[r])
                             clusterings[names[r]].append(labels)
                             print(purities[-1])
@@ -513,4 +593,5 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                 print('consensus ARI: ' + str(consensus_ari))
                 consensus_purities.append(consensus_ari)
         print('consensus results: ' + '\t'.join(map(str, consensus_purities)))
+    other_results['clusterings'] = clusterings
     return results, names, other_results
