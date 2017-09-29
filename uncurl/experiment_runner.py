@@ -6,15 +6,8 @@
 
 # preprocessing returns a matrix of shape (k, cells), where k <= genes
 
+import matplotlib.pyplot as plt
 import numpy as np
-
-from state_estimation import poisson_estimate_state
-from dim_reduce import dim_reduce
-from evaluation import purity
-from preprocessing import cell_normalize
-from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust
-from clustering import poisson_cluster
-
 from scipy import sparse
 from scipy.special import log1p
 
@@ -28,6 +21,14 @@ from sklearn.cluster import KMeans
 import Cluster_Ensembles as CE
 
 import SIMLR
+
+from state_estimation import poisson_estimate_state
+from dim_reduce import dim_reduce
+from evaluation import purity
+from preprocessing import cell_normalize
+from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust
+from clustering import poisson_cluster
+
 
 
 class Preprocess(object):
@@ -595,3 +596,60 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
         print('consensus results: ' + '\t'.join(map(str, consensus_purities)))
     other_results['clusterings'] = clusterings
     return results, names, other_results
+
+def generate_visualizations(methods, data, true_labels, base_dir = 'visualizations'):
+    """
+    Generates visualization scatterplots for all the methods.
+
+    Args:
+        methods: follows same format as run_experiments. List of tuples.
+        data: genes x cells
+        true_labels: array of integers
+    """
+    for method in methods:
+        preproc_method = method[0]
+        results, ll = preproc_method.run(data)
+        for r, name in zip(results, preproc_method.output_names):
+            # TODO: cluster labels
+            print(name)
+            # if it's 2d, just display it... else, do tsne to reduce to 2d
+            if r.shape[0]==2:
+                r_dim_red = r
+            else:
+                name = 'tsne_' + name
+                tsne = TSNE(2)
+                r_dim_red = tsne.fit_transform(r.T).T
+            if isinstance(method[1], list):
+                for clustering_method in method[1]:
+                    try:
+                        cluster_labels = clustering_method.run(r)
+                    except:
+                        print('clustering failed')
+                        continue
+                    plt.cla()
+                    for i in set(cluster_labels):
+                        plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i)
+                    plt.legend()
+                    output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
+                    plt.savefig(output_path, dpi=100)
+            else:
+                clustering_method = method[1]
+                try:
+                    cluster_labels = clustering_method.run(r)
+                except:
+                    print('clustering failed')
+                    continue
+                plt.cla()
+                for i in set(cluster_labels):
+                    plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i)
+                plt.legend()
+                output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
+                plt.savefig(output_path, dpi=100)
+                pass
+            plt.cla()
+            for i in set(true_labels):
+                plt.scatter(r_dim_red[0, true_labels==i], r_dim_red[1, true_labels==i], label=i)
+            plt.legend()
+            output_path = base_dir + '/{0}_true_labels.png'.format(name)
+            plt.savefig(output_path, dpi=100)
+

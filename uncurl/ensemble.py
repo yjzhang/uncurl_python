@@ -3,6 +3,7 @@
 # method based on https://arxiv.org/abs/1702.07186
 # combine all the means produced...
 
+from clustering import poisson_cluster
 from preprocessing import cell_normalize
 from state_estimation import poisson_estimate_state, initialize_from_assignments
 
@@ -222,6 +223,19 @@ def poisson_se_multiclust(data, k, n_runs=10, **se_params):
     M, W, ll = poisson_estimate_state(data, k, init_means=init_m, init_weights=init_w, **se_params)
     return M, W, ll
 
+def poisson_consensus_se(data, k, n_runs=10, **se_params):
+    """
+    Initializes Poisson State Estimation using a consensus Poisson clustering.
+    """
+    clusters = []
+    for i in range(n_runs):
+        assignments, means  = poisson_cluster(data, k)
+        clusters.append(assignments)
+    clusterings = np.vstack(clusters)
+    consensus = CE.cluster_ensembles(clusterings, verbose=False, N_clusters_max=k)
+    init_m, init_w = nmf_init(data, consensus, k, 'basic')
+    M, W, ll = poisson_estimate_state(data, k, init_means=init_m, init_weights=init_w, **se_params)
+    return M, W, ll
 
 def lensNMF(data, k, ks=1):
     """

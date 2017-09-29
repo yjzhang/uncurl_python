@@ -81,6 +81,17 @@ def objective(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.n
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+def cost(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
+    """
+    Calculates the log-likelihood of X | M, W
+    """
+    cdef int genes = X.shape[0]
+    cdef np.ndarray[DTYPE_t, ndim=2] d = M.dot(W) + eps
+    return np.sum(d - X*np.log(d))/genes
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
 def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
     """
     Calculates the Poisson Mixture objective value for a sparse matrix x.
@@ -98,16 +109,17 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     indptr = X_csc.indptr
     cdef double[:] data_ = X_csc.data
     cdef double[:] mw = np.zeros(len(data_))
-    for i in range(cells):
-        c = i
-        start_ind = indptr[i]
-        end_ind = indptr[i+1]
-        for ind in range(start_ind, end_ind):
-            g = indices[ind]
-            d = 0
-            for k in range(clusters):
-                d += M[g,k]*W[k,c]
-            mw[ind] = d
+    with nogil:
+        for i in range(cells):
+            c = i
+            start_ind = indptr[i]
+            end_ind = indptr[i+1]
+            for ind in range(start_ind, end_ind):
+                g = indices[ind]
+                d = 0
+                for k in range(clusters):
+                    d += M[g,k]*W[k,c]
+                mw[ind] = d
     cdef np.ndarray[DTYPE_t, ndim=1] D = np.asarray(mw)
     cdef np.ndarray[DTYPE_t, ndim=1] data = np.asarray(data_)
     obj = np.sum(-data*np.log(D))
@@ -116,6 +128,12 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     MW_sparse = M_sparse*W_sparse
     obj += MW_sparse.sum()
     return obj/genes
+
+def cost(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
+    """
+    Calculates the log likelihood of X | M, W, where X is sparse
+    """
+    cdef double ll0 = sparse_objective(X, M, W)
 
 
 @cython.boundscheck(False)
@@ -144,22 +162,23 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef double[:] data_ = X_csc.data
     cdef double[:,:] cij = np.zeros((cells, k))
     # based on timing results, it seems that parallel w/guided schedule and 4 threads only improves runtime by 10%
-    for i in range(cells):
-    #for i in prange(cells, nogil=True, schedule='guided', num_threads=4):
-        #i = cells - i - 1
-        start_ind = indptr[i]
-        end_ind = indptr[i+1]
-        for ind in range(start_ind, end_ind):
-            g = indices[ind]
-            mw = eps
-            for k2 in range(k):
-                mw += M_view[g,k2]*W_view[k2,i]
-            mw = data_[ind]/mw
+    with nogil:
+        for i in range(cells):
+        #for i in prange(cells, nogil=True, schedule='guided', num_threads=4):
+            #i = cells - i - 1
+            start_ind = indptr[i]
+            end_ind = indptr[i+1]
+            for ind in range(start_ind, end_ind):
+                g = indices[ind]
+                mw = eps
+                for k2 in range(k):
+                    mw += M_view[g,k2]*W_view[k2,i]
+                mw = data_[ind]/mw
+                for j in range(k):
+                    cij[i,j] += M_view[g,j]*mw
+            lam = lams[i]
             for j in range(k):
-                cij[i,j] += M_view[g,j]*mw
-        lam = lams[i]
-        for j in range(k):
-            Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-cij[i,j])))
+                Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-cij[i,j])))
     return np.asarray(Wnew_view)
 
 
