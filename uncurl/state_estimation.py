@@ -123,6 +123,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     # repeat steps 1 and 2 until convergence:
     nolips_iters = inner_max_iters
     X = data.astype(float)
+    XT = X.T
     if sparse.issparse(X):
         update_fn = sparse_nolips_update_w
         Xsum = np.asarray(X.sum(0)).flatten()
@@ -132,6 +133,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         X = sparse.csc_matrix(X)
         method = 'NoLips'
         objective_fn = sparse_objective
+        XT = sparse.csc_matrix(XT)
     else:
         objective_fn = objective
         update_fn = nolips_update_w
@@ -146,7 +148,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                 update_fn = sparse_nolips_update_w
                 X = sparse.csc_matrix(X)
                 objective_fn = sparse_objective
-    XT = X.T
+                XT = sparse.csc_matrix(XT)
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))

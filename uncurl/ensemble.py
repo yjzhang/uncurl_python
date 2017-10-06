@@ -118,10 +118,18 @@ def nmf_init(data, clusters, k, init='enhanced'):
     init_w = np.zeros((data.shape[0], k))
     if sparse.issparse(data):
         for i in range(k):
-            init_w[:,i] = np.array(data[:,clusters==i].mean(1)).flatten()
+            if data[:,clusters==i].shape[1]==0:
+                point = np.random.randint(0, data.shape[1])
+                init_w[:,i] = data[:,point].toarray().flatten()
+            else:
+                init_w[:,i] = np.array(data[:,clusters==i].mean(1)).flatten()
     else:
         for i in range(k):
-            init_w[:,i] = data[:,clusters==i].mean(1)
+            if data[:,clusters==i].shape[1]==0:
+                point = np.random.randint(0, data.shape[1])
+                init_w[:,i] = data[:,point].flatten()
+            else:
+                init_w[:,i] = data[:,clusters==i].mean(1)
     init_h = np.zeros((k, data.shape[1]))
     if init == 'enhanced':
         distances = np.zeros((k, data.shape[1]))

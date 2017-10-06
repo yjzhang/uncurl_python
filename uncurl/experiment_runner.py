@@ -26,6 +26,7 @@ from state_estimation import poisson_estimate_state
 from dim_reduce import dim_reduce
 from evaluation import purity
 from preprocessing import cell_normalize
+import ensemble
 from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust
 from clustering import poisson_cluster
 
@@ -179,6 +180,9 @@ class LogNMF(Preprocess):
             cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
         else:
             cost = 0.5*((data_norm - W.dot(H))**2).sum()
+        if 'normalize_h' in self.params:
+            print('normalize h')
+            H = H/H.sum(0)
         return [H, W.dot(H)], cost
 
 class BasicNMF(Preprocess):
@@ -202,6 +206,8 @@ class BasicNMF(Preprocess):
             cost = 0.5*((data - ws.dot(hs)).power(2)).sum()
         else:
             cost = 0.5*((data - W.dot(H))**2).sum()
+        if 'normalize_h' in self.params:
+            H = H/H.sum(0)
         return [H, W.dot(H)], cost
 
 class EnsembleNMF(Preprocess):
@@ -340,6 +346,48 @@ class EnsembleTSVDPoissonSE(Preprocess):
             outputs.append(X.T.dot(W))
         return outputs, obj
 
+class EnsembleClusterPoissonSE(Preprocess):
+    """
+    Runs Poisson state estimation initialized from the consensus
+    of 10 runs of Poisson KM.
+
+    params: k - dimensionality
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['ConsensusPoisson_W']
+        self.return_m = False
+        self.return_mw = False
+        self.return_mds = False
+        if 'return_m' in params and params['return_m']:
+            self.output_names.append('ConsensusPoisson_M')
+            self.return_m = True
+            params.pop('return_m')
+        if 'return_mw' in params and params['return_mw']:
+            self.output_names.append('ConsensusPoisson_MW')
+            self.return_mw = True
+            params.pop('return_mw')
+        if 'return_mds' in params and params['return_mds']:
+            self.output_names.append('ConsensusPoisson_MDS')
+            self.return_mds = True
+            params.pop('return_mds')
+        super(EnsembleClusterPoissonSE, self).__init__(**params)
+
+    def run(self, data):
+        # make the data sparse for runtime improvements in poisson clustering
+        data = sparse.csc_matrix(data)
+        M, W, obj = ensemble.poisson_consensus_se(data, **self.params)
+        outputs = []
+        outputs.append(W)
+        if self.return_m:
+            outputs.append(M)
+        if self.return_mw:
+            outputs.append(M.dot(W))
+        if self.return_mds:
+            X = dim_reduce(M, W, 2)
+            outputs.append(X.T.dot(W))
+        return outputs, obj
+
 class Simlr(Preprocess):
 
     def __init__(self, **params):
@@ -349,12 +397,12 @@ class Simlr(Preprocess):
         super(Simlr, self).__init__(**params)
 
     def run(self, data):
-        X = np.log1p(data)
+        X_log = np.log1p(data)
         if 'n_pca_components' in self.params:
             n_components = self.params['n_pca_components']
         else:
             n_components = 50
-        X = SIMLR.helper.fast_pca(data.T, n_components)
+        X = SIMLR.helper.fast_pca(X_log.T, n_components)
         S, F, val, ind = self.simlr.fit(X)
         return [F.T], 0
 
@@ -371,6 +419,8 @@ class SimlrSmall(Preprocess):
 
     def run(self, data):
         X = np.log1p(data)
+        # TODO: the python implementation of simlr only contains the
+        # large-scale (PCA-dependent) methods.
         if 'n_pca_components' in self.params:
             n_components = self.params['n_pca_components']
         else:
@@ -493,7 +543,7 @@ class SimlrKm(Cluster):
 
     def run(self, data):
         y_pred = self.simlr.fast_minibatch_kmeans(data.T, 8)
-        return y_pred
+        return y_pred.flatten()
 
 class EnsembleNMFKm(Cluster):
     """
@@ -597,7 +647,8 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
     other_results['clusterings'] = clusterings
     return results, names, other_results
 
-def generate_visualizations(methods, data, true_labels, base_dir = 'visualizations'):
+def generate_visualizations(methods, data, true_labels, base_dir = 'visualizations',
+        figsize=(18,10)):
     """
     Generates visualization scatterplots for all the methods.
 
@@ -605,7 +656,10 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
         methods: follows same format as run_experiments. List of tuples.
         data: genes x cells
         true_labels: array of integers
+        base_dir: base directory to save all the plots
+        figsize: tuple of ints representing size of figure
     """
+    plt.figure(figsize=figsize)
     for method in methods:
         preproc_method = method[0]
         results, ll = preproc_method.run(data)

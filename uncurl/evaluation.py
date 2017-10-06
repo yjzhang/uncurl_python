@@ -29,5 +29,21 @@ def purity(labels, true_labels):
 def mdl(ll, k, data):
     """
     Returns the minimum description length score of the model given its
-    log-likelihood and k.
+    log-likelihood and k, the number of cell types.
+
+    a lower cost is better...
     """
+
+    """
+    N - no. of genes
+    n - no. of cells 
+    k - no. of cell types
+    R - sum(Dataset) i.e. total no. of reads
+
+    function TotCost = TotBits(N,m,p,R,C)
+        # C is the cost from the cost function
+        TotCost = C + (N*m + m*p)*(log(R/(N*p)));
+    """
+    N, m = data.shape
+    cost = ll + (N*m + m*k)*(np.log(data.sum()/(N*k)))
+    return cost
