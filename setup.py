@@ -6,10 +6,25 @@ from Cython.Compiler.Options import directive_defaults
 #directive_defaults['linetrace'] = True
 #directive_defaults['binding'] = True
 
-#extensions = [
-#        Extension('nolips', ['uncurl/nolips.pyx']),# define_macros=[('CYTHON_TRACE_NOGIL', '1')]),
-#        Extension('sparse_utils', ['uncurl/sparse_utils.pyx'])#, define_macros=[('CYTHON_TRACE_NOGIL', '1')])
-#        ]
+extensions = [
+        Extension('nolips', ['uncurl/nolips.pyx'],
+            extra_compile_args=['-O3', '-march=native', '-ffast-math']),
+        Extension('sparse_utils', ['uncurl/sparse_utils.pyx'],
+            extra_compile_args=['-O3', '-march=native', '-ffast-math'])
+        ]
+
+parallel_extensions = [
+        Extension('nolips_parallel', ['uncurl/nolips_parallel.pyx'],
+            extra_compile_args=['-O3', '-march=native', '-ffast-math', '-fopenmp'],
+            extra_link_args=['-fopenmp'])
+        ]
+
+try:
+    parallel = cythonize(parallel_extensions)
+except:
+    print('Unable to compile parallel extensions.')
+    parallel = []
+
 
 setup(name='uncurl',
       version='0.2.3',
@@ -18,7 +33,7 @@ setup(name='uncurl',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
       license='MIT',
-      ext_modules = cythonize("uncurl/*.pyx"),
+      ext_modules = cythonize(extensions) + parallel,
       packages=find_packages("."),
       install_requires=[
           'numpy',

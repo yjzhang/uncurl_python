@@ -1,7 +1,14 @@
 # state estimation with poisson convex mixture model
 
 from clustering import kmeans_pp, poisson_cluster
-from nolips import nolips_update_w, sparse_nolips_update_w, objective, sparse_objective
+from nolips import nolips_update_w, objective, sparse_objective
+from nolips import sparse_nolips_update_w
+# try to use parallel; otherwise
+try:
+    from nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
+except:
+    # if parallel can't be used, just use the dense version
+    parallel_sparse_nolips_update_w = sparse_nolips_update_w
 
 import numpy as np
 from scipy import sparse
@@ -77,10 +84,12 @@ def initialize_from_assignments(assignments, k, max_assign_weight=0.75):
                 init_W[a2, i] = max_assign_weight/(k-1)
     return init_W
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=20, tol=1e-10, disp=True, inner_max_iters=400, normalize=True, initialization='cluster'):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=20, tol=1e-10, disp=True, inner_max_iters=400, normalize=True, initialization='cluster', parallel=True, n_threads=4):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
+
+    To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.
 
     Args:
         data (array): genes x cells array or sparse matrix.
@@ -94,6 +103,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 400
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
         initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights). Default: cluster.
+        parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
+        n_threads (int, optional): How many threads to use in the parallel computation. Default: 4
 
     Returns:
         M (array): genes x clusters - state means
@@ -120,12 +131,15 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         w_init = init_weights.copy()
     else:
         w_init = np.random.random((clusters, cells))
-    # repeat steps 1 and 2 until convergence:
     nolips_iters = inner_max_iters
     X = data.astype(float)
     XT = X.T
+    is_sparse = False
     if sparse.issparse(X):
+        is_sparse = True
         update_fn = sparse_nolips_update_w
+        if parallel:
+            update_fn = parallel_sparse_nolips_update_w
         Xsum = np.asarray(X.sum(0)).flatten()
         Xsum_m = np.asarray(X.sum(1)).flatten()
         # L-BFGS-B won't work right now for sparse matrices
@@ -139,13 +153,16 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         update_fn = nolips_update_w
         Xsum = X.sum(0)
         Xsum_m = X.sum(1)
-        # TODO: if method is NoLips, converting to a sparse matrix
+        # If method is NoLips, converting to a sparse matrix
         # will always improve the performance (?) and never lower accuracy...
         # will almost always improve performance?
         # if sparsity is below 40%?
         if method == 'NoLips':
             if np.count_nonzero(X) < 0.4*genes*cells:
+                is_sparse = True
                 update_fn = sparse_nolips_update_w
+                if parallel:
+                    update_fn = parallel_sparse_nolips_update_w
                 X = sparse.csc_matrix(X)
                 objective_fn = sparse_objective
                 XT = sparse.csc_matrix(XT)
@@ -155,13 +172,19 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         # step 1: given M, estimate W
         if method=='NoLips':
             for j in range(nolips_iters):
-                w_new = update_fn(X, means, w_init, Xsum)
+                if is_sparse and parallel:
+                    w_new = update_fn(X, means, w_init, Xsum, n_threads=n_threads)
+                else:
+                    w_new = update_fn(X, means, w_init, Xsum)
                 #w_new = w_res.x.reshape((clusters, cells))
                 #w_new = w_new/w_new.sum(0)
-                w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
-                w_init = w_new
-                if w_diff < tol:
-                    break
+                if tol > 0:
+                    w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
+                    w_init = w_new
+                    if w_diff < tol:
+                        break
+                else:
+                    w_init = w_new
         elif method=='L-BFGS-B':
             w_objective = _create_w_objective(means, data)
             w_bounds = [(0, None) for c in range(clusters*cells)]
@@ -170,17 +193,24 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                     options={'disp':disp, 'maxiter':inner_max_iters})
             w_new = w_res.x.reshape((clusters, cells))
             w_init = w_new
-        w_ll = objective_fn(X, means, w_new)
         if disp:
+            w_ll = objective_fn(X, means, w_new)
             print('Finished updating W. Objective value: {0}'.format(w_ll))
         # step 2: given W, update M
         if method=='NoLips':
             for j in range(nolips_iters):
-                m_new = update_fn(XT, w_new.T, means.T, Xsum_m)
-                m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
-                means = m_new.T
-                if m_diff <= tol:
-                    break
+                if is_sparse and parallel:
+                    m_new = update_fn(XT, w_new.T, means.T, Xsum_m,
+                            n_threads=n_threads)
+                else:
+                    m_new = update_fn(XT, w_new.T, means.T, Xsum_m)
+                if tol > 0:
+                    m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
+                    means = m_new.T
+                    if m_diff <= tol:
+                        break
+                else:
+                    means = m_new.T
         elif method=='L-BFGS-B':
             m_objective = _create_m_objective(w_new, data)
             m_init = means.flatten()
@@ -189,9 +219,10 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                     method='L-BFGS-B', jac=True, bounds=m_bounds,
                     options={'disp':disp, 'maxiter':inner_max_iters})
             means = m_res.x.reshape((genes, clusters))
-        m_ll = objective_fn(X, means, w_new)
         if disp:
+            m_ll = objective_fn(X, means, w_new)
             print('Finished updating M. Objective value: {0}'.format(m_ll))
     if normalize:
         w_new = w_new/w_new.sum(0)
+    m_ll = objective_fn(X, means, w_new)
     return means, w_new, m_ll

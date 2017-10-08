@@ -63,7 +63,7 @@ class SparseStateEstimationTest(TestCase):
         print sim_data
         # add noise to the mean
         sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
-        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False, parallel=False)
         print m
         print w
         print w.sum(0)
