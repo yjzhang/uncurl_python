@@ -65,3 +65,12 @@ def cell_normalize(data):
     med = np.median(total_umis)
     data_norm *= med
     return data_norm
+
+def log1p(data):
+    """
+    Returns ln(data+1), whether the original data is dense or sparse.
+    """
+    if sparse.issparse(data):
+        return data.log1p()
+    else:
+        return np.log1p(data)
