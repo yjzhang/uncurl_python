@@ -104,7 +104,24 @@ class TSVD(Preprocess):
         super(TSVD, self).__init__(**params)
 
     def run(self, data):
-        return [self.tsvd.fit_transform(data.T)], 0
+        return [self.tsvd.fit_transform(data.T).T], 0
+
+class TSVDTSNE(Preprocess):
+    """
+    Runs truncated SVD followed by tSNE on the data.
+    the input param k is the number of dimensions for tsvd; tsne always
+    uses 2d.
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['TSVD_TSNE']
+        self.tsvd = TruncatedSVD(params['k'])
+        self.tsne = TSNE(2)
+        super(TSVDTSNE, self).__init__(**params)
+
+    def run(self, data):
+        return [self.tsne.fit_transform(self.tsvd.fit_transform(data.T)).T], 0
+
 
 
 class PoissonSE(Preprocess):
@@ -582,8 +599,19 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
         purities = []
         r = 0
         for preproc, cluster in methods:
-            preprocessed, ll = preproc.run(data)
-            for name, pre in zip(preproc.output_names, preprocessed):
+            if isinstance(preproc, Preprocess):
+                preprocessed, ll = preproc.run(data)
+                output_names = preproc.output_names
+            else:
+                # if the input is a list, only use the first preproc result
+                p1 = data
+                output_names = ['']
+                for p in preproc:
+                    p1, ll = p.run(p1)
+                    p1 = p1[0]
+                    output_names[0] = output_names[0] + p.output_names[0]
+                preprocessed = [p1]
+            for name, pre in zip(output_names, preprocessed):
                 if isinstance(cluster, Cluster):
                     try:
                         labels = cluster.run(pre)
@@ -661,9 +689,20 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
     """
     plt.figure(figsize=figsize)
     for method in methods:
-        preproc_method = method[0]
-        results, ll = preproc_method.run(data)
-        for r, name in zip(results, preproc_method.output_names):
+        preproc= method[0]
+        if isinstance(preproc, Preprocess):
+            preprocessed, ll = preproc.run(data)
+            output_names = preproc.output_names
+        else:
+            # if the input is a list, only use the first preproc result
+            p1 = data
+            output_names = ['']
+            for p in preproc:
+                p1, ll = p.run(p1)
+                p1 = p1[0]
+                output_names[0] = output_names[0] + p.output_names[0]
+            preprocessed = [p1]
+        for r, name in zip(preprocessed, output_names):
             # TODO: cluster labels
             print(name)
             # if it's 2d, just display it... else, do tsne to reduce to 2d
