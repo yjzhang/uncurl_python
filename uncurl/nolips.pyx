@@ -164,8 +164,6 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     # based on timing results, it seems that parallel w/guided schedule and 4 threads only improves runtime by 10%
     with nogil:
         for i in range(cells):
-        #for i in prange(cells, nogil=True, schedule='guided', num_threads=4):
-            #i = cells - i - 1
             start_ind = indptr[i]
             end_ind = indptr[i+1]
             for ind in range(start_ind, end_ind):

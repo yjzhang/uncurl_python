@@ -670,9 +670,16 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
             if r.shape[0]==2:
                 r_dim_red = r
             else:
-                name = 'tsne_' + name
-                tsne = TSNE(2)
-                r_dim_red = tsne.fit_transform(r.T).T
+                if sparse.issparse(r):
+                    name = 'tsne_tsvd_' + name
+                    tsvd = TruncatedSVD(50)
+                    tsne = TSNE(2)
+                    r_dim_red = tsne.fit_transform(tsvd.fit_transform(r.T)).T
+                    pass
+                else:
+                    name = 'tsne_' + name
+                    tsne = TSNE(2)
+                    r_dim_red = tsne.fit_transform(r.T).T
             if isinstance(method[1], list):
                 for clustering_method in method[1]:
                     try:

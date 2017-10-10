@@ -59,9 +59,6 @@ def qualNormGaussian(data, qualitative):
         Array of starting positions for state estimation or
         clustering, with shape genes x clusters
     """
-    # TODO: if 'binarized' is not binary... convert it to binary by setting
-    # the threshhold at the midpoint of the range for each gene
-    # cluster the genes
     genes, cells = data.shape
     clusters = qualitative.shape[1]
     output = np.zeros((genes, clusters))
