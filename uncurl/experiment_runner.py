@@ -5,7 +5,6 @@
 # ex. uncurl_mw -> tsne -> km???
 
 # preprocessing returns a matrix of shape (k, cells), where k <= genes
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import sparse
@@ -27,9 +26,9 @@ from dim_reduce import dim_reduce
 from evaluation import purity
 from preprocessing import cell_normalize
 import ensemble
-from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust
+from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust, lightlda_se_tsne
 from clustering import poisson_cluster
-
+from lightlda_utils import lightlda_estimate_state
 
 
 class Preprocess(object):
@@ -107,6 +106,7 @@ class TSVD(Preprocess):
         return [self.tsvd.fit_transform(data.T)], 0
 
 
+
 class PoissonSE(Preprocess):
     """
     Runs Poisson State Estimation, returning W and MW.
@@ -153,6 +153,36 @@ class PoissonSE(Preprocess):
             X = dim_reduce(M, W, 2)
             outputs.append(X.T.dot(W))
         return outputs, ll
+
+
+class LightLDASE(Preprocess):
+    """
+    Runs LightLDA State Estimation, returning W and MW.
+    Requires a 'k' parameter.
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['LightLDA_W', 'LightLDA_MW']
+        super(LightLDASE, self).__init__(**params)
+
+    def run(self, data):
+        M, W, ll = lightlda_estimate_state(data, **self.params)
+        return [W, M.dot(W)], ll
+
+
+class EnsembleTsneLightLDASE(Preprocess):
+    """
+    Runs tsne-based LightLDA Poisson state estimation
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['LightLDA_Ensemble_W', 'LightLDA_Ensemble_MW']
+        super(EnsembleTsneLightLDASE, self).__init__(**params)
+
+    def run(self, data):
+        M, W, ll = lightlda_se_tsne(data, **self.params)
+        return [W, M.dot(W)], ll
+
 
 class LogNMF(Preprocess):
     """
