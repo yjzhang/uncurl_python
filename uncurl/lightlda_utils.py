@@ -129,10 +129,11 @@ def poisson_objective(X, m, w):
     return np.sum(d - X*np.log(d))/genes #, deriv.flatten()/genes
 
            
-# Runs LDA on the given dataset. If the data has not already been prepared into
-# LDA format, set "prepare_data" to TRUE. If "prepare_data" is FALSE, the
-# method assumes that the data has already been preprocessed into LightLDA
-# format and is located at the given "input_folder_name."
+# Runs LDA on the given dataset (can be an 2-D array of any form - sparse
+# or dense, as long as it can be indexed). If the data has not already been
+# prepared into LDA format, set "prepare_data" to TRUE. If "prepare_data" is
+# FALSE, the method assumes that the data has already been preprocessed into
+# LightLDA format and is located at the given "input_folder".
 def lightlda_estimate_state(data, k, input_folder="/data1/LightLDA_input", threads=8, max_iters=250, prepare_data=True, init_means=None, init_weights=None):
     if prepare_data:
         prepare_lightlda_data(data, input_folder)
@@ -152,9 +153,6 @@ def lightlda_estimate_state(data, k, input_folder="/data1/LightLDA_input", threa
         create_model_file("doc_topic.0", init_weights.T)        
         print init_means
         print "init_means"
-        print init_means[537][4]
-        print init_means[1139][2]
-        print init_means[1992][2]
 
     # Run LightLDA
     print "TRAINING"
