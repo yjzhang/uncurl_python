@@ -185,7 +185,7 @@ def lightlda_estimate_state(data, k, input_folder="/data1/LightLDA_input", threa
     return M, W, ll
 
 
-# Converts matrix to LightLDA format and dumps it into LIGHTLDA_FOLDER/input.
+# Converts matrix to LightLDA format and dumps it into the input folder.
 def prepare_lightlda_data(data, input_folder):
     print "Preparing LightLDA data"
 

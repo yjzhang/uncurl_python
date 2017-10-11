@@ -5,6 +5,7 @@
 # ex. uncurl_mw -> tsne -> km???
 
 # preprocessing returns a matrix of shape (k, cells), where k <= genes
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import sparse
