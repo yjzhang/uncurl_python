@@ -54,6 +54,18 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
+
+<div class="viewcode-block" id="sparse_var"><a class="viewcode-back" href="../../uncurl.html#uncurl.preprocessing.sparse_var">[docs]</a><span class="k">def</span> <span class="nf">sparse_var</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the variance for each row of a sparse matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_csr</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_csr</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">sq</span> <span class="o">=</span> <span class="n">data_csr</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">means_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sq</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">means_2</span> <span class="o">-</span> <span class="n">means</span><span class="o">**</span><span class="mi">2</span>
+    <span class="k">return</span> <span class="n">var</span></div>
 
 <div class="viewcode-block" id="max_variance_genes"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.preprocessing.max_variance_genes">[docs]</a><span class="k">def</span> <span class="nf">max_variance_genes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -70,7 +82,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">var</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">sparse_var</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">means</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">mean_indices</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
     <span class="n">n_elements</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">nbins</span>
     <span class="n">frac_elements</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_elements</span><span class="o">*</span><span class="n">frac</span><span class="p">)</span>
@@ -87,7 +103,28 @@
         <span class="n">indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">indices</span></div>
 
+<div class="viewcode-block" id="cell_normalize"><a class="viewcode-back" href="../../uncurl.html#uncurl.preprocessing.cell_normalize">[docs]</a><span class="k">def</span> <span class="nf">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the data where the expression is normalized so that the total</span>
+<span class="sd">    count per cell is equal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">total_umis</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">total_umis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_norm</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">data_norm</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">/=</span> <span class="n">total_umis</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">med</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">total_umis</span><span class="p">)</span>
+    <span class="n">data_norm</span> <span class="o">*=</span> <span class="n">med</span>
+    <span class="k">return</span> <span class="n">data_norm</span></div>
 
+<div class="viewcode-block" id="log1p"><a class="viewcode-back" href="../../uncurl.html#uncurl.preprocessing.log1p">[docs]</a><span class="k">def</span> <span class="nf">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns ln(data+1), whether the original data is dense or sparse.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">log1p</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

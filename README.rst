@@ -3,6 +3,8 @@ UNCURL
 
 To install after cloning the repo: ``pip install .``
 
+Requirements: numpy, scipy, cython, scikit-learn
+
 To run tests: ``python setup.py test``
 
 Examples: see the examples folder.
@@ -52,7 +54,11 @@ Example:
 State Estimation
 ----------------
 
-The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution. These functions can be initialized using the outputs of Poisson clustering.
+The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. 
+
+The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution, is much slower, and is not capable of dealing with sparse inputs.
+
+There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using ``poisson_cluster``, but it can also be initialized using truncated SVD + K-means or just K-means.
 
 Example:
 
@@ -65,9 +71,13 @@ Example:
     M, W, ll = poisson_estimate_state(data, 2)
     M2, W2, R, ll2 = nb_estimate_state(data, 2)
 
-    # initializations - first, performing clustering
+    # optional arguments
+    M, W, ll = poisson_estimate_state(data, 2, disp=False, max_iters=10, inner_max_iters=200, initialization='tsvd', threads=8)
+
+    # initialization by providing means and weights
     assignments_p, centers = poisson_cluster(data, 2)
     M, W, ll = poisson_estimate_state(data, 2, init_means=centers, init_weights=assignments_p)
+
 
 Dimensionality Reduction
 ------------------------

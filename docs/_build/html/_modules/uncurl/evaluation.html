@@ -76,6 +76,28 @@
         <span class="n">lab</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">most_common</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">purity</span> <span class="o">+=</span> <span class="n">count</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">purity</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="mdl"><a class="viewcode-back" href="../../uncurl.html#uncurl.evaluation.mdl">[docs]</a><span class="k">def</span> <span class="nf">mdl</span><span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the minimum description length score of the model given its</span>
+<span class="sd">    log-likelihood and k, the number of cell types.</span>
+
+<span class="sd">    a lower cost is better...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    N - no. of genes</span>
+<span class="sd">    n - no. of cells </span>
+<span class="sd">    k - no. of cell types</span>
+<span class="sd">    R - sum(Dataset) i.e. total no. of reads</span>
+
+<span class="sd">    function TotCost = TotBits(N,m,p,R,C)</span>
+<span class="sd">        # C is the cost from the cost function</span>
+<span class="sd">        TotCost = C + (N*m + m*p)*(log(R/(N*p)));</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">N</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">ll</span> <span class="o">+</span> <span class="p">(</span><span class="n">N</span><span class="o">*</span><span class="n">m</span> <span class="o">+</span> <span class="n">m</span><span class="o">*</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span><span class="p">(</span><span class="n">N</span><span class="o">*</span><span class="n">k</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">cost</span></div>
 </pre></div>
 
           </div>
