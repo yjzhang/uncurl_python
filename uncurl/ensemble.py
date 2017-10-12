@@ -6,6 +6,7 @@
 from clustering import poisson_cluster
 from preprocessing import cell_normalize
 from state_estimation import poisson_estimate_state, initialize_from_assignments
+from lightlda_utils import lightlda_estimate_state, prepare_lightlda_data
 
 import numpy as np
 
@@ -244,6 +245,31 @@ def poisson_consensus_se(data, k, n_runs=10, **se_params):
     init_m, init_w = nmf_init(data, consensus, k, 'basic')
     M, W, ll = poisson_estimate_state(data, k, init_means=init_m, init_weights=init_w, **se_params)
     return M, W, ll
+
+
+def lightlda_se_tsne(data, k, n_runs=10, init='basic', **se_params):
+    print "lightlda_se_tsne"
+    clusters = []
+    tsne = TSNE(2)
+    km = KMeans(k)
+    n_runs = 3
+    # Prepare LightLDA data
+    prepare_lightlda_data(data, "/data1/LightLDA_input")
+
+    # Run LightLDA several times, and then find the consensus clusters
+    for i in range(n_runs):
+        m, w, ll = lightlda_estimate_state(data, k, prepare_data=False, **se_params)
+        tsne_w = tsne.fit_transform(w.T)
+        clust = km.fit_predict(tsne_w)
+        clusters.append(clust)
+    clusterings = np.vstack(clusters)
+    consensus = CE.cluster_ensembles(clusterings, verbose=False, N_clusters_max=k)
+    
+    # Initialize a new LightlDA run with the consensus clusters
+    init_m, init_w = nmf_init(data, consensus, k, 'basic')
+    M, W, ll = lightlda_estimate_state(data, k, init_means=init_m, init_weights=init_w, prepare_data=False, **se_params)
+    return M, W, ll
+
 
 def lensNMF(data, k, ks=1):
     """
