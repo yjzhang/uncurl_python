@@ -59,9 +59,11 @@
 <span class="sd">Basically, we observe one (cell_id, gene_level) pair at a time, iterating</span>
 <span class="sd">through the data point by point, updating the gradient based on that point.</span>
 
-<span class="sd">If </span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">issparse</span>
 
 
@@ -75,18 +77,43 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span></div>
 
-<div class="viewcode-block" id="poisson_estimate_state"><a class="viewcode-back" href="../../../uncurl.scalable.html#uncurl.scalable.state_estimation.poisson_estimate_state">[docs]</a><span class="k">def</span> <span class="nf">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="cost_grad"><a class="viewcode-back" href="../../../uncurl.scalable.html#uncurl.scalable.state_estimation.cost_grad">[docs]</a><span class="k">def</span> <span class="nf">cost_grad</span><span class="p">(</span><span class="n">th</span><span class="p">,</span> <span class="n">Xr</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Runs Poisson state estimation...</span>
+<span class="sd">    translated from the matlab</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">th</span><span class="p">)</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="nb">sum</span><span class="p">(</span><span class="n">xth</span> <span class="o">-</span> <span class="n">Xr</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">xth</span><span class="p">))</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="p">(</span><span class="n">Xr</span><span class="o">/</span><span class="n">xth</span><span class="p">)</span>
+    <span class="n">grad</span>  <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">temp</span><span class="p">)</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">cost</span><span class="p">,</span> <span class="n">grad</span></div>
+
+
+<div class="viewcode-block" id="poisson_estimate_state"><a class="viewcode-back" href="../../../uncurl.scalable.html#uncurl.scalable.state_estimation.poisson_estimate_state">[docs]</a><span class="k">def</span> <span class="nf">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>  <span class="n">disp</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs Poisson state estimation on a sparse data matrix...</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># If data is a sparse (CSC) matrix: loop through points</span>
     <span class="c1"># otherwise, loop</span>
+    <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cells</span><span class="p">))</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">clusters</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">nonzero</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()):</span>
-                <span class="k">pass</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+            <span class="c1"># 1. estimate W</span>
+            <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">]</span>
+                <span class="n">cost</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">cost_grad</span><span class="p">(</span><span class="n">W</span><span class="p">[:,</span><span class="n">p2</span><span class="p">],</span> <span class="n">x</span><span class="p">,</span> <span class="n">M</span><span class="p">[</span><span class="n">p1</span><span class="p">,:],</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">W</span><span class="p">[:,</span><span class="n">p2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">grad</span><span class="o">*</span><span class="n">eta</span>
+            <span class="c1"># 2. estimate M</span>
+            <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">]</span>
+                <span class="n">cost</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">cost_grad</span><span class="p">(</span><span class="n">M</span><span class="p">[</span><span class="n">p1</span><span class="p">,:],</span> <span class="n">x</span><span class="p">,</span> <span class="n">W</span><span class="p">[:,</span><span class="n">p2</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">M</span><span class="p">[</span><span class="n">p1</span><span class="p">,:]</span> <span class="o">+=</span> <span class="n">grad</span><span class="o">*</span><span class="n">eta</span>
+        <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">pass</span></div>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: data is not sparse.&#39;</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

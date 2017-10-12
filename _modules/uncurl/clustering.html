@@ -52,6 +52,7 @@
 <span></span><span class="c1"># poisson clustering</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">minimize</span>
 
 <span class="kn">from</span> <span class="nn">pois_ll</span> <span class="k">import</span> <span class="n">poisson_ll</span><span class="p">,</span> <span class="n">poisson_dist</span><span class="p">,</span> <span class="n">zip_ll</span><span class="p">,</span> <span class="n">zip_ll_row</span>
@@ -84,23 +85,34 @@
     <span class="n">distances</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
     <span class="k">if</span> <span class="n">num_known_centers</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cells</span><span class="p">)</span>
-        <span class="n">centers</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">init</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">centers</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">init</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">centers</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">init</span><span class="p">]</span>
         <span class="n">num_known_centers</span><span class="o">+=</span><span class="mi">1</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_known_centers</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">):</span>
-                <span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">c2</span><span class="p">]</span> <span class="o">=</span> <span class="n">poisson_dist</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">centers</span><span class="p">[:,</span><span class="n">c2</span><span class="p">])</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">c</span><span class="o">-</span><span class="mi">1</span>
+        <span class="c1"># TODO: use different formulation for distance... if sparse, use lls</span>
+        <span class="c1"># if not sparse, use poisson_dist</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">lls</span> <span class="o">=</span> <span class="n">poisson_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">centers</span><span class="p">[:,</span><span class="n">c2</span><span class="p">:</span><span class="n">c2</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">distances</span><span class="p">[:,</span><span class="n">c2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">lls</span> <span class="o">-</span> <span class="n">lls</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+            <span class="n">distances</span><span class="p">[:,</span><span class="n">c2</span><span class="p">]</span> <span class="o">/=</span> <span class="n">distances</span><span class="p">[:,</span><span class="n">c2</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">):</span>
+                <span class="n">distances</span><span class="p">[</span><span class="n">cell</span><span class="p">,</span> <span class="n">c2</span><span class="p">]</span> <span class="o">=</span> <span class="n">poisson_dist</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">cell</span><span class="p">],</span> <span class="n">centers</span><span class="p">[:,</span><span class="n">c2</span><span class="p">])</span>
         <span class="c1"># choose a new data point as center... probability proportional</span>
         <span class="c1"># to distance^2</span>
         <span class="n">min_distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">min_distances</span> <span class="o">=</span> <span class="n">min_distances</span><span class="o">**</span><span class="mi">2</span>
         <span class="n">min_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">),</span>
                 <span class="n">p</span><span class="o">=</span><span class="n">min_distances</span><span class="o">/</span><span class="n">min_distances</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">min_dist</span><span class="p">]</span>
-    <span class="n">cluster_dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">cells</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
-        <span class="n">cluster_dists</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">poisson_dist</span><span class="p">(</span><span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">],</span> <span class="n">data</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cells</span><span class="p">)])</span>
-    <span class="n">new_assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">cluster_dists</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">min_dist</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">min_dist</span><span class="p">]</span>
+    <span class="n">lls</span> <span class="o">=</span> <span class="n">poisson_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span>
+    <span class="n">new_assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">lls</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">centers</span><span class="p">[</span><span class="n">centers</span><span class="o">==</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="n">eps</span>
     <span class="k">return</span> <span class="n">centers</span><span class="p">,</span> <span class="n">new_assignments</span></div>
 
@@ -109,7 +121,7 @@
 <span class="sd">    Performs Poisson hard EM on the given data.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        data (array): A 2d array- genes x cells</span>
+<span class="sd">        data (array): A 2d array- genes x cells. Can be dense or sparse; for best performance, sparse matrices should be in CSC format.</span>
 <span class="sd">        k (int): Number of clusters</span>
 <span class="sd">        init (array, optional): Initial centers - genes x k array. Default: None, use kmeans++</span>
 <span class="sd">        max_iters (int, optional): Maximum number of iterations. Default: 100</span>
@@ -122,10 +134,12 @@
     <span class="c1"># e.g., have init values only for certain genes, have a row of all</span>
     <span class="c1"># zeros indicating that kmeans++ should be used for that row.</span>
     <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
-    <span class="n">init</span><span class="p">,</span> <span class="n">assignments</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="o">+</span><span class="n">eps</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="n">init</span><span class="p">)</span>
+    <span class="c1">#print &#39;starting: &#39;, centers</span>
+    <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sparse</span><span class="o">.</span><span class="n">isspmatrix_csc</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csc_matrix</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">init</span><span class="p">,</span> <span class="n">assignments</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="n">init</span><span class="p">)</span>
     <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
     <span class="n">assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span>
-    <span class="c1">#print &#39;starting: &#39;, centers</span>
     <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
         <span class="n">lls</span> <span class="o">=</span> <span class="n">poisson_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span>
         <span class="c1">#cluster_dists = np.zeros((cells, k))</span>
@@ -134,7 +148,19 @@
             <span class="c1">#print &#39;ending: &#39;, centers</span>
             <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
-            <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">new_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">data</span><span class="p">[:,</span><span class="n">new_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># re-initialize centers?</span>
+                    <span class="n">new_c</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">centers</span><span class="p">[:,:</span><span class="n">c</span><span class="p">])</span>
+                    <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_c</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">new_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">new_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">])</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">new_c</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kmeans_pp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">centers</span><span class="p">[:,:</span><span class="n">c</span><span class="p">])</span>
+                    <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_c</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">centers</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">new_assignments</span><span class="o">==</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">assignments</span> <span class="o">=</span> <span class="n">new_assignments</span>
     <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span></div>
 

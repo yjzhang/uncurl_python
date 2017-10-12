@@ -119,7 +119,7 @@ clustering, with shape genes x clusters</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells</li>
+<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells. Can be dense or sparse; for best performance, sparse matrices should be in CSC format.</li>
 <li><strong>k</strong> (<em>int</em>) &#8211; Number of clusters</li>
 <li><strong>init</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial centers - genes x k array. Default: None, use kmeans++</li>
 <li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Maximum number of iterations. Default: 100</li>
@@ -176,25 +176,28 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 <h2>uncurl.poisson_estimate_state<a class="headerlink" href="#uncurl-poisson-estimate-state" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.poisson_estimate_state">
-<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=10</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>reps=1</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=20</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>normalize=True</em>, <em>initialization='cluster'</em>, <em>parallel=True</em>, <em>n_threads=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
+<p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells array or sparse matrix.</li>
 <li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
 <li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: from Poisson kmeans</li>
 <li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans</li>
 <li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
-<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 20</li>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
 <li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 100</li>
-<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of random initializations. NOT YET IMPLEMENTED. Default: 1.</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 400</li>
 <li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
+<li><strong>initialization</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; If initial means and weights are not provided, this describes how they are initialized. Options: &#8216;cluster&#8217; (poisson cluster for means and weights), &#8216;kmpp&#8217; (kmeans++ for means, random weights), &#8216;km&#8217; (regular k-means), &#8216;tsvd&#8217; (tsvd(50) + k-means). Default: cluster.</li>
+<li><strong>parallel</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether to use parallel updates (sparse NoLips only). Default: True</li>
+<li><strong>n_threads</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; How many threads to use in the parallel computation. Default: 4</li>
 </ul>
 </td>
 </tr>

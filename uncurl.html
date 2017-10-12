@@ -90,7 +90,7 @@ assignments - a cells x 1 array of cluster assignments</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells</li>
+<li><strong>data</strong> (<em>array</em>) &#8211; A 2d array- genes x cells. Can be dense or sparse; for best performance, sparse matrices should be in CSC format.</li>
 <li><strong>k</strong> (<em>int</em>) &#8211; Number of clusters</li>
 <li><strong>init</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial centers - genes x k array. Default: None, use kmeans++</li>
 <li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Maximum number of iterations. Default: 100</li>
@@ -210,6 +210,14 @@ of the cluster centers.</p>
 </div>
 <div class="section" id="module-uncurl.evaluation">
 <span id="uncurl-evaluation-module"></span><h2>uncurl.evaluation module<a class="headerlink" href="#module-uncurl.evaluation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.evaluation.mdl">
+<code class="descclassname">uncurl.evaluation.</code><code class="descname">mdl</code><span class="sig-paren">(</span><em>ll</em>, <em>k</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/evaluation.html#mdl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.evaluation.mdl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum description length score of the model given its
+log-likelihood and k, the number of cell types.</p>
+<p>a lower cost is better...</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="uncurl.evaluation.purity">
 <code class="descclassname">uncurl.evaluation.</code><code class="descname">purity</code><span class="sig-paren">(</span><em>labels</em>, <em>true_labels</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/evaluation.html#purity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.evaluation.purity" title="Permalink to this definition">¶</a></dt>
@@ -526,6 +534,7 @@ ll (float): Log-likelihood of final iteration</p>
 <dt id="uncurl.pois_ll.poisson_dist">
 <code class="descclassname">uncurl.pois_ll.</code><code class="descname">poisson_dist</code><span class="sig-paren">(</span><em>p1</em>, <em>p2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#poisson_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.poisson_dist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the Poisson distance between two vectors.</p>
+<p>p1 can be a sparse matrix, while p2 has to be a dense matrix.</p>
 </dd></dl>
 
 <dl class="function">
@@ -603,6 +612,19 @@ ll (float): Log-likelihood of final iteration</p>
 <span id="uncurl-preprocessing-module"></span><h2>uncurl.preprocessing module<a class="headerlink" href="#module-uncurl.preprocessing" title="Permalink to this headline">¶</a></h2>
 <p>Misc functions...</p>
 <dl class="function">
+<dt id="uncurl.preprocessing.cell_normalize">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">cell_normalize</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#cell_normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.cell_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the data where the expression is normalized so that the total
+count per cell is equal.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.preprocessing.log1p">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">log1p</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#log1p"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.log1p" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns ln(data+1), whether the original data is dense or sparse.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="uncurl.preprocessing.max_variance_genes">
 <code class="descclassname">uncurl.preprocessing.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=10</em>, <em>frac=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.max_variance_genes" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function identifies the genes that have the max variance
@@ -625,12 +647,40 @@ across a number of bins sorted by mean.</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="uncurl.preprocessing.sparse_var">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">sparse_var</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#sparse_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.sparse_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the variance for each row of a sparse matrix.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-uncurl.qual2quant">
 <span id="uncurl-qual2quant-module"></span><h2>uncurl.qual2quant module<a class="headerlink" href="#module-uncurl.qual2quant" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.qual2quant.qualNorm">
 <code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNorm</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNorm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells</li>
+<li><strong>qualitative</strong> (<em>array</em>) &#8211; 2d array of numerical data - genes x clusters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Array of starting positions for state estimation or
+clustering, with shape genes x clusters</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.qual2quant.qualNormGaussian">
+<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNormGaussian</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNormGaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNormGaussian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -896,26 +946,49 @@ labels - array of cluster labels</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="uncurl.state_estimation.initialize_means">
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_means</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_means"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_means" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the M matrix given the data and a set of cluster labels.
+Cluster centers are set to the mean of each cluster.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>clusters</strong> (<em>array</em>) &#8211; 1d array of ints (0...k-1)</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of clusters</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="uncurl.state_estimation.poisson_estimate_state">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=10</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>reps=1</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=20</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>normalize=True</em>, <em>initialization='cluster'</em>, <em>parallel=True</em>, <em>n_threads=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
+<p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells array or sparse matrix.</li>
 <li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
 <li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: from Poisson kmeans</li>
 <li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans</li>
 <li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
-<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 20</li>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
 <li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 100</li>
-<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of random initializations. NOT YET IMPLEMENTED. Default: 1.</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 400</li>
 <li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
+<li><strong>initialization</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; If initial means and weights are not provided, this describes how they are initialized. Options: &#8216;cluster&#8217; (poisson cluster for means and weights), &#8216;kmpp&#8217; (kmeans++ for means, random weights), &#8216;km&#8217; (regular k-means), &#8216;tsvd&#8217; (tsvd(50) + k-means). Default: cluster.</li>
+<li><strong>parallel</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether to use parallel updates (sparse NoLips only). Default: True</li>
+<li><strong>n_threads</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; How many threads to use in the parallel computation. Default: 4</li>
 </ul>
 </td>
 </tr>
