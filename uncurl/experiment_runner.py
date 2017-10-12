@@ -6,6 +6,8 @@
 
 # preprocessing returns a matrix of shape (k, cells), where k <= genes
 
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import sparse
@@ -574,7 +576,7 @@ class EnsembleTSVDKm(Cluster):
     """
     # TODO
 
-def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=True, use_nmi=False, use_ari=False, consensus=False, visualize=False):
+def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=True, use_nmi=False, use_ari=False, consensus=False):
     """
     runs a pre-processing + clustering experiment...
 
@@ -594,11 +596,13 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
     names = []
     clusterings = {}
     other_results = {}
+    other_results['timing'] = {}
     for i in range(n_runs):
         print('run {0}'.format(i))
         purities = []
         r = 0
         for preproc, cluster in methods:
+            t0 = time.time()
             if isinstance(preproc, Preprocess):
                 preprocessed, ll = preproc.run(data)
                 output_names = preproc.output_names
@@ -611,10 +615,13 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                     p1 = p1[0]
                     output_names[0] = output_names[0] + p.output_names[0]
                 preprocessed = [p1]
+            t1 = time.time() - t0
             for name, pre in zip(output_names, preprocessed):
                 if isinstance(cluster, Cluster):
                     try:
+                        t0 = time.time()
                         labels = cluster.run(pre)
+                        t2 = t1 + time.time() - t0
                         if use_purity:
                             purities.append(purity(labels, true_labels))
                         if use_nmi:
@@ -624,8 +631,11 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                         if i==0:
                             names.append(name + '_' + cluster.name)
                             clusterings[names[-1]] = []
+                            other_results['timing'][names[-1]] = []
                         print(names[r])
                         clusterings[names[r]].append(labels)
+                        print('time: ' + str(t2))
+                        other_results['timing'][names[r]].append(t2)
                         print(purities[-1])
                         r += 1
                     except:
@@ -633,7 +643,9 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                 elif type(cluster) == list:
                     for c in cluster:
                         try:
+                            t0 = time.time()
                             labels = c.run(pre)
+                            t2 = t1 + time.time() - t0
                             if use_purity:
                                 purities.append(purity(labels, true_labels))
                             if use_nmi:
@@ -643,8 +655,11 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                             if i==0:
                                 names.append(name + '_' + c.name)
                                 clusterings[names[-1]] = []
+                                other_results['timing'][names[-1]] = []
                             print(names[r])
                             clusterings[names[r]].append(labels)
+                            other_results['timing'][names[r]].append(t2)
+                            print('time: ' + str(t2))
                             print(purities[-1])
                             r += 1
                         except:
@@ -654,11 +669,13 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
         results.append(purities)
     consensus_purities = []
     if consensus:
+        other_results['consensus'] = {}
         k = len(np.unique(true_labels))
         for name, clusts in clusterings.iteritems():
             print(name)
             clusts = np.vstack(clusts)
             consensus_clust = CE.cluster_ensembles(clusts, verbose=False, N_clusters_max=k)
+            other_results['consensus'][name] = consensus_clust
             if use_purity:
                 consensus_purity = purity(consensus_clust.flatten(), true_labels)
                 print('consensus purity: ' + str(consensus_purity))

@@ -157,14 +157,14 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             # computational time does that add?
             assignments = km.fit_predict(log1p(cell_normalize(data)).T)
             init_weights = initialize_from_assignments(assignments, clusters)
-            init_means = initialize_means(data, assignments, clusters)
+            means = initialize_means(data, assignments, clusters)
         elif initialization=='tsvd':
             tsvd = TruncatedSVD(50)
             km = KMeans(clusters)
             data_reduced = tsvd.fit_transform(log1p(cell_normalize(data)).T)
             assignments = km.fit_predict(data_reduced)
             init_weights = initialize_from_assignments(assignments, clusters)
-            init_means = initialize_means(data, assignments, clusters)
+            means = initialize_means(data, assignments, clusters)
     else:
         means = init_means.copy()
     means = means.astype(float)
