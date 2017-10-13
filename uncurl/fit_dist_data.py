@@ -29,11 +29,7 @@ def GetDistFitError(Dat):
     std = np.std(Dat, ddof=1)
     m_l = np.mean(Dat2)
     std_l = np.std(Dat2, ddof=1)
-    print m 
-    print std
-    print m_l 
-    print std_l 
-               
+              
     
     
     #Create a bin of frequencies and generate frequencies based on distr
