@@ -12,7 +12,10 @@ from nb_cluster import nb_cluster
 from preprocessing import max_variance_genes
 
 import robust
-
-import experiment_runner
-import ensemble
 import sampling
+
+try:
+    import experiment_runner
+    import ensemble
+except:
+    pass
