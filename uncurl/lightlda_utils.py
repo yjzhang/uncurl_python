@@ -4,7 +4,8 @@ import errno
 import subprocess
 import uncurl
 from scipy.sparse import csc_matrix
-LIGHTLDA_FOLDER = "/home/joshua/lightlda"
+
+LIGHTLDA_FOLDER = "/home/yjzhang/lightlda-warm-start"
 eps = 1e-10
 
 # Contains methods to process input and output files for LightLDA.

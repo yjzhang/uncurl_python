@@ -254,7 +254,7 @@ def lightlda_se_tsne(data, k, n_runs=10, init='basic', **se_params):
     km = KMeans(k)
     n_runs = 3
     # Prepare LightLDA data
-    prepare_lightlda_data(data, "/data1/LightLDA_input")
+    prepare_lightlda_data(data, "lightlda_data/LightLDA_input")
 
     # Run LightLDA several times, and then find the consensus clusters
     for i in range(n_runs):
