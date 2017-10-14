@@ -7,8 +7,8 @@ from nolips import sparse_nolips_update_w
 try:
     from nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
 except:
-    # if parallel can't be used, just use the dense version
-    parallel_sparse_nolips_update_w = sparse_nolips_update_w
+    # if parallel can't be used, do not use parallel update function...
+    pass
 from preprocessing import cell_normalize, log1p
 
 import numpy as np
