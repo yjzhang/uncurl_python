@@ -34,14 +34,14 @@ except:
     # optional dependencies?
     pass
 
-from state_estimation import poisson_estimate_state
-from dim_reduce import dim_reduce
-from evaluation import purity
-from preprocessing import cell_normalize
-import ensemble
-from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust, lightlda_se_tsne
-from clustering import poisson_cluster
-from lightlda_utils import lightlda_estimate_state
+from .state_estimation import poisson_estimate_state
+from .dim_reduce import dim_reduce
+from .evaluation import purity
+from .preprocessing import cell_normalize
+from . import ensemble
+from .ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust, lightlda_se_tsne
+from .clustering import poisson_cluster
+from .lightlda_utils import lightlda_estimate_state
 
 
 class Preprocess(object):

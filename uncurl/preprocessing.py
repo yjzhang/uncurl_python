@@ -37,7 +37,7 @@ def max_variance_genes(data, nbins=10, frac=0.1):
     else:
         var = data.var(1)
     mean_indices = means.argsort()
-    n_elements = data.shape[0]/nbins
+    n_elements = int(data.shape[0]/nbins)
     frac_elements = int(n_elements*frac)
     for i in range(nbins):
         bin_i = mean_indices[i*n_elements : (i+1)*n_elements]

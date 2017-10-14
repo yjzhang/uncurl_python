@@ -16,8 +16,8 @@ eps = 1e-10
 def create_libsvm_file(matrix, filename):
     f = open(filename, "w")
     (r,c) = matrix.shape
-    print "Create_libsvm_file"
-    print filename
+    print("Create_libsvm_file")
+    print(filename)
     # NOTE: I assume the "label" attribute of the LibSVM file isn't used
     # (LightLDA is unsupervised), so all labels are set to the same class.
     # This might be an incorrect assumption!!!
@@ -152,25 +152,25 @@ def lightlda_estimate_state(data, k, input_folder="/data1/LightLDA_input", threa
         init_weights = init_weights/init_weights.sum(0)
         create_model_file("server_0_table_0.model", init_means)
         create_model_file("doc_topic.0", init_weights.T)        
-        print init_means
-        print "init_means"
+        print(init_means)
+        print("init_means")
 
     # Run LightLDA
-    print "TRAINING"
+    print("TRAINING")
     train_args = (os.path.join(LIGHTLDA_FOLDER, "bin/lightlda"), "-num_vocabs", str(data.shape[0]), "-num_topics",
                   str(k), "-num_iterations", str(max_iters), "-alpha", "0.05", "-beta", "0.01", "-mh_steps", "2",
                   "-num_local_workers", str(threads), "-num_blocks", "1", "-max_num_document", str(data.shape[1]),
                   "-input_dir", input_folder, "-data_capacity", "3000")
     if warm_start:
-        print "warm start"
+        print("warm start")
         train_args = train_args + ("-warm_start",)        
 
     # Call LightLDA
     subprocess.call(train_args)
     
     # Parse final model and doc-topic files to obtain M/W
-    print "data shape"
-    print data.shape
+    print("data shape")
+    print(data.shape)
 
     M = parse_model_file("server_0_table_0.model", k, data.shape[0])
     W = parse_result_file("doc_topic.0", k)
@@ -179,16 +179,16 @@ def lightlda_estimate_state(data, k, input_folder="/data1/LightLDA_input", threa
     M = M * (np.mean(data) / np.mean(M))
     W = W/W.sum(0)
     ll = poisson_objective(data, M, W)
-    print "shapes"
-    print M.shape
-    print W.shape
+    print("shapes")
+    print(M.shape)
+    print(W.shape)
     #M = M * (5./np.mean(M))
     return M, W, ll
 
 
 # Converts matrix to LightLDA format and dumps it into the input folder.
 def prepare_lightlda_data(data, input_folder):
-    print "Preparing LightLDA data"
+    print("Preparing LightLDA data")
 
     # Create the input directory if it doesn't exist
     try:
@@ -199,7 +199,7 @@ def prepare_lightlda_data(data, input_folder):
 
     libsvm_file = os.path.join(input_folder, "input.libsvm")
     create_libsvm_file(data, libsvm_file)
-    print "libsvm file created"
+    print("libsvm file created")
  
     # Produce metadata file
     metadata_args = (os.path.join(LIGHTLDA_FOLDER, "example/get_meta.py"),
@@ -217,5 +217,5 @@ def prepare_lightlda_data(data, input_folder):
                     input_folder, pid)
     subprocess.call(convert_args)
 
-    print "Done preparing LightLDA data"
+    print("Done preparing LightLDA data")
 

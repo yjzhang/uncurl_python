@@ -19,7 +19,7 @@ class LineageTest(TestCase):
         m2 = M + np.random.random(M.shape) - 0.5
         curves, fitted_vals, edges, assignments = lineage(m2, W)
         # TODO: assert something about the distances???
-        print len(edges)
+        print(len(edges))
         adjacent_count = 0
         for e in edges:
             if np.abs(e[0]-e[1]) <= 1:

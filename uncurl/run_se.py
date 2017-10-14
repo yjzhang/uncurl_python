@@ -1,8 +1,8 @@
 # state estimation with poisson convex mixture model
 
-from state_estimation import poisson_estimate_state
-from nb_state_estimation import nb_estimate_state
-from zip_state_estimation import zip_estimate_state
+from .state_estimation import poisson_estimate_state
+from .nb_state_estimation import nb_estimate_state
+from .zip_state_estimation import zip_estimate_state
 
 import numpy as np
 from scipy import sparse

@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn.cluster import KMeans
 
-from clustering import poisson_cluster
+from .clustering import poisson_cluster
 
 def qualNorm(data, qualitative):
     """

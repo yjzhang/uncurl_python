@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from unittest import TestCase
 
 import numpy as np
@@ -81,20 +83,20 @@ class ClusterTest(TestCase):
         """
         centers = np.random.randint(10, 1000, (3,3))
         L = np.random.random((3,3))
-        print centers
-        print L
+        print(centers)
+        print(L)
         centers = centers.astype(float)
         data, labs = generate_zip_data(centers, L, 1000)
         data = data.astype(float)
-        print data
+        print(data)
         assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
         distances = np.zeros((3,3))
         for i in range(3):
             for j in range(3):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
-        print c_centers
-        print c_zeros
-        print purity(assignments, labs)
+        print(c_centers)
+        print(c_zeros)
+        print(purity(assignments, labs))
         self.assertTrue(purity(assignments, labs) > 0.6)
         #self.assertFalse(correspond[0]==correspond[1])
         #self.assertFalse(correspond[1]==correspond[2])

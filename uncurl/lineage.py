@@ -5,7 +5,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.spatial.distance import pdist, squareform
 
-from dim_reduce import dim_reduce
+from .dim_reduce import dim_reduce
 
 def fourier_series(x, *a):
     """

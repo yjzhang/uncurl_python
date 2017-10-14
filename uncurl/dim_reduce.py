@@ -1,7 +1,7 @@
 # dimensionality reduction
 
 import numpy as np
-from pois_ll import poisson_dist
+from .pois_ll import poisson_dist
 
 eps=1e-8
 max_or_zero = np.vectorize(lambda x: max(0.0,x))

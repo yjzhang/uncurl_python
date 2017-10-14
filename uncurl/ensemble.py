@@ -3,10 +3,10 @@
 # method based on https://arxiv.org/abs/1702.07186
 # combine all the means produced...
 
-from clustering import poisson_cluster
-from preprocessing import cell_normalize
-from state_estimation import poisson_estimate_state, initialize_from_assignments
-from lightlda_utils import lightlda_estimate_state, prepare_lightlda_data
+from .clustering import poisson_cluster
+from .preprocessing import cell_normalize
+from .state_estimation import poisson_estimate_state, initialize_from_assignments
+from .lightlda_utils import lightlda_estimate_state, prepare_lightlda_data
 
 import numpy as np
 
@@ -248,7 +248,7 @@ def poisson_consensus_se(data, k, n_runs=10, **se_params):
 
 
 def lightlda_se_tsne(data, k, n_runs=10, init='basic', **se_params):
-    print "lightlda_se_tsne"
+    print("lightlda_se_tsne")
     clusters = []
     tsne = TSNE(2)
     km = KMeans(k)
@@ -290,13 +290,13 @@ def lensNMF(data, k, ks=1):
         R_i[R_i < 0] = 0
         """
         P_r = R_i.sum(1)/R_i.sum()
-        print P_r.shape
+        print(P_r.shape)
         P_c = R_i.sum(0)/R_i.sum()
-        print P_c.shape
+        print(P_c.shape)
         row_choice = np.random.choice(range(len(P_r)), p=P_r)
-        print row_choice
+        print(row_choice)
         col_choice = np.random.choice(range(len(P_c)), p=P_c)
-        print col_choice
+        print(col_choice)
         D_r = cosine_similarity(data[row_choice:row_choice+1,:], data)
         D_c = cosine_similarity(data[:,col_choice:col_choice+1].T, data.T)
         D_r = np.diag(D_r.flatten())

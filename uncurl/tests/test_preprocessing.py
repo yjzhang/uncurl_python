@@ -24,7 +24,7 @@ class PreprocessingTest(TestCase):
         dense_var = np.var(self.data_dense, 1)
         sp_var = sparse_var(self.data_sparse)
         se = np.sqrt(np.sum((sp_var - dense_var)**2))
-        print se
+        print(se)
         self.assertTrue(se < 1e-6)
 
     def testMaxVarGenes(self):

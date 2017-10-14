@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from unittest import TestCase
 
 import numpy as np
@@ -21,8 +23,8 @@ class StateEstimationTest(TestCase):
         c1 = W.argmax(0)
         c2 = W_.argmax(0)
         p = purity(c2, c1)
-        print p
-        print data
-        print M
-        print M_
+        print(p)
+        print(data)
+        print(M)
+        print(M_)
         self.assertTrue(p > 0.7)

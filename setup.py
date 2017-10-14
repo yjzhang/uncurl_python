@@ -1,20 +1,19 @@
 from setuptools import setup, find_packages
 from distutils.extension import Extension
 from Cython.Build import cythonize
-from Cython.Compiler.Options import directive_defaults
 
 #directive_defaults['linetrace'] = True
 #directive_defaults['binding'] = True
 
 extensions = [
-        Extension('nolips', ['uncurl/nolips.pyx'],
+        Extension('uncurl.nolips', ['uncurl/nolips.pyx'],
             extra_compile_args=['-O3', '-march=native', '-ffast-math']),
-        Extension('sparse_utils', ['uncurl/sparse_utils.pyx'],
+        Extension('uncurl.sparse_utils', ['uncurl/sparse_utils.pyx'],
             extra_compile_args=['-O3', '-march=native', '-ffast-math'])
         ]
 
 parallel_extensions = [
-        Extension('nolips_parallel', ['uncurl/nolips_parallel.pyx'],
+        Extension('uncurl.nolips_parallel', ['uncurl/nolips_parallel.pyx'],
             extra_compile_args=['-O3', '-march=native', '-ffast-math', '-fopenmp'],
             extra_link_args=['-fopenmp'])
         ]
