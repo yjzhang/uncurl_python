@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import itertools
 
 from unittest import TestCase
@@ -27,12 +29,12 @@ class SparseStateEstimationTest(TestCase):
                                     [0.9,0.8,0.7,0.6,0.5,0.2,0.1]])
         sim_data = simulation.generate_state_data(sim_means, sim_assignments)
         sim_data = sparse.csc_matrix(sim_data)
-        print sim_data
+        print(sim_data)
         # add noise to the mean
         sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
-        print m
-        print w
+        print(m)
+        print(w)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.01)
         # mean error in M is less than 5
         self.assertTrue(np.mean(np.abs(sim_means-m))<10.0 or
@@ -60,13 +62,13 @@ class SparseStateEstimationTest(TestCase):
                                     [0.3,0.1,0.4,0.2,0.8,0.1,0.3,0.0,0.5,0.5,0.1]])
         sim_data = simulation.generate_state_data(sim_means, sim_assignments)
         sim_data = sparse.csc_matrix(sim_data)
-        print sim_data
+        print(sim_data)
         # add noise to the mean
         sim_means_noised = sim_means + 5*(np.random.random(sim_means.shape)-0.5)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 3, init_means=sim_means_noised, max_iters=10, disp=False, parallel=False)
-        print m
-        print w
-        print w.sum(0)
+        print(m)
+        print(w)
+        print(w.sum(0))
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.01)
         # mean error in M is less than 10
         means_good = False

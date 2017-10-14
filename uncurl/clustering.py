@@ -4,7 +4,7 @@ import numpy as np
 from scipy import sparse
 from scipy.optimize import minimize
 
-from pois_ll import poisson_ll, poisson_dist, zip_ll, zip_ll_row
+from .pois_ll import poisson_ll, poisson_dist, zip_ll, zip_ll_row
 
 eps = 1e-8
 

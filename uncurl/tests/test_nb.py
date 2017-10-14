@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from unittest import TestCase
 
 import numpy as np
@@ -64,8 +66,8 @@ class NBTest(TestCase):
         self.assertFalse(np.isinf(p).any())
         self.assertFalse(np.isinf(r).any())
         self.assertTrue(np.sum(np.abs(p - P.flatten())**2)/3 < 0.5)
-        print r
-        print np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3
+        print(r)
+        print(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3)
         self.assertTrue(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3 < 3)
 
     def test_nb_fit_random(self):
@@ -82,11 +84,11 @@ class NBTest(TestCase):
                 continue
             p_nans = np.isnan(p)
             r_nans = np.isnan(r)
-            print P
-            print R
-            print p
-            print r
-            print np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3
+            print(P)
+            print(R)
+            print(p)
+            print(r)
+            print(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3)
             self.assertTrue(np.sqrt(np.sum(np.abs(r - R.flatten())**2))/3 < 35)
             self.assertFalse(p_nans.any())
             self.assertFalse(r_nans.any())

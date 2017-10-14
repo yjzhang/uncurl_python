@@ -20,18 +20,28 @@ from sklearn.decomposition import NMF, TruncatedSVD, PCA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 
-import Cluster_Ensembles as CE
+try:
+    import Cluster_Ensembles as CE
+except:
+    pass
 
-import SIMLR
+# optional dependencies?
+try:
+    import SIMLR
+    from ZIFA import ZIFA
+    from ZIFA import block_ZIFA
+except:
+    # optional dependencies?
+    pass
 
-from state_estimation import poisson_estimate_state
-from dim_reduce import dim_reduce
-from evaluation import purity
-from preprocessing import cell_normalize
-import ensemble
-from ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust
-from clustering import poisson_cluster
-
+from .state_estimation import poisson_estimate_state
+from .dim_reduce import dim_reduce
+from .evaluation import purity
+from .preprocessing import cell_normalize
+from . import ensemble
+from .ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust, lightlda_se_tsne
+from .clustering import poisson_cluster
+from .lightlda_utils import lightlda_estimate_state
 
 
 class Preprocess(object):
@@ -108,22 +118,52 @@ class TSVD(Preprocess):
     def run(self, data):
         return [self.tsvd.fit_transform(data.T).T], 0
 
-class TSVDTSNE(Preprocess):
+class Tsne(Preprocess):
     """
-    Runs truncated SVD followed by tSNE on the data.
-    the input param k is the number of dimensions for tsvd; tsne always
-    uses 2d.
+    2d tsne dimensionality reduction - tsne always uses 2d
     """
 
     def __init__(self, **params):
-        self.output_names = ['TSVD_TSNE']
-        self.tsvd = TruncatedSVD(params['k'])
+        self.output_names = ['TSNE']
         self.tsne = TSNE(2)
-        super(TSVDTSNE, self).__init__(**params)
+        super(Tsne, self).__init__(**params)
 
     def run(self, data):
-        return [self.tsne.fit_transform(self.tsvd.fit_transform(data.T)).T], 0
+        if sparse.issparse(data):
+            data = data.toarray()
+        return [self.tsne.fit_transform(data.T).T], 0
 
+class Pca(Preprocess):
+    """
+    PCA preprocessing
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['PCA']
+        self.pca = PCA(params['k'])
+        super(Pca, self).__init__(**params)
+
+    def run(self, data):
+        if sparse.issparse(data):
+            data = data.toarray()
+        return [self.pca.fit_transform(data.T).T], 0
+
+class Zifa(Preprocess):
+    """
+    ZIFA preprocessing
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['ZIFA']
+        self.k = params['k']
+        super(Zifa, self).__init__(**params)
+
+    def run(self, data):
+        if sparse.issparse(data):
+            data = data.toarray()
+        data = np.log1p(data)
+        Z, model_params = block_ZIFA.fitModel(data.T, self.k)
+        return [Z.T], 0
 
 
 class PoissonSE(Preprocess):
@@ -173,6 +213,36 @@ class PoissonSE(Preprocess):
             outputs.append(X.T.dot(W))
         return outputs, ll
 
+
+class LightLDASE(Preprocess):
+    """
+    Runs LightLDA State Estimation, returning W and MW.
+    Requires a 'k' parameter.
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['LightLDA_W', 'LightLDA_MW']
+        super(LightLDASE, self).__init__(**params)
+
+    def run(self, data):
+        M, W, ll = lightlda_estimate_state(data, **self.params)
+        return [W, M.dot(W)], ll
+
+
+class EnsembleTsneLightLDASE(Preprocess):
+    """
+    Runs tsne-based LightLDA Poisson state estimation
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['LightLDA_Ensemble_W', 'LightLDA_Ensemble_MW']
+        super(EnsembleTsneLightLDASE, self).__init__(**params)
+
+    def run(self, data):
+        M, W, ll = lightlda_se_tsne(data, **self.params)
+        return [W, M.dot(W)], ll
+
+
 class LogNMF(Preprocess):
     """
     Runs NMF on log(normalize(data)+1), returning H and W*H.
@@ -181,9 +251,20 @@ class LogNMF(Preprocess):
     """
 
     def __init__(self, **params):
-        self.output_names = ['logNMF_H', 'logNMF_WH']
+        self.output_names = ['logNMF_H']
         super(LogNMF, self).__init__(**params)
         self.nmf = NMF(params['k'])
+        self.return_mds = False
+        self.return_wh = False
+        if 'return_wh' in params and params['return_wh']:
+            self.output_names.append('logNMF_WH')
+            self.return_wh = True
+            params.pop('return_wh')
+        if 'return_mds' in params and params['return_mds']:
+            self.output_names.append('logNMF_MDS')
+            self.return_mds = True
+            params.pop('return_mds')
+
 
     def run(self, data):
         data_norm = cell_normalize(data)
@@ -202,7 +283,13 @@ class LogNMF(Preprocess):
         if 'normalize_h' in self.params:
             print('normalize h')
             H = H/H.sum(0)
-        return [H, W.dot(H)], cost
+        output = [H]
+        if self.return_wh:
+            output.append(W.dot(H))
+        if self.return_mds:
+            X = dim_reduce(W, H, 2)
+            output.append(X.T.dot(H))
+        return output, cost
 
 class BasicNMF(Preprocess):
     """

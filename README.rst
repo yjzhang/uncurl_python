@@ -5,6 +5,8 @@ To install after cloning the repo: ``pip install .``
 
 Requirements: numpy, scipy, cython, scikit-learn
 
+For parallel state estimation, OpenMP is required.
+
 To run tests: ``python setup.py test``
 
 Examples: see the examples folder.

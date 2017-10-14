@@ -4,8 +4,8 @@ import numpy as np
 from scipy.optimize import fsolve, minimize
 from scipy.special import gammaln, digamma, xlog1py
 
-from clustering import kmeans_pp
-import pois_ll
+from .clustering import kmeans_pp
+from . import pois_ll
 
 eps=1e-8
 

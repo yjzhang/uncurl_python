@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from unittest import TestCase
 
 import numpy as np
@@ -21,7 +23,7 @@ class Qual2QuantTest(TestCase):
         starting_points = uncurl.qualNorm(self.data, self.qualData)
         self.assertTrue(starting_points.shape==(500, 2))
         self.assertFalse(np.isnan(starting_points).any())
-        print (starting_points==0).sum()
+        print((starting_points==0).sum())
         self.assertTrue((starting_points == 0).sum() < 100)
 
     def test_qual2quant_missing_data(self):
@@ -34,5 +36,5 @@ class Qual2QuantTest(TestCase):
         starting_points = uncurl.qualNorm(self.data, qualData_m)
         self.assertTrue(starting_points.shape==(500, 2))
         self.assertFalse(np.isnan(starting_points).any())
-        print (starting_points==0).sum()
+        print((starting_points==0).sum())
         self.assertTrue((starting_points == 0).sum() < 100)

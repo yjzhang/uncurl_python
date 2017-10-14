@@ -5,7 +5,7 @@ from scipy import sparse
 from scipy.stats import poisson
 from scipy.special import xlogy, gammaln
 
-from sparse_utils import sparse_poisson_ll
+from uncurl.sparse_utils import sparse_poisson_ll
 
 eps = 1e-10
 

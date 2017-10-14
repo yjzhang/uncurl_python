@@ -1,15 +1,17 @@
 # state estimation with poisson convex mixture model
 
-from clustering import kmeans_pp, poisson_cluster
-from nolips import nolips_update_w, objective, sparse_objective
-from nolips import sparse_nolips_update_w
+from .clustering import kmeans_pp, poisson_cluster
+from uncurl.nolips import nolips_update_w, objective, sparse_objective
+from uncurl.nolips import sparse_nolips_update_w
 # try to use parallel; otherwise
+#from uncurl.nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
 try:
-    from nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
+    from uncurl.nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
 except:
+    print('Warning: cannot import sparse nolips')
     # if parallel can't be used, do not use parallel update function...
     pass
-from preprocessing import cell_normalize, log1p
+from .preprocessing import cell_normalize, log1p
 
 import numpy as np
 from scipy import sparse

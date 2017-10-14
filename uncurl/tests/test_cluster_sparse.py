@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from unittest import TestCase
 
 import numpy as np
@@ -49,8 +51,8 @@ class SparseClusterTest(TestCase):
         for i in range(3):
             for j in range(3):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
-        print assignments
-        print labs
-        print purity(assignments, labs)
+        print(assignments)
+        print(labs)
+        print(purity(assignments, labs))
         self.assertTrue(purity(assignments, labs) > 0.8)
 
