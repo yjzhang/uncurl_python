@@ -17,6 +17,38 @@ ctypedef np.double_t DTYPE_t
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+def sparse_create_libsvm_file(data, str filename):
+    """
+    Create a libsvm file for use with LightLDA, for sparse matrices.
+    """
+    cdef int cells = data.shape[1]
+    cdef int genes = data.shape[0]
+    cdef int[:] indices, indptr
+    cdef long[:] data_
+    cdef int ind, g, c, start_ind, end_ind
+    #cdef int ind, g, c, start_ind, end_ind
+    cdef long i
+    f = open(filename, "w")
+    csc = sparse.csc_matrix(data)
+    indices = csc.indices
+    indptr = csc.indptr
+    data_ = csc.data.astype(np.long)
+    strings = []
+    for c in range(cells):
+        strings.append('1\t')
+        start_ind = indptr[c]
+        end_ind = indptr[c+1]
+        for i2 in range(start_ind, end_ind):
+            g = indices[i2]
+            i = data_[i2]
+            strings.append(str(g)+':'+str(i)+' ')
+        strings.append('\n')
+    f.write(''.join(strings))
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
 def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
     """
     calculates the Poisson log-likelihood for a sparse matrix data (genes x cells)

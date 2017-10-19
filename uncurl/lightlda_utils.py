@@ -2,8 +2,8 @@ import numpy as np
 import os
 import errno
 import subprocess
-import uncurl
-from scipy.sparse import csc_matrix
+from scipy import sparse
+from uncurl.sparse_utils import sparse_create_libsvm_file
 
 LIGHTLDA_FOLDER = "/home/yjzhang/lightlda-warm-start"
 eps = 1e-10
@@ -27,9 +27,9 @@ def create_libsvm_file(matrix, filename):
     # 1 0:12 2:4 5:6
     # (document is class 1. Gene 0 appears 12 times, G2 appears 4 times, G5 appears 6 times)
     strings = []
-    for i in xrange(c):
+    for i in range(c):
         strings.append("1\t")
-        for j in xrange(r):
+        for j in range(r):
             if matrix[j,i] != 0:
                 strings.append(str(j))
                 strings.append(":")
@@ -55,9 +55,9 @@ def create_model_file(filename, matrix):
     # (cell is class 1. archetype 0 has value 12, archetype 2 has value 4,
     # archetype 5 has value 6
     strings = []
-    for i in xrange(r):
+    for i in range(r):
         strings.append(str(i) + " ")
-        for j in xrange(c):
+        for j in range(c):
             if matrix[i, j] >= 0.0:
                 strings.append(str(j))
                 strings.append(":")
@@ -73,7 +73,7 @@ def create_model_file(filename, matrix):
 # G0, G1, etc.) I don't think this is used.
 def create_dict_file(num_genes, filename):
     f = open(filename, "w")
-    for i in xrange(num_genes):
+    for i in range(num_genes):
         f.write(str(i) + "\tG" + str(i) + "\t" + str(i+1) + "\n")
         
 
@@ -88,7 +88,7 @@ def parse_model_file(model_file, num_topics, num_words):
     for line in lines:
         tokens = line.split()
         word_id = tokens[0]
-        for i in xrange(1, len(tokens)):
+        for i in range(1, len(tokens)):
             topic_id, count = tokens[i].split(":")
             word_topic[int(word_id), int(topic_id)] = float(count)
     return word_topic
@@ -104,7 +104,7 @@ def parse_result_file(result_file, num_topics):
     for line in lines:
         tokens = line.split()
         doc_id = tokens[0]
-        for i in xrange(1, len(tokens)):
+        for i in range(1, len(tokens)):
             topic_id, count = tokens[i].split(":")
             matrix[int(topic_id), int(doc_id)] = float(count)
     return matrix
@@ -135,7 +135,7 @@ def poisson_objective(X, m, w):
 # prepared into LDA format, set "prepare_data" to TRUE. If "prepare_data" is
 # FALSE, the method assumes that the data has already been preprocessed into
 # LightLDA format and is located at the given "input_folder".
-def lightlda_estimate_state(data, k, input_folder="/data1/LightLDA_input", threads=8, max_iters=250, prepare_data=True, init_means=None, init_weights=None):
+def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", threads=8, max_iters=250, prepare_data=True, init_means=None, init_weights=None):
     if prepare_data:
         prepare_lightlda_data(data, input_folder)
 
@@ -151,19 +151,20 @@ def lightlda_estimate_state(data, k, input_folder="/data1/LightLDA_input", threa
         init_means = init_means/init_means.sum(0)
         init_weights = init_weights/init_weights.sum(0)
         create_model_file("server_0_table_0.model", init_means)
-        create_model_file("doc_topic.0", init_weights.T)        
+        create_model_file("doc_topic.0", init_weights.T)
         print(init_means)
         print("init_means")
 
     # Run LightLDA
     print("TRAINING")
+    # TODO: argument for data capacity
     train_args = (os.path.join(LIGHTLDA_FOLDER, "bin/lightlda"), "-num_vocabs", str(data.shape[0]), "-num_topics",
                   str(k), "-num_iterations", str(max_iters), "-alpha", "0.05", "-beta", "0.01", "-mh_steps", "2",
                   "-num_local_workers", str(threads), "-num_blocks", "1", "-max_num_document", str(data.shape[1]),
-                  "-input_dir", input_folder, "-data_capacity", "3000")
+                  "-input_dir", input_folder, "-data_capacity", "500", "-model_capacity", "500", "-alias_capacity", "500")
     if warm_start:
         print("warm start")
-        train_args = train_args + ("-warm_start",)        
+        train_args = train_args + ("-warm_start",)
 
     # Call LightLDA
     subprocess.call(train_args)
@@ -198,7 +199,8 @@ def prepare_lightlda_data(data, input_folder):
             raise
 
     libsvm_file = os.path.join(input_folder, "input.libsvm")
-    create_libsvm_file(data, libsvm_file)
+    print('create libsvm file')
+    sparse_create_libsvm_file(data, libsvm_file)
     print("libsvm file created")
  
     # Produce metadata file

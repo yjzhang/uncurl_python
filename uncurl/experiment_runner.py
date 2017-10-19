@@ -34,6 +34,13 @@ except:
     # optional dependencies?
     pass
 
+# magic (requires python 3)
+try:
+    import pandas as pd
+    import magic
+except:
+    pass
+
 from .state_estimation import poisson_estimate_state
 from .dim_reduce import dim_reduce
 from .evaluation import purity
@@ -221,12 +228,26 @@ class LightLDASE(Preprocess):
     """
 
     def __init__(self, **params):
-        self.output_names = ['LightLDA_W', 'LightLDA_MW']
+        self.output_names = ['LightLDA_W']
+        if 'return_mw' in params and params['return_mw']:
+            self.output_names.append('LightLDA_MW')
+            self.return_mw = True
+            params.pop('return_mw')
+        if 'return_mds' in params and params['return_mds']:
+            self.output_names.append('LightLDA_MDS')
+            self.return_mds = True
+            params.pop('return_mds')
         super(LightLDASE, self).__init__(**params)
 
     def run(self, data):
         M, W, ll = lightlda_estimate_state(data, **self.params)
-        return [W, M.dot(W)], ll
+        output = [W]
+        if self.return_mw:
+            output.append(M.dot(W))
+        if self.return_mds:
+            X = dim_reduce(M, W, 2)
+            output.append(X.T.dot(W))
+        return output, ll
 
 
 class EnsembleTsneLightLDASE(Preprocess):
@@ -235,12 +256,26 @@ class EnsembleTsneLightLDASE(Preprocess):
     """
 
     def __init__(self, **params):
-        self.output_names = ['LightLDA_Ensemble_W', 'LightLDA_Ensemble_MW']
+        self.output_names = ['LightLDA_Ensemble_W']
+        if 'return_mw' in params and params['return_mw']:
+            self.output_names.append('LightLDA_Ensemble_MW')
+            self.return_mw = True
+            params.pop('return_mw')
+        if 'return_mds' in params and params['return_mds']:
+            self.output_names.append('LightLDA_Ensemble_MDS')
+            self.return_mds = True
+            params.pop('return_mds')
         super(EnsembleTsneLightLDASE, self).__init__(**params)
 
     def run(self, data):
         M, W, ll = lightlda_se_tsne(data, **self.params)
-        return [W, M.dot(W)], ll
+        output = [W]
+        if self.return_mw:
+            output.append(M.dot(W))
+        if self.return_mds:
+            X = dim_reduce(M, W, 2)
+            output.append(X.T.dot(W))
+        return output, ll
 
 
 class LogNMF(Preprocess):
@@ -539,10 +574,23 @@ class Magic(Preprocess):
     # TODO: this requires python 3
 
     def __init__(self, **params):
-        pass
+        self.output_names = ['magic']
+        super(Magic, self).__init__(**params)
 
     def run(self, data):
-        pass
+        if 'n_pca_components' in self.params:
+            n_components = self.params['n_pca_components']
+        else:
+            n_components = 20
+        if sparse.issparse(data):
+            data = data.toarray()
+        scdata = magic.mg.SCData(pd.DataFrame(data.T), data_type='sc-seq')
+        scdata = scdata.normalize_scseq_data()
+        scdata.run_magic(n_pca_components=n_components, random_pca=True,
+                t=6, k=30, ka=10, epsilon=1, rescale_percent=99)
+        scdata.run_tsne()
+        scdata.magic.run_tsne()
+        return [scdata.magic.tsne.as_matrix().T], 0
 
 class Cluster(object):
     """
@@ -758,7 +806,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
     if consensus:
         other_results['consensus'] = {}
         k = len(np.unique(true_labels))
-        for name, clusts in clusterings.iteritems():
+        for name, clusts in clusterings.items():
             print(name)
             clusts = np.vstack(clusts)
             consensus_clust = CE.cluster_ensembles(clusts, verbose=False, N_clusters_max=k)
