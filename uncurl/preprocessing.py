@@ -5,6 +5,8 @@ Misc functions...
 import numpy as np
 from scipy import sparse
 
+from uncurl.sparse_utils import sparse_cell_normalize
+
 def sparse_var(data):
     """
     Calculates the variance for each row of a sparse matrix.
@@ -57,6 +59,8 @@ def cell_normalize(data):
     Returns the data where the expression is normalized so that the total
     count per cell is equal.
     """
+    if sparse.issparse(data):
+        return sparse_cell_normalize(data)
     data_norm = data.copy().astype(float)
     total_umis = []
     for i in range(data.shape[1]):

@@ -117,7 +117,7 @@ def initialize_means(data, clusters, k):
     return init_w
 
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=20, tol=1e-10, disp=True, inner_max_iters=400, normalize=True, initialization='cluster', parallel=True, n_threads=4):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=15, tol=1e-10, disp=True, inner_max_iters=300, normalize=True, initialization='tsvd', parallel=True, n_threads=4):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -130,12 +130,12 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         init_means (array, optional): initial centers - genes x clusters. Default: from Poisson kmeans
         init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans
         method (str, optional): optimization method. Current options are 'NoLips' and 'L-BFGS-B'. Default: 'NoLips'.
-        max_iters (int, optional): maximum number of iterations. Default: 20
+        max_iters (int, optional): maximum number of iterations. Default: 15
         tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10
         disp (bool, optional): whether or not to display optimization parameters. Default: True
-        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 400
+        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 300
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
-        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means). Default: cluster.
+        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means). Default: tsvd.
         parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
         n_threads (int, optional): How many threads to use in the parallel computation. Default: 4
 

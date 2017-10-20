@@ -5,7 +5,7 @@ from scipy.io import loadmat
 from scipy import sparse
 
 import uncurl
-from uncurl.preprocessing import sparse_var
+from uncurl.preprocessing import sparse_var, cell_normalize
 from uncurl.simulation import generate_poisson_data
 from uncurl.evaluation import purity
 
@@ -41,3 +41,9 @@ class PreprocessingTest(TestCase):
         self.assertEqual(set(genes1), set(genes2))
         self.assertEqual(len(genes1), 5*int((n_genes/5)*0.2))
 
+    def testCellNormalize(self):
+        sparse_cell_norm = cell_normalize(self.data_sparse)
+        dense_cell_norm = cell_normalize(self.data_dense)
+        diff = dense_cell_norm - sparse_cell_norm.toarray()
+        diff = np.sqrt(np.sum(diff**2))
+        self.assertTrue(diff < 1e-6)
