@@ -49,6 +49,7 @@ from . import ensemble
 from .ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust, lightlda_se_tsne
 from .clustering import poisson_cluster
 from .lightlda_utils import lightlda_estimate_state
+from .plda_utils import plda_estimate_state
 
 
 class Preprocess(object):
@@ -185,9 +186,14 @@ class PoissonSE(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['Poisson_W']
+        self.return_w = True
         self.return_m = False
         self.return_mw = False
         self.return_mds = False
+        if 'return_w' in params and not params['return_w']:
+            self.output_names = []
+            self.return_w = False
+            params.pop('return_w')
         if 'return_m' in params and params['return_m']:
             self.output_names.append('Poisson_M')
             self.return_m = True
@@ -210,7 +216,8 @@ class PoissonSE(Preprocess):
         """
         M, W, ll = poisson_estimate_state(data, **self.params)
         outputs = []
-        outputs.append(W)
+        if self.return_w:
+            outputs.append(W)
         if self.return_m:
             outputs.append(M)
         if self.return_mw:
@@ -248,6 +255,35 @@ class LightLDASE(Preprocess):
             X = dim_reduce(M, W, 2)
             output.append(X.T.dot(W))
         return output, ll
+
+class PLDASE(Preprocess):
+    """
+    Runs PLDA State Estimation, returning W and MW.
+    Requires a 'k' parameter.
+    """
+
+    def __init__(self, **params):
+        self.output_names = ['PLDA_W']
+        if 'return_mw' in params and params['return_mw']:
+            self.output_names.append('PLDA_MW')
+            self.return_mw = True
+            params.pop('return_mw')
+        if 'return_mds' in params and params['return_mds']:
+            self.output_names.append('PLDA_MDS')
+            self.return_mds = True
+            params.pop('return_mds')
+        super(PLDASE, self).__init__(**params)
+
+    def run(self, data):
+        M, W = plda_estimate_state(data, **self.params)
+        output = [W]
+        if self.return_mw:
+            output.append(M.dot(W))
+        if self.return_mds:
+            X = dim_reduce(M, W, 2)
+            output.append(X.T.dot(W))
+        return output, 0
+
 
 
 class EnsembleTsneLightLDASE(Preprocess):
@@ -310,9 +346,10 @@ class LogNMF(Preprocess):
         W = self.nmf.fit_transform(data_norm)
         H = self.nmf.components_
         if sparse.issparse(data_norm):
-            ws = sparse.csr_matrix(W)
-            hs = sparse.csr_matrix(H)
-            cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
+            cost = 0
+            #ws = sparse.csr_matrix(W)
+            #hs = sparse.csr_matrix(H)
+            #cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()
         else:
             cost = 0.5*((data_norm - W.dot(H))**2).sum()
         if 'normalize_h' in self.params:
@@ -861,12 +898,18 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
             if r.shape[0]==2:
                 r_dim_red = r
             else:
-                if sparse.issparse(r):
-                    name = 'tsne_tsvd_' + name
+                # sometimes the data is too big to do tsne... (for sklearn)
+                if sparse.issparse(r) and r.shape[0] > 100:
+                    name = 'tsvd_' + name
                     tsvd = TruncatedSVD(50)
-                    tsne = TSNE(2)
-                    r_dim_red = tsne.fit_transform(tsvd.fit_transform(r.T)).T
-                    pass
+                    r_dim_red = tsvd.fit_transform(r.T)
+                    try:
+                        tsne = TSNE(2)
+                        r_dim_red = tsne.fit_transform(r_dim_red).T
+                        name = 'tsne_' + name
+                    except:
+                        tsvd2 = TruncatedSVD(2)
+                        r_dim_red = tsvd2.fit_transform(r_dim_red).T
                 else:
                     name = 'tsne_' + name
                     tsne = TSNE(2)
@@ -880,7 +923,7 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
                         continue
                     plt.cla()
                     for i in set(cluster_labels):
-                        plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i)
+                        plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, alpha=0.1)
                     plt.legend()
                     output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
                     plt.savefig(output_path, dpi=100)
@@ -893,14 +936,14 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
                     continue
                 plt.cla()
                 for i in set(cluster_labels):
-                    plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i)
+                    plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, alpha=0.1)
                 plt.legend()
                 output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
                 plt.savefig(output_path, dpi=100)
                 pass
             plt.cla()
             for i in set(true_labels):
-                plt.scatter(r_dim_red[0, true_labels==i], r_dim_red[1, true_labels==i], label=i)
+                plt.scatter(r_dim_red[0, true_labels==i], r_dim_red[1, true_labels==i], label=i, alpha=0.1)
             plt.legend()
             output_path = base_dir + '/{0}_true_labels.png'.format(name)
             plt.savefig(output_path, dpi=100)

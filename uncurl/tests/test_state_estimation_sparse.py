@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 
 from uncurl import state_estimation, simulation
+from uncurl.nolips import objective, sparse_objective
 
 class SparseStateEstimationTest(TestCase):
 
@@ -132,6 +133,10 @@ class SparseStateEstimationTest(TestCase):
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False, initialization='tsvd')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
+        obj = sparse_objective(sim_data, m, w)
+        self.assertEqual(ll, obj)
+        dense_obj = objective(sim_data.toarray(), m, w)
+        self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
         means_good = False
         weights_good = False
         for p in itertools.permutations([0,1]):
@@ -151,6 +156,10 @@ class SparseStateEstimationTest(TestCase):
         sim_data = sparse.csc_matrix(sim_data)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        obj = sparse_objective(sim_data, m, w)
+        self.assertEqual(ll, obj)
+        dense_obj = objective(sim_data.toarray(), m, w)
+        self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
         means_good = False
         weights_good = False
         for p in itertools.permutations([0,1]):

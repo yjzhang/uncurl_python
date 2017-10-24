@@ -102,6 +102,7 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef Py_ssize_t i
     #X_csc = X
     X_csc = sparse.csc_matrix(X)
+    # TODO: when there are more than 2 billion elements or so, will be long
     cdef int[:] indices, indptr
     indices = X_csc.indices
     indptr = X_csc.indptr

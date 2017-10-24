@@ -106,6 +106,7 @@ def initialize_means(data, clusters, k):
                 point = np.random.randint(0, data.shape[1])
                 init_w[:,i] = data[:,point].toarray().flatten()
             else:
+                # memory usage might be a problem here?
                 init_w[:,i] = np.array(data[:,clusters==i].mean(1)).flatten()
     else:
         for i in range(k):

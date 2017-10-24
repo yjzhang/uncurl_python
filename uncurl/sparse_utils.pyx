@@ -48,6 +48,37 @@ def sparse_create_libsvm_file(data, str filename):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+def sparse_create_plda_file(data, str filename):
+    """
+    Create a file for use with PLDA, for sparse matrices.
+    """
+    cdef int cells = data.shape[1]
+    cdef int genes = data.shape[0]
+    cdef int[:] indices, indptr
+    cdef long[:] data_
+    cdef int ind, g, c, start_ind, end_ind
+    #cdef int ind, g, c, start_ind, end_ind
+    cdef long i
+    f = open(filename, "w")
+    csc = sparse.csc_matrix(data)
+    indices = csc.indices
+    indptr = csc.indptr
+    data_ = csc.data.astype(np.long)
+    strings = []
+    for c in range(cells):
+        start_ind = indptr[c]
+        end_ind = indptr[c+1]
+        for i2 in range(start_ind, end_ind):
+            g = indices[i2]
+            i = data_[i2]
+            strings.append('G' + str(g) + ' ' + str(i) + ' ')
+        strings.append('\n')
+    f.write(''.join(strings))
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
 def sparse_cell_normalize(data):
     """
     cell_normalize for sparse matrices

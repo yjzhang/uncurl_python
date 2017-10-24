@@ -109,6 +109,8 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     indptr = X_csc.indptr
     cdef double[:] data_ = X_csc.data
     cdef double[:] mw = np.zeros(len(data_))
+    cdef double[:,:] m_view = M
+    cdef double[:,:] w_view = W
     with nogil:
         for i in range(cells):
             c = i
@@ -123,10 +125,10 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     cdef np.ndarray[DTYPE_t, ndim=1] D = np.asarray(mw)
     cdef np.ndarray[DTYPE_t, ndim=1] data = np.asarray(data_)
     obj = np.sum(-data*np.log(D))
-    M_sparse = sparse.csr_matrix(M)
-    W_sparse = sparse.csr_matrix(W)
-    MW_sparse = M_sparse*W_sparse
-    obj += MW_sparse.sum()
+    for c in range(cells):
+        for g in range(genes):
+            for k in range(clusters):
+                obj += m_view[g,k]*w_view[k,c]
     return obj/genes
 
 def cost(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
