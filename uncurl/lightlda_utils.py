@@ -129,13 +129,15 @@ def poisson_objective(X, m, w):
     #deriv = w_sum - w2.T
     return np.sum(d - X*np.log(d))/genes #, deriv.flatten()/genes
 
-           
-# Runs LDA on the given dataset (can be an 2-D array of any form - sparse
-# or dense, as long as it can be indexed). If the data has not already been
-# prepared into LDA format, set "prepare_data" to TRUE. If "prepare_data" is
-# FALSE, the method assumes that the data has already been preprocessed into
-# LightLDA format and is located at the given "input_folder".
-def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", threads=8, max_iters=250, prepare_data=True, init_means=None, init_weights=None, lightlda_folder=None):
+
+def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", threads=8, max_iters=250, prepare_data=True, init_means=None, init_weights=None, lightlda_folder=None, data_capacity=1000):
+    """
+    Runs LDA on the given dataset (can be an 2-D array of any form - sparse
+    or dense, as long as it can be indexed). If the data has not already been
+    prepared into LDA format, set "prepare_data" to TRUE. If "prepare_data" is
+    FALSE, the method assumes that the data has already been preprocessed into
+    LightLDA format and is located at the given "input_folder".
+    """
     if lightlda_folder is None:
         lightlda_folder = LIGHTLDA_FOLDER
     if prepare_data:
@@ -163,7 +165,7 @@ def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", thread
     train_args = (os.path.join(lightlda_folder, "bin/lightlda"), "-num_vocabs", str(data.shape[0]), "-num_topics",
                   str(k), "-num_iterations", str(max_iters), "-alpha", "0.05", "-beta", "0.01", "-mh_steps", "2",
                   "-num_local_workers", str(threads), "-num_blocks", "1", "-max_num_document", str(data.shape[1]),
-                  "-input_dir", input_folder, "-data_capacity", "500", "-model_capacity", "500", "-alias_capacity", "500")
+                  "-input_dir", input_folder, "-data_capacity", str(data_capacity))
     if warm_start:
         print("warm start")
         train_args = train_args + ("-warm_start",)

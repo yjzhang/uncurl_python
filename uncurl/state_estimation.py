@@ -118,7 +118,7 @@ def initialize_means(data, clusters, k):
     return init_w
 
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=15, tol=1e-10, disp=True, inner_max_iters=300, normalize=True, initialization='tsvd', parallel=True, n_threads=4):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=15, tol=1e-10, disp=True, inner_max_iters=300, normalize=True, initialization='tsvd', parallel=True, threads=4):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -138,7 +138,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
         initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means). Default: tsvd.
         parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
-        n_threads (int, optional): How many threads to use in the parallel computation. Default: 4
+        threads (int, optional): How many threads to use in the parallel computation. Default: 4
 
     Returns:
         M (array): genes x clusters - state means
@@ -219,7 +219,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         if method=='NoLips':
             for j in range(nolips_iters):
                 if is_sparse and parallel:
-                    w_new = update_fn(X, means, w_init, Xsum, n_threads=n_threads)
+                    w_new = update_fn(X, means, w_init, Xsum, n_threads=threads)
                 else:
                     w_new = update_fn(X, means, w_init, Xsum)
                 #w_new = w_res.x.reshape((clusters, cells))
@@ -247,7 +247,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             for j in range(nolips_iters):
                 if is_sparse and parallel:
                     m_new = update_fn(XT, w_new.T, means.T, Xsum_m,
-                            n_threads=n_threads)
+                            n_threads=threads)
                 else:
                     m_new = update_fn(XT, w_new.T, means.T, Xsum_m)
                 if tol > 0:
