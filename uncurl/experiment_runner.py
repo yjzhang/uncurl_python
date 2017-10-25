@@ -236,6 +236,10 @@ class LightLDASE(Preprocess):
 
     def __init__(self, **params):
         self.output_names = ['LightLDA_W']
+        self.return_w = True
+        self.return_m = False
+        self.return_mw = False
+        self.return_mds = False
         if 'return_mw' in params and params['return_mw']:
             self.output_names.append('LightLDA_MW')
             self.return_mw = True
