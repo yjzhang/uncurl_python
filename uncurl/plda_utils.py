@@ -84,7 +84,9 @@ def parse_plda_input(input_file, num_columns):
 # Given a PLDA input file, runs PLDA to find the M/W matrices.
 # Note: please call "create_plda_file()" beforehand to create a PLDA input
 # file from your matrix.
-def plda_estimate_state(data, k, threads=4, num_iterations=150):
+def plda_estimate_state(data, k, threads=4, num_iterations=150, plda_folder=None):
+    if plda_folder is None:
+        plda_folder = PLDA_FOLDER
     data_mean = np.array(data.mean(0)).flatten()
     try:
         os.mkdir('plda')
@@ -93,7 +95,7 @@ def plda_estimate_state(data, k, threads=4, num_iterations=150):
     filename = os.path.join(os.getcwd(), 'plda', 'data.txt')
     create_plda_file(data, filename)
     print("Training PLDA")
-    train_args = ("mpiexec", "-n", str(threads), os.path.join(PLDA_FOLDER, "mpi_lda"),
+    train_args = ("mpiexec", "-n", str(threads), os.path.join(plda_folder, "mpi_lda"),
                   "--num_topics", str(k), "--alpha", "0.1",
                   "--beta", "0.01", "--training_data_file", filename,
                   "--model_file", "model.txt", "--burn_in_iterations", "100", "--total_iterations", str(num_iterations))
@@ -101,7 +103,7 @@ def plda_estimate_state(data, k, threads=4, num_iterations=150):
 
     print("TRAINED")
 
-    inference_args = (os.path.join(PLDA_FOLDER, "infer"), "--alpha", "0.1", "--beta",
+    inference_args = (os.path.join(plda_folder, "infer"), "--alpha", "0.1", "--beta",
                       "0.01", "--inference_data_file", filename, "--inference_result_file",
                       "result.txt", "--model_file", "model.txt", "--total_iterations",
                       "50", "--burn_in_iterations", "20")

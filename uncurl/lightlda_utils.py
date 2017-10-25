@@ -135,9 +135,11 @@ def poisson_objective(X, m, w):
 # prepared into LDA format, set "prepare_data" to TRUE. If "prepare_data" is
 # FALSE, the method assumes that the data has already been preprocessed into
 # LightLDA format and is located at the given "input_folder".
-def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", threads=8, max_iters=250, prepare_data=True, init_means=None, init_weights=None):
+def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", threads=8, max_iters=250, prepare_data=True, init_means=None, init_weights=None, lightlda_folder=None):
+    if lightlda_folder is None:
+        lightlda_folder = LIGHTLDA_FOLDER
     if prepare_data:
-        prepare_lightlda_data(data, input_folder)
+        prepare_lightlda_data(data, input_folder, lightlda_folder)
 
     # Check if initializations for M/W were provided.
     if ((init_means is not None) and (init_weights is None)) or ((init_means is None) and (init_weights is not None)):
@@ -158,7 +160,7 @@ def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", thread
     # Run LightLDA
     print("TRAINING")
     # TODO: argument for data capacity
-    train_args = (os.path.join(LIGHTLDA_FOLDER, "bin/lightlda"), "-num_vocabs", str(data.shape[0]), "-num_topics",
+    train_args = (os.path.join(lightlda_folder, "bin/lightlda"), "-num_vocabs", str(data.shape[0]), "-num_topics",
                   str(k), "-num_iterations", str(max_iters), "-alpha", "0.05", "-beta", "0.01", "-mh_steps", "2",
                   "-num_local_workers", str(threads), "-num_blocks", "1", "-max_num_document", str(data.shape[1]),
                   "-input_dir", input_folder, "-data_capacity", "500", "-model_capacity", "500", "-alias_capacity", "500")
@@ -188,7 +190,7 @@ def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", thread
 
 
 # Converts matrix to LightLDA format and dumps it into the input folder.
-def prepare_lightlda_data(data, input_folder):
+def prepare_lightlda_data(data, input_folder, lightlda_folder):
     print("Preparing LightLDA data")
 
     # Create the input directory if it doesn't exist
@@ -204,7 +206,7 @@ def prepare_lightlda_data(data, input_folder):
     print("libsvm file created")
  
     # Produce metadata file
-    metadata_args = (os.path.join(LIGHTLDA_FOLDER, "example/get_meta.py"),
+    metadata_args = (os.path.join(lightlda_folder, "example/get_meta.py"),
                      libsvm_file,
                      os.path.join(input_folder, "genes.word_id.dict"))
     subprocess.call(metadata_args)
