@@ -865,9 +865,9 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
     return results, names, other_results
 
 def generate_visualizations(methods, data, true_labels, base_dir = 'visualizations',
-        figsize=(18,10)):
+        figsize=(18,10), **scatter_options):
     """
-    Generates visualization scatterplots for all the methods.
+    Generates visualization scatters for all the methods.
 
     Args:
         methods: follows same format as run_experiments. List of tuples.
@@ -875,6 +875,7 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
         true_labels: array of integers
         base_dir: base directory to save all the plots
         figsize: tuple of ints representing size of figure
+        scatter_options: options for plt.scatter
     """
     plt.figure(figsize=figsize)
     for method in methods:
@@ -923,7 +924,7 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
                         continue
                     plt.cla()
                     for i in set(cluster_labels):
-                        plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, alpha=0.1)
+                        plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, **scatter_options)
                     plt.legend()
                     output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
                     plt.savefig(output_path, dpi=100)
@@ -936,14 +937,14 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
                     continue
                 plt.cla()
                 for i in set(cluster_labels):
-                    plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, alpha=0.1)
+                    plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, **scatter_options)
                 plt.legend()
                 output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
                 plt.savefig(output_path, dpi=100)
                 pass
             plt.cla()
             for i in set(true_labels):
-                plt.scatter(r_dim_red[0, true_labels==i], r_dim_red[1, true_labels==i], label=i, alpha=0.1)
+                plt.scatter(r_dim_red[0, true_labels==i], r_dim_red[1, true_labels==i], label=i, **scatter_options)
             plt.legend()
             output_path = base_dir + '/{0}_true_labels.png'.format(name)
             plt.savefig(output_path, dpi=100)
