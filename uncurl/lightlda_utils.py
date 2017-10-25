@@ -217,7 +217,7 @@ def prepare_lightlda_data(data, input_folder, lightlda_folder):
 
     # Convert the libsvm file into LightLDA input
     pid = str(0)
-    convert_args = (os.path.join(LIGHTLDA_FOLDER, "bin/dump_binary"),
+    convert_args = (os.path.join(lightlda_folder, "bin/dump_binary"),
                     libsvm_file,
                     os.path.join(input_folder, "genes.word_id.dict"),
                     input_folder, pid)
