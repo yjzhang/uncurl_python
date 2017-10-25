@@ -183,10 +183,14 @@ def lightlda_estimate_state(data, k, input_folder="data1/LightLDA_input", thread
     # Not sure if normalization is correct
     M = M * (np.mean(data) / np.mean(M))
     W = W/W.sum(0)
-    ll = poisson_objective(data, M, W)
     print("shapes")
     print(M.shape)
     print(W.shape)
+    # TODO: poisson_objective doesn't work for sparse matrices
+    if sparse.issparse(data):
+        ll = 0
+    else:
+        ll = poisson_objective(data, M, W)
     #M = M * (5./np.mean(M))
     return M, W, ll
 
