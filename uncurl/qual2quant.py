@@ -1,6 +1,7 @@
 # Qualitative to Quantitative semi-supervision framework
 
 import numpy as np
+from scipy import sparse
 from sklearn.cluster import KMeans
 
 from .clustering import poisson_cluster
@@ -31,7 +32,11 @@ def qualNorm(data, qualitative):
             continue
         qual_indices.append(i)
         threshold = (qualitative[i,:].max() - qualitative[i,:].min())/2.0
-        assignments, means = poisson_cluster(data[i,:].reshape((1, cells)), 2)
+        # TODO: make it work for sparse matrices
+        if sparse.issparse(data):
+            assignments, means = poisson_cluster(data[i,:].T, 2)
+        else:
+            assignments, means = poisson_cluster(data[i,:].reshape((1, cells)), 2)
         high_mean = means.max()
         low_mean = means.min()
         for k in range(clusters):

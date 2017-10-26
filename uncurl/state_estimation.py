@@ -86,8 +86,8 @@ def initialize_from_assignments(assignments, k, max_assign_weight=0.75):
         init_W[a, i] = max_assign_weight
         for a2 in range(k):
             if a2!=a:
-                init_W[a2, i] = max_assign_weight/(k-1)
-    return init_W
+                init_W[a2, i] = (1-max_assign_weight)/(k-1)
+    return init_W/init_W.sum(0)
 
 def initialize_means(data, clusters, k):
     """
@@ -117,8 +117,14 @@ def initialize_means(data, clusters, k):
                 init_w[:,i] = data[:,clusters==i].mean(1)
     return init_w
 
+def initialize_weights_nn(data, means):
+    """
+    Initializes the weights with a nearest-neighbor approach:
+    """
+    # TODO
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=15, tol=1e-10, disp=True, inner_max_iters=300, normalize=True, initialization='tsvd', parallel=True, threads=4):
+
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=15, tol=1e-10, disp=True, inner_max_iters=300, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -136,9 +142,10 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 300
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
-        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means). Default: tsvd.
+        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means), 'nn' (nearest neighbors - requires means provided, weights not provided). Default: tsvd.
         parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
         threads (int, optional): How many threads to use in the parallel computation. Default: 4
+        max_assign_weight (float, optional): If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75
 
     Returns:
         M (array): genes x clusters - state means
@@ -151,7 +158,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             assignments, means = poisson_cluster(data, clusters)
             if init_weights is None:
                 init_weights = initialize_from_assignments(assignments, clusters,
-                        max_assign_weight=0.6)
+                        max_assign_weight=max_assign_weight)
         elif initialization=='kmpp':
             means, assignments = kmeans_pp(data, clusters)
         elif initialization=='km':
@@ -159,24 +166,37 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             # TODO: should the data be log-normalized? how much
             # computational time does that add?
             assignments = km.fit_predict(log1p(cell_normalize(data)).T)
-            init_weights = initialize_from_assignments(assignments, clusters)
+            init_weights = initialize_from_assignments(assignments, clusters,
+                    max_assign_weight)
             means = initialize_means(data, assignments, clusters)
         elif initialization=='tsvd':
-            tsvd = TruncatedSVD(50)
+            tsvd = TruncatedSVD(min(50, genes-1))
             km = KMeans(clusters)
             data_reduced = tsvd.fit_transform(log1p(cell_normalize(data)).T)
             assignments = km.fit_predict(data_reduced)
-            init_weights = initialize_from_assignments(assignments, clusters)
+            init_weights = initialize_from_assignments(assignments, clusters,
+                    max_assign_weight)
             means = initialize_means(data, assignments, clusters)
     else:
         means = init_means.copy()
     means = means.astype(float)
     if init_weights is not None:
         if len(init_weights.shape)==1:
-            init_weights = initialize_from_assignments(init_weights, clusters)
+            init_weights = initialize_from_assignments(init_weights, clusters,
+                    max_assign_weight)
         w_init = init_weights.copy()
     else:
-        w_init = np.random.random((clusters, cells))
+        if init_means is not None:
+            # TODO: have some strategy here?
+            # current strategy is 1 round of poisson clustering, regardless
+            # of the value of 'initialization'
+            assignments, means = poisson_cluster(data, clusters,
+                    init=init_means, max_iters=1)
+            w_init = initialize_from_assignments(assignments, clusters,
+                    max_assign_weight)
+        else:
+            w_init = np.random.random((clusters, cells))
+            w_init = w_init/w_init.sum(0)
     nolips_iters = inner_max_iters
     X = data.astype(float)
     XT = X.T

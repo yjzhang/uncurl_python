@@ -3,6 +3,7 @@ from __future__ import print_function
 from unittest import TestCase
 
 import numpy as np
+from scipy import sparse
 from scipy.io import loadmat
 
 import uncurl
@@ -25,6 +26,19 @@ class Qual2QuantTest(TestCase):
         self.assertFalse(np.isnan(starting_points).any())
         print((starting_points==0).sum())
         self.assertTrue((starting_points == 0).sum() < 100)
+
+
+    def test_qual2quant_sparse(self):
+        # simulated test data?
+        # no... use M as a starting matrix
+        # qual_matrix = np.zeros((self.data.shape[0], 2))
+        data_sparse = sparse.csc_matrix(self.data)
+        starting_points = uncurl.qualNorm(data_sparse, self.qualData)
+        self.assertTrue(starting_points.shape==(500, 2))
+        self.assertFalse(np.isnan(starting_points).any())
+        print((starting_points==0).sum())
+        self.assertTrue((starting_points == 0).sum() < 100)
+
 
     def test_qual2quant_missing_data(self):
         # simulated test data?

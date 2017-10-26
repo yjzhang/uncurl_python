@@ -81,7 +81,7 @@ class SparseStateEstimationTest(TestCase):
         self.assertTrue(means_good)
         self.assertTrue(weights_good)
 
-    def test_random_means(self):
+    def test_random_means_lbfgs(self):
         """
         Test state estimation with random means and weights.
 
@@ -90,8 +90,8 @@ class SparseStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
-        sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False, method='L-BFGS-B')
+        #sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, method='L-BFGS-B')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         means_good = False
         weights_good = False
@@ -110,8 +110,7 @@ class SparseStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
-        sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False, initialization='kmeans')
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='km')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         means_good = False
         weights_good = False
@@ -130,8 +129,7 @@ class SparseStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
-        sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False, initialization='tsvd')
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='tsvd')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         obj = sparse_objective(sim_data, m, w)
         self.assertEqual(ll, obj)
@@ -145,7 +143,7 @@ class SparseStateEstimationTest(TestCase):
         self.assertTrue(means_good)
         self.assertTrue(weights_good)
 
-    def test_random_means_2(self):
+    def test_random_means_cluster_init(self):
         """
         Test state estimation with random means and weights.
 
@@ -155,7 +153,7 @@ class SparseStateEstimationTest(TestCase):
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
         sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='cluster')
         obj = sparse_objective(sim_data, m, w)
         self.assertEqual(ll, obj)
         dense_obj = objective(sim_data.toarray(), m, w)
