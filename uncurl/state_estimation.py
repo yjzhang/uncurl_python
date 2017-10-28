@@ -117,11 +117,18 @@ def initialize_means(data, clusters, k):
                 init_w[:,i] = data[:,clusters==i].mean(1)
     return init_w
 
-def initialize_weights_nn(data, means):
+def initialize_weights_nn(data, means, lognorm=True):
     """
-    Initializes the weights with a nearest-neighbor approach:
+    Initializes the weights with a nearest-neighbor approach using the means.
     """
     # TODO
+    genes, cells = data.shape
+    k = means.shape[1]
+    if lognorm:
+        data = log1p(cell_normalize(data))
+    for i in range(cells):
+        for j in range(k):
+            pass
 
 
 def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=15, tol=1e-10, disp=True, inner_max_iters=300, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75):
@@ -142,7 +149,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         disp (bool, optional): whether or not to display optimization parameters. Default: True
         inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 300
         normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
-        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means), 'nn' (nearest neighbors - requires means provided, weights not provided). Default: tsvd.
+        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means). Default: tsvd.
         parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
         threads (int, optional): How many threads to use in the parallel computation. Default: 4
         max_assign_weight (float, optional): If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75
@@ -180,23 +187,40 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     else:
         means = init_means.copy()
     means = means.astype(float)
-    if init_weights is not None:
-        if len(init_weights.shape)==1:
-            init_weights = initialize_from_assignments(init_weights, clusters,
-                    max_assign_weight)
-        w_init = init_weights.copy()
-    else:
+    if init_weights is None:
         if init_means is not None:
             # TODO: have some strategy here?
             # current strategy is 1 round of poisson clustering, regardless
             # of the value of 'initialization'
-            assignments, means = poisson_cluster(data, clusters,
-                    init=init_means, max_iters=1)
-            w_init = initialize_from_assignments(assignments, clusters,
-                    max_assign_weight)
+            if initialization == 'cluster':
+                assignments, means = poisson_cluster(data, clusters,
+                        init=init_means, max_iters=1)
+                w_init = initialize_from_assignments(assignments, clusters,
+                        max_assign_weight)
+            elif initialization == 'km':
+                km = KMeans(clusters, init=log1p(init_means.T), max_iter=1)
+                assignments = km.fit_predict(log1p(cell_normalize(data)).T)
+                w_init = initialize_from_assignments(assignments, clusters,
+                        max_assign_weight)
+            elif initialization=='tsvd':
+                tsvd = TruncatedSVD(min(50, genes-1))
+                data_reduced = tsvd.fit_transform(log1p(data).T)
+                means_reduced = tsvd.transform(log1p(init_means).T)
+                km = KMeans(clusters, init=means_reduced, max_iter=1)
+                assignments = km.fit_predict(data_reduced)
+                w_init = initialize_from_assignments(assignments, clusters,
+                        max_assign_weight)
+            else:
+                w_init = np.random.random((clusters, cells))
+                w_init = w_init/w_init.sum(0)
         else:
             w_init = np.random.random((clusters, cells))
             w_init = w_init/w_init.sum(0)
+    else:
+        if len(init_weights.shape)==1:
+            init_weights = initialize_from_assignments(init_weights, clusters,
+                    max_assign_weight)
+        w_init = init_weights.copy()
     nolips_iters = inner_max_iters
     X = data.astype(float)
     XT = X.T

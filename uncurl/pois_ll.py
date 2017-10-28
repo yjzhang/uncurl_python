@@ -38,7 +38,7 @@ def poisson_ll_2(p1, p2):
     """
     p1_1 = p1 + eps
     p2_1 = p2 + eps
-    return -np.sum(p2_1 + p1_1*np.log(p2_1))
+    return np.sum(-p2_1 + p1_1*np.log(p2_1))
 
 def poisson_dist(p1, p2):
     """
