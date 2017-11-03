@@ -7,6 +7,7 @@ from uncurl.nolips import sparse_nolips_update_w
 #from uncurl.nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
 try:
     from uncurl.nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
+    from uncurl.nolips_parallel import sparse_nolips_update_w_long as parallel_sparse_nolips_update_w_long
 except:
     print('Warning: cannot import sparse nolips')
     # if parallel can't be used, do not use parallel update function...
@@ -228,13 +229,15 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     if sparse.issparse(X):
         is_sparse = True
         update_fn = sparse_nolips_update_w
+        X = sparse.csc_matrix(X)
         if parallel:
             update_fn = parallel_sparse_nolips_update_w
+            if X.indptr.dtype == np.int64:
+                update_fn = parallel_sparse_nolips_update_w_long
         Xsum = np.asarray(X.sum(0)).flatten()
         Xsum_m = np.asarray(X.sum(1)).flatten()
         # L-BFGS-B won't work right now for sparse matrices
         # convert to csc
-        X = sparse.csc_matrix(X)
         method = 'NoLips'
         objective_fn = sparse_objective
         XT = sparse.csc_matrix(XT)
@@ -253,6 +256,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                 update_fn = sparse_nolips_update_w
                 if parallel:
                     update_fn = parallel_sparse_nolips_update_w
+                    if X.indptr.dtype == np.int64:
+                        update_fn = parallel_sparse_nolips_update_w_long
                 X = sparse.csc_matrix(X)
                 objective_fn = sparse_objective
                 XT = sparse.csc_matrix(XT)
