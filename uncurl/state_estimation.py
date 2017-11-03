@@ -203,14 +203,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                 assignments = km.fit_predict(log1p(cell_normalize(data)).T)
                 w_init = initialize_from_assignments(assignments, clusters,
                         max_assign_weight)
-            elif initialization=='tsvd':
-                tsvd = TruncatedSVD(min(50, genes-1))
-                data_reduced = tsvd.fit_transform(log1p(data).T)
-                means_reduced = tsvd.transform(log1p(init_means).T)
-                km = KMeans(clusters, init=means_reduced, max_iter=1)
-                assignments = km.fit_predict(data_reduced)
-                w_init = initialize_from_assignments(assignments, clusters,
-                        max_assign_weight)
             else:
                 w_init = np.random.random((clusters, cells))
                 w_init = w_init/w_init.sum(0)

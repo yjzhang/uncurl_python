@@ -123,8 +123,7 @@ class StateEstimationTest(TestCase):
         """
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
-        sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
-        m, w, ll = run_state_estimation(sim_data, 2, dist='Poiss', init_means=sim_means_noised, max_iters=10, disp=False)
+        m, w, ll = run_state_estimation(sim_data, 2, dist='Poiss', max_iters=10, disp=False)
         means_good = False
         weights_good = False
         for p in itertools.permutations([0,1]):

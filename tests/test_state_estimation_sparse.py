@@ -129,6 +129,31 @@ class SparseStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='tsvd', threads=1)
+        self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
+        obj = sparse_objective(sim_data, m, w)
+        self.assertEqual(ll, obj)
+        dense_obj = objective(sim_data.toarray(), m, w)
+        self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
+        means_good = False
+        weights_good = False
+        for p in itertools.permutations([0,1]):
+            means_good = means_good or (np.mean(np.abs(sim_m-m[:,p]))<20.0)
+            weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.3)
+        self.assertTrue(means_good)
+        self.assertTrue(weights_good)
+
+    def test_random_means_tsvd_init_long(self):
+        """
+        Test state estimation with random means and weights.
+
+        200 cells, 20 genes, 2 clusters
+        """
+        sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
+        sim_data = simulation.generate_state_data(sim_m, sim_w)
+        sim_data = sparse.csc_matrix(sim_data)
+        sim_data.indices = sim_data.indices.astype(np.int64)
+        sim_data.indptr = sim_data.indptr.astype(np.int64)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='tsvd')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         obj = sparse_objective(sim_data, m, w)
@@ -143,6 +168,7 @@ class SparseStateEstimationTest(TestCase):
         self.assertTrue(means_good)
         self.assertTrue(weights_good)
 
+
     def test_random_means_cluster_init(self):
         """
         Test state estimation with random means and weights.
@@ -152,7 +178,6 @@ class SparseStateEstimationTest(TestCase):
         sim_m, sim_w = simulation.generate_poisson_states(2, 20, 200)
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
-        sim_means_noised = sim_m + 5*(np.random.random(sim_m.shape)-0.5)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='cluster')
         obj = sparse_objective(sim_data, m, w)
         self.assertEqual(ll, obj)
