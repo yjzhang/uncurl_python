@@ -2,9 +2,21 @@
 
 import numpy as np
 from scipy import sparse
+import scipy.stats
 from sklearn.cluster import KMeans
 
 from .clustering import poisson_cluster
+
+def find_bimodal(data, p_genes):
+    """
+    finds putatively bimodal genes
+    """
+
+def supervised_init(data, quantitative):
+    """
+    Initializes means and weights from quantitative data using Spearman
+    correlation.
+    """
 
 def qualNorm(data, qualitative):
     """
@@ -18,23 +30,20 @@ def qualNorm(data, qualitative):
         Array of starting positions for state estimation or
         clustering, with shape genes x clusters
     """
-    # TODO: if 'binarized' is not binary... convert it to binary by setting
-    # the threshhold at the midpoint of the range for each gene
-    # cluster the genes
     genes, cells = data.shape
     clusters = qualitative.shape[1]
     output = np.zeros((genes, clusters))
     missing_indices = []
     qual_indices = []
+    # crude differential expression measure
     for i in range(genes):
         if qualitative[i,:].max() == -1 and qualitative[i,:].min() == -1:
             missing_indices.append(i)
             continue
         qual_indices.append(i)
         threshold = (qualitative[i,:].max() - qualitative[i,:].min())/2.0
-        # TODO: make it work for sparse matrices
         if sparse.issparse(data):
-            assignments, means = poisson_cluster(data[i,:].T, 2)
+            assignments, means = poisson_cluster(data[i,:], 2)
         else:
             assignments, means = poisson_cluster(data[i,:].reshape((1, cells)), 2)
         high_mean = means.max()
@@ -44,11 +53,15 @@ def qualNorm(data, qualitative):
                 output[i,k] = high_mean
             else:
                 output[i,k] = low_mean
+    # sort by diffs
     if missing_indices:
         assignments, means = poisson_cluster(data[qual_indices, :], clusters, output[qual_indices, :], max_iters=1)
         for ind in missing_indices:
             for k in range(clusters):
-                output[ind, k] = np.mean(data[ind, assignments==k])
+                if len(assignments==k)==0:
+                    output[ind, k] = data[ind,:].mean()
+                else:
+                    output[ind, k] = data[ind, assignments==k].mean()
     return output
 
 
@@ -94,4 +107,5 @@ def qualNormGaussian(data, qualitative):
         for ind in missing_indices:
             for k in range(clusters):
                 output[ind, k] = np.mean(data[ind, assignments==k])
+    # TODO: assign to closest
     return output
