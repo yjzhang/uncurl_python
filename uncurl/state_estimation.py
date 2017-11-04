@@ -221,7 +221,9 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     if sparse.issparse(X):
         is_sparse = True
         update_fn = sparse_nolips_update_w
+        # convert to csc
         X = sparse.csc_matrix(X)
+        XT = sparse.csc_matrix(XT)
         if parallel:
             update_fn = parallel_sparse_nolips_update_w
             if X.indptr.dtype == np.int64:
@@ -229,10 +231,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         Xsum = np.asarray(X.sum(0)).flatten()
         Xsum_m = np.asarray(X.sum(1)).flatten()
         # L-BFGS-B won't work right now for sparse matrices
-        # convert to csc
         method = 'NoLips'
         objective_fn = sparse_objective
-        XT = sparse.csc_matrix(XT)
     else:
         objective_fn = objective
         update_fn = nolips_update_w
@@ -245,14 +245,14 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         if method == 'NoLips':
             if np.count_nonzero(X) < 0.4*genes*cells:
                 is_sparse = True
+                X = sparse.csc_matrix(X)
+                XT = sparse.csc_matrix(XT)
                 update_fn = sparse_nolips_update_w
                 if parallel:
                     update_fn = parallel_sparse_nolips_update_w
                     if X.indptr.dtype == np.int64:
                         update_fn = parallel_sparse_nolips_update_w_long
-                X = sparse.csc_matrix(X)
                 objective_fn = sparse_objective
-                XT = sparse.csc_matrix(XT)
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
