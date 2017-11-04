@@ -6,6 +6,46 @@ from .pois_ll import poisson_dist
 eps=1e-8
 max_or_zero = np.vectorize(lambda x: max(0.0,x))
 
+def diffusion_mds(means, weights, d, diffusion_rounds=10):
+    """
+    Dimensionality reduction using MDS, while running diffusion on W.
+
+    Args:
+        means (array): genes x clusters
+        weights (array): clusters x cells
+        d (int): desired dimensionality
+
+    Returns:
+        W_reduced (array): array of shape (d, cells)
+    """
+    for i in range(diffusion_rounds):
+        weights = weights*weights
+        weights = weights/weights.sum(0)
+    X = dim_reduce(means, weights, d)
+    if X.shape[0]==2:
+        return X.dot(weights)
+    else:
+        return X.T.dot(weights)
+
+
+def mds(means, weights, d):
+    """
+    Dimensionality reduction using MDS.
+
+    Args:
+        means (array): genes x clusters
+        weights (array): clusters x cells
+        d (int): desired dimensionality
+
+    Returns:
+        W_reduced (array): array of shape (d, cells)
+    """
+    X = dim_reduce(means, weights, d)
+    if X.shape[0]==2:
+        return X.dot(weights)
+    else:
+        return X.T.dot(weights)
+
 def dim_reduce(means, weights, d):
     """
     Dimensionality reduction using Poisson distances and MDS.
