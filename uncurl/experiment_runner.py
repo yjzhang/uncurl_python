@@ -186,11 +186,19 @@ class PoissonSE(Preprocess):
 
     def __init__(self, return_w=True, return_m=False, return_mw=False,
             return_mds=False, **params):
-        self.output_names = ['Poisson_W']
+        self.output_names = []
         self.return_w = return_w
+        if return_w:
+            self.output_names.append('Poisson_W')
         self.return_m = return_m
+        if return_m:
+            self.output_names.append('Poisson_M')
         self.return_mw = return_mw
+        if return_mw:
+            self.output_names.append('Poisson_MW')
         self.return_mds = return_mds
+        if return_mds:
+            self.output_names.append('Poisson_MDS')
         super(PoissonSE, self).__init__(**params)
 
     def run(self, data):
@@ -315,7 +323,11 @@ class LogNMF(Preprocess):
         super(LogNMF, self).__init__(**params)
         self.nmf = NMF(params['k'])
         self.return_mds = return_mds
+        if return_mds:
+            self.output_names.append('logNMF_MDS')
         self.return_wh = return_wh
+        if return_wh:
+            self.output_names.append('logNMF_WH')
 
     def run(self, data):
         data_norm = cell_normalize(data)
@@ -672,12 +684,12 @@ class PcaKm(Cluster):
     of PCA.
     """
 
-    def __init__(self, n_classes, use_log=False, **params):
+    def __init__(self, n_classes, use_log=False, name='pca_km', **params):
         super(PcaKm, self).__init__(n_classes, **params)
         self.use_log = use_log
         self.pca = PCA(params['k'])
         self.km = KMeans(n_classes)
-        self.name = 'pca_km'
+        self.name = name
 
     def run(self, data):
         if sparse.issparse(data):
@@ -693,7 +705,7 @@ class TsneKm(Cluster):
     TSNE(2) + Kmeans
     """
 
-    def __init__(self, n_classes, use_log=False, **params):
+    def __init__(self, n_classes, use_log=False, name='tsne_km', **params):
         super(TsneKm, self).__init__(n_classes, **params)
         self.use_log=use_log
         if 'k' in self.params:
@@ -701,7 +713,7 @@ class TsneKm(Cluster):
         else:
             self.tsne = TSNE(2)
         self.km = KMeans(n_classes)
-        self.name = 'tsne_km'
+        self.name = name
 
     def run(self, data):
         if sparse.issparse(data):
