@@ -184,28 +184,13 @@ class PoissonSE(Preprocess):
     return_mw=True: returns MW in outputs
     """
 
-    def __init__(self, **params):
+    def __init__(self, return_w=True, return_m=False, return_mw=False,
+            return_mds=False, **params):
         self.output_names = ['Poisson_W']
-        self.return_w = True
-        self.return_m = False
-        self.return_mw = False
-        self.return_mds = False
-        if 'return_w' in params and not params['return_w']:
-            self.output_names = []
-            self.return_w = False
-            params.pop('return_w')
-        if 'return_m' in params and params['return_m']:
-            self.output_names.append('Poisson_M')
-            self.return_m = True
-            params.pop('return_m')
-        if 'return_mw' in params and params['return_mw']:
-            self.output_names.append('Poisson_MW')
-            self.return_mw = True
-            params.pop('return_mw')
-        if 'return_mds' in params and params['return_mds']:
-            self.output_names.append('Poisson_MDS')
-            self.return_mds = True
-            params.pop('return_mds')
+        self.return_w = return_w
+        self.return_m = return_m
+        self.return_mw = return_mw
+        self.return_mds = return_mds
         super(PoissonSE, self).__init__(**params)
 
     def run(self, data):
@@ -325,21 +310,12 @@ class LogNMF(Preprocess):
     Requires a 'k' parameter, which is the rank of the matrices.
     """
 
-    def __init__(self, **params):
+    def __init__(self, return_mds=False, return_wh=False, **params):
         self.output_names = ['logNMF_H']
         super(LogNMF, self).__init__(**params)
         self.nmf = NMF(params['k'])
-        self.return_mds = False
-        self.return_wh = False
-        if 'return_wh' in params and params['return_wh']:
-            self.output_names.append('logNMF_WH')
-            self.return_wh = True
-            params.pop('return_wh')
-        if 'return_mds' in params and params['return_mds']:
-            self.output_names.append('logNMF_MDS')
-            self.return_mds = True
-            params.pop('return_mds')
-
+        self.return_mds = return_mds
+        self.return_wh = return_wh
 
     def run(self, data):
         data_norm = cell_normalize(data)
@@ -694,13 +670,18 @@ class PcaKm(Cluster):
     of PCA.
     """
 
-    def __init__(self, n_classes, **params):
+    def __init__(self, n_classes, use_log=False, **params):
         super(PcaKm, self).__init__(n_classes, **params)
+        self.use_log = use_log
         self.pca = PCA(params['k'])
         self.km = KMeans(n_classes)
         self.name = 'pca_km'
 
     def run(self, data):
+        if sparse.issparse(data):
+            data = data.toarray()
+        if self.use_log:
+            data = log1p(data)
         data_pca = self.pca.fit_transform(data.T)
         labels = self.km.fit_predict(data_pca)
         return labels
@@ -710,8 +691,9 @@ class TsneKm(Cluster):
     TSNE(2) + Kmeans
     """
 
-    def __init__(self, n_classes, **params):
+    def __init__(self, n_classes, use_log=False, **params):
         super(TsneKm, self).__init__(n_classes, **params)
+        self.use_log=use_log
         if 'k' in self.params:
             self.tsne = TSNE(self.params['k'])
         else:
@@ -722,6 +704,8 @@ class TsneKm(Cluster):
     def run(self, data):
         if sparse.issparse(data):
             data = data.toarray()
+        if self.use_log:
+            data = log1p(data)
         data_tsne = self.tsne.fit_transform(data.T)
         labels = self.km.fit_predict(data_tsne)
         return labels
