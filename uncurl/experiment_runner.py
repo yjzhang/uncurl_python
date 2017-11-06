@@ -617,9 +617,12 @@ class Magic(Preprocess):
         scdata = scdata.normalize_scseq_data()
         scdata.run_magic(n_pca_components=n_components, random_pca=True,
                 t=6, k=30, ka=10, epsilon=1, rescale_percent=99)
-        scdata.run_tsne()
-        scdata.magic.run_tsne()
-        return [scdata.magic.tsne.as_matrix().T], 0
+        #scdata.run_tsne()
+        if 'use_tsne' in self.params and self.params['use_tsne']:
+            scdata.magic.run_tsne()
+            return [scdata.magic.tsne.as_matrix().T], 0
+        else:
+            return [scdata.magic.data.as_matrix().T], 0
 
 class Cluster(object):
     """
