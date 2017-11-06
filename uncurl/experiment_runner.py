@@ -42,7 +42,7 @@ except:
     pass
 
 from .state_estimation import poisson_estimate_state
-from .dim_reduce import dim_reduce
+from .dimensionality_reduction import dim_reduce
 from .evaluation import purity
 from .preprocessing import cell_normalize
 from . import ensemble
