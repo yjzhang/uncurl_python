@@ -619,8 +619,10 @@ class Cluster(object):
 
     def __init__(self, n_classes, **params):
         self.n_classes = n_classes
-        self.params = params
         self.name = ''
+        if 'name' in self.params:
+            self.name = params.pop('name')
+        self.params = params
 
     def run(self, data):
         pass
