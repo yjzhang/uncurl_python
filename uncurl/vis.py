@@ -17,7 +17,7 @@ def visualize_poisson_w(w, labels, filename, method='pca', figsize=(18,10), titl
         return
     visualize_dim_red(r_dim_red, labels, filename, figsize, title, **scatter_options)
 
-def visualize_dim_red(r, labels, filename, figsize=(18,10), title='', **scatter_options):
+def visualize_dim_red(r, labels, filename, figsize=(18,10), title='', legend=True, **scatter_options):
     """
     Saves a scatter plot of a (2,n) matrix r, where each column is a cell.
     """
@@ -26,5 +26,7 @@ def visualize_dim_red(r, labels, filename, figsize=(18,10), title='', **scatter_
     for i in set(labels):
         plt.scatter(r[0, labels==i], r[1, labels==i], label=i, **scatter_options)
     plt.title(title)
-    plt.legend()
+    if legend:
+        plt.legend()
     plt.savefig(filename, dpi=100)
+    plt.close()
