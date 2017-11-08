@@ -766,18 +766,21 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
         consensus: if true, runs a consensus on cluster results for each method at the very end.
 
     Returns:
-        purities
-        names
+        purities (list of lists)
+        names (list of lists)
+        other (dict): keys: timing, preprocessing, clusterings
     """
     results = []
     names = []
     clusterings = {}
     other_results = {}
     other_results['timing'] = {}
+    other_results['preprocessing'] = {}
     for i in range(n_runs):
         print('run {0}'.format(i))
         purities = []
         r = 0
+        method_index = 0
         for preproc, cluster in methods:
             t0 = time.time()
             if isinstance(preproc, Preprocess):
@@ -794,6 +797,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                 preprocessed = [p1]
             t1 = time.time() - t0
             for name, pre in zip(output_names, preprocessed):
+                starting_index = method_index
                 if isinstance(cluster, Cluster):
                     try:
                         t0 = time.time()
@@ -815,6 +819,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                         other_results['timing'][names[r]].append(t2)
                         print(purities[-1])
                         r += 1
+                        method_index += 1
                     except:
                         print('failed to do clustering')
                 elif type(cluster) == list:
@@ -839,8 +844,19 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                             print('time: ' + str(t2))
                             print(purities[-1])
                             r += 1
+                            method_index += 1
                         except:
                             print('failed to do clustering')
+                # TODO: find the highest purity for the pre-processing method
+                # TODO: save the preprocessing result with the highest NMI
+                num_clustering_results = method_index - starting_index
+                clustering_results = purities[-num_clustering_results:]
+                if len(results) > 0:
+                    old_clustering_results = results[-1][-num_clustering_results:]
+                    if max(old_clustering_results) < max(clustering_results):
+                        other_results['preprocessing'][name] = pre
+                else:
+                    other_results['preprocessing'][name] = pre
         print('\t'.join(names))
         print('purities: ' + '\t'.join(map(str, purities)))
         results.append(purities)
