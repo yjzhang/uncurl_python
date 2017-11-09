@@ -712,7 +712,7 @@ class TsneKm(Cluster):
     """
 
     def __init__(self, n_classes, use_log=False, name='tsne_km',
-            metric='euclidean', **params):
+            metric='euclidean', use_exp=False, **params):
         super(TsneKm, self).__init__(n_classes, **params)
         self.use_log=use_log
         if 'k' in self.params:
@@ -721,12 +721,15 @@ class TsneKm(Cluster):
             self.tsne = TSNE(2, metric=metric)
         self.km = KMeans(n_classes)
         self.name = name
+        self.use_exp = use_exp
 
     def run(self, data):
         if sparse.issparse(data):
             data = data.toarray()
         if self.use_log:
             data = log1p(data)
+        if self.use_exp:
+            data = (10**data) - 1
         data_tsne = self.tsne.fit_transform(data.T)
         labels = self.km.fit_predict(data_tsne)
         return labels
