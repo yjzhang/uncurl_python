@@ -131,9 +131,12 @@ class Tsne(Preprocess):
     2d tsne dimensionality reduction - tsne always uses 2d
     """
 
-    def __init__(self, **params):
+    def __init__(self, metric='euclidean', **params):
+        """
+        metric can be any metric usable with tsne.
+        """
         self.output_names = ['TSNE']
-        self.tsne = TSNE(2)
+        self.tsne = TSNE(2, metric=metric)
         super(Tsne, self).__init__(**params)
 
     def run(self, data):
@@ -708,13 +711,14 @@ class TsneKm(Cluster):
     TSNE(2) + Kmeans
     """
 
-    def __init__(self, n_classes, use_log=False, name='tsne_km', **params):
+    def __init__(self, n_classes, use_log=False, name='tsne_km',
+            metric='euclidean', **params):
         super(TsneKm, self).__init__(n_classes, **params)
         self.use_log=use_log
         if 'k' in self.params:
-            self.tsne = TSNE(self.params['k'])
+            self.tsne = TSNE(self.params['k'], metric=metric)
         else:
-            self.tsne = TSNE(2)
+            self.tsne = TSNE(2, metric=metric)
         self.km = KMeans(n_classes)
         self.name = name
 
@@ -847,8 +851,8 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                             method_index += 1
                         except:
                             print('failed to do clustering')
-                # TODO: find the highest purity for the pre-processing method
-                # TODO: save the preprocessing result with the highest NMI
+                # find the highest purity for the pre-processing method
+                # save the preprocessing result with the highest NMI
                 num_clustering_results = method_index - starting_index
                 clustering_results = purities[-num_clustering_results:]
                 if len(results) > 0:
