@@ -18,16 +18,16 @@ parallel_extensions = [
             extra_link_args=['-fopenmp'])
         ]
 
+parallel = []
 try:
     parallel = cythonize(parallel_extensions)
 except:
     print('Unable to compile parallel extensions.')
-    parallel = []
 
 
 setup(name='uncurl',
-      version='0.2.3',
-      description='Tool for clustering single-cell RNASeq data',
+      version='0.2.4',
+      description='Tool for pre-processing single-cell RNASeq data',
       url='https://github.com/yjzhang/uncurl_python',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
@@ -41,5 +41,5 @@ setup(name='uncurl',
           'scikit-learn',
       ],
       test_suite='nose.collector',
-      tests_require=['nose'],
+      tests_require=['nose', 'flaky'],
       zip_safe=False)
