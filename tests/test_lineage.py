@@ -1,9 +1,11 @@
 from unittest import TestCase
+from flaky import flaky
 
 import numpy as np
 
 from uncurl import simulation, lineage, pseudotime
 
+@flaky
 class LineageTest(TestCase):
 
     def setUp(self):

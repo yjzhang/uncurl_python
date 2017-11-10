@@ -18,7 +18,7 @@ def sparse_var(data):
     var = means_2 - means**2
     return var
 
-def max_variance_genes(data, nbins=10, frac=0.1):
+def max_variance_genes(data, nbins=5, frac=0.2):
     """
     This function identifies the genes that have the max variance
     across a number of bins sorted by mean.
