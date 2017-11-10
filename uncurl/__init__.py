@@ -6,7 +6,7 @@ from .state_estimation import poisson_estimate_state
 from .run_se import run_state_estimation
 from .nb_state_estimation import nb_estimate_state
 from .zip_state_estimation import zip_estimate_state
-from .dimensionality_reduction import dim_reduce, dim_reduce_data
+from .dimensionality_reduction import mds, dim_reduce, dim_reduce_data
 from .lineage import lineage, pseudotime
 from .nb_cluster import nb_cluster
 

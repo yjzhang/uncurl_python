@@ -31,10 +31,10 @@ uncurl.nb_estimate_state
 
 .. autofunction:: uncurl.nb_estimate_state
 
-uncurl.dim_reduce
+uncurl.mds
 -----------------
 
-.. autofunction:: uncurl.dim_reduce
+.. autofunction:: uncurl.mds
 
 uncurl.lineage
 --------------
