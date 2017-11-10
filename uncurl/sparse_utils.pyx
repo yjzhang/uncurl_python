@@ -269,5 +269,5 @@ def symmetric_kld(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2
     cdef double kl2 = 0
     cdef double d = 1.0/len(p1)
     cdef np.ndarray[DTYPE_t, ndim=1] pq = np.log(p1/(p2+eps))
-    cdef np.ndarray[DTYPE_t, ndim=1] qp = np.log(p2/(p1+epx))
+    cdef np.ndarray[DTYPE_t, ndim=1] qp = np.log(p2/(p1+eps))
     return (p1*pq).sum() + (p2*qp).sum()
