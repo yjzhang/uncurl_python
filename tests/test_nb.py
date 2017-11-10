@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from unittest import TestCase
+from flaky import flaky
 
 import numpy as np
 
@@ -8,6 +9,8 @@ from uncurl import nb_cluster, simulation
 from uncurl.nb_cluster import nb_ll, nb_fit
 from uncurl.evaluation import purity
 
+
+@flaky
 class NBTest(TestCase):
 
     def setUp(self):

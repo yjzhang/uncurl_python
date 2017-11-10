@@ -1,12 +1,14 @@
 from __future__ import print_function
 
 from unittest import TestCase
+from flaky import flaky
 
 import numpy as np
 from scipy.io import loadmat
 
 from uncurl import zip_state_estimation, simulation
 
+@flaky
 class ZIPStateEstimationTest(TestCase):
 
     def setUp(self):

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from unittest import TestCase
+from flaky import flaky
 
 import numpy as np
 from scipy.io import loadmat
@@ -10,6 +11,7 @@ import uncurl
 from uncurl.simulation import generate_poisson_data
 from uncurl.evaluation import purity
 
+@flaky
 class SparseClusterTest(TestCase):
 
     def setUp(self):

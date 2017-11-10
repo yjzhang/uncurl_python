@@ -1,7 +1,7 @@
 UNCURL
 ======
 
-First, install Cython if it isn't installed already: ``pip install cython``. Then, after cloning the repo, run ``pip install .``
+First, install Cython and numpy if they aren't installed already: ``pip install cython`` and ``pip install numpy`` (maybe ``sudo`` is necessary). Then, after cloning the repo, run ``pip install .``
 
 Requirements: numpy, scipy, cython, scikit-learn
 
@@ -15,6 +15,61 @@ Examples: see the examples folder.
 
 Features
 ========
+
+State Estimation
+----------------
+
+The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. 
+
+The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution, is much slower, and is not capable of dealing with sparse inputs.
+
+There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using ``poisson_cluster``, but it can also be initialized using truncated SVD + K-means or just K-means.
+
+Example:
+
+.. code-block:: python
+    import numpy as np
+    import scipy.io
+    from uncurl import poisson_cluster, poisson_estimate_state, nb_estimate_state
+
+    data = np.loadtxt('counts.txt')
+
+    # sparse data (matrix market format)
+    data_sparse = scipy.io.mmread('matrix.mtx')
+
+    # poisson state estimation
+    M, W, ll = poisson_estimate_state(data_sparse, 2)
+
+    # labels in 0...k-1
+    labels = W.argmax(0)
+
+    # Negative binomial clustering cannot deal with sparse data
+    M2, W2, R, ll2 = nb_estimate_state(data, 2)
+
+    # optional arguments
+    M, W, ll = poisson_estimate_state(data_sparse, clusters=2, disp=False, max_iters=30, inner_max_iters=150, initialization='tsvd', threads=8)
+
+    # initialization by providing means and weights
+    assignments_p, centers = poisson_cluster(data, 2)
+    M, W, ll = poisson_estimate_state(data, 2, init_means=centers, init_weights=assignments_p)
+
+Qualitative to Quantitative Framework
+-------------------------------------
+
+The ``qualNorm`` function is used to convert binary data with shape (genes, types) into starting points for clustering and state estimation.
+
+Example:
+
+.. code-block:: python
+
+    from uncurl import qualNorm
+    import numpy as np
+
+    data = np.loadtxt('counts.txt')
+    bin_data = np.loadtxt('binary.txt')
+    starting_centers = qualNorm(data, bin_data)
+    assignments, centers = poisson_cluster(data, 2, init=starting_centers)
+
 
 Clustering
 ----------
@@ -34,51 +89,6 @@ Example:
   data = np.loadtxt('counts.txt')
   assignments_p, centers = poisson_cluster(data, 2)
   assignments_nb, P, R = nb_cluster(data, 2)
-
-
-Qualitative to Quantitative Framework
--------------------------------------
-
-The ``qualNorm`` function is used to convert binary data into starting points for clustering.
-
-Example:
-
-.. code-block:: python
-
-    from uncurl import qualNorm
-    import numpy as np
-
-    data = np.loadtxt('counts.txt')
-    bin_data = np.loadtxt('binary.txt')
-    starting_centers = qualNorm(data, bin_data)
-    assignments, centers = poisson_cluster(data, 2, init=starting_centers)
-
-State Estimation
-----------------
-
-The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. 
-
-The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution, is much slower, and is not capable of dealing with sparse inputs.
-
-There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using ``poisson_cluster``, but it can also be initialized using truncated SVD + K-means or just K-means.
-
-Example:
-
-.. code-block:: python
-
-    from uncurl import poisson_estimate_state, nb_estimate_state
-
-    data = np.loadtxt('counts.txt')
-
-    M, W, ll = poisson_estimate_state(data, 2)
-    M2, W2, R, ll2 = nb_estimate_state(data, 2)
-
-    # optional arguments
-    M, W, ll = poisson_estimate_state(data, clusters=2, disp=False, max_iters=30, inner_max_iters=150, initialization='tsvd', threads=8)
-
-    # initialization by providing means and weights
-    assignments_p, centers = poisson_cluster(data, 2)
-    M, W, ll = poisson_estimate_state(data, 2, init_means=centers, init_weights=assignments_p)
 
 
 Dimensionality Reduction

@@ -5,8 +5,10 @@
 # ex. uncurl_mw -> tsne -> km???
 
 # preprocessing returns a matrix of shape (k, cells), where k <= genes
+from __future__ import print_function
 
 import time
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,8 +47,11 @@ from .state_estimation import poisson_estimate_state
 from .dimensionality_reduction import dim_reduce
 from .evaluation import purity
 from .preprocessing import cell_normalize
-from . import ensemble
-from .ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust, lightlda_se_tsne
+try:
+    from . import ensemble
+    from .ensemble import nmf_ensemble, nmf_kfold, nmf_tsne, poisson_se_tsne, poisson_se_multiclust, lightlda_se_tsne
+except:
+    print('unable to import ensemble methods.')
 from .clustering import poisson_cluster
 from .lightlda_utils import lightlda_estimate_state
 from .plda_utils import plda_estimate_state

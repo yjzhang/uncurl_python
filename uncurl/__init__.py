@@ -17,6 +17,10 @@ from . import sampling
 
 try:
     from . import experiment_runner
+except:
+    pass
+
+try:
     from . import ensemble
 except:
     pass
