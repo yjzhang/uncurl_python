@@ -173,8 +173,8 @@ def sparse_poisson_dist(p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
     coo = p1
     if not sparse.isspmatrix_coo(coo):
         coo = sparse.coo_matrix(p1)
-    cdef int[:] row = coo.row.astype(np.int32)
-    cdef int[:] col = coo.col.astype(np.int32)
+    cdef long[:] row = coo.row.astype(np.int64)
+    cdef long[:] col = coo.col.astype(np.int64)
     cdef double[:] data_ = coo.data.astype(np.float64)
     cdef Py_ssize_t i, g, c
 
@@ -252,3 +252,22 @@ def sparse_poisson_dist_mat(data, np.ndarray[DTYPE_t, ndim=2] centers, eps=1e-10
         for k in range(clusters):
             distances[c,k] += (data_[i] - cv[g,k])*(logdata[i] - logc[g,k])
     return np.asarray(distances)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def symmetric_kld(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2,
+        eps=1e-10):
+    """
+    Gets the symmetric KL divergence between the two points
+    (assuming that they're of equal length, and both are probability distributions)
+    """
+    p1 = p1/p1.sum()
+    p2 = p2/p2.sum()
+    cdef Py_ssize_t i
+    cdef double kl1 = 0
+    cdef double kl2 = 0
+    cdef double d = 1.0/len(p1)
+    cdef np.ndarray[DTYPE_t, ndim=1] pq = np.log(p1/(p2+eps))
+    cdef np.ndarray[DTYPE_t, ndim=1] qp = np.log(p2/(p1+epx))
+    return (p1*pq).sum() + (p2*qp).sum()
