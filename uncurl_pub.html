@@ -61,7 +61,7 @@
 <h2>uncurl.max_variance_genes<a class="headerlink" href="#uncurl-max-variance-genes" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.max_variance_genes">
-<code class="descclassname">uncurl.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=10</em>, <em>frac=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.max_variance_genes" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=5</em>, <em>frac=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.max_variance_genes" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function identifies the genes that have the max variance
 across a number of bins sorted by mean.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -256,12 +256,32 @@ ll (float): Log-likelihood of final iteration</p>
 </dd></dl>
 
 </div>
-<div class="section" id="uncurl-dim-reduce">
-<h2>uncurl.dim_reduce<a class="headerlink" href="#uncurl-dim-reduce" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="uncurl-mds">
+<h2>uncurl.mds<a class="headerlink" href="#uncurl-mds" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="uncurl.dim_reduce">
-<code class="descclassname">uncurl.</code><code class="descname">dim_reduce</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#uncurl.dim_reduce" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="uncurl.mds">
+<code class="descclassname">uncurl.</code><code class="descname">mds</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dimensionality_reduction.html#mds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.mds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dimensionality reduction using MDS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; genes x clusters</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; clusters x cells</li>
+<li><strong>d</strong> (<em>int</em>) &#8211; desired dimensionality</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">array of shape (d, cells)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">W_reduced (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="uncurl-lineage">
@@ -337,7 +357,7 @@ cell cluster assignments: list of ints</p>
 <li><a class="reference internal" href="#uncurl-nb-cluster">uncurl.nb_cluster</a></li>
 <li><a class="reference internal" href="#uncurl-poisson-estimate-state">uncurl.poisson_estimate_state</a></li>
 <li><a class="reference internal" href="#uncurl-nb-estimate-state">uncurl.nb_estimate_state</a></li>
-<li><a class="reference internal" href="#uncurl-dim-reduce">uncurl.dim_reduce</a></li>
+<li><a class="reference internal" href="#uncurl-mds">uncurl.mds</a></li>
 <li><a class="reference internal" href="#uncurl-lineage">uncurl.lineage</a></li>
 <li><a class="reference internal" href="#uncurl-pseudotime">uncurl.pseudotime</a></li>
 </ul>

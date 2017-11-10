@@ -12,10 +12,10 @@ uncurl.clustering module
     :undoc-members:
     :show-inheritance:
 
-uncurl.dim_reduce module
+uncurl.dimensionality_reduction module
 ------------------------
 
-.. automodule:: uncurl.dim_reduce
+.. automodule:: uncurl.dimensionality_reduction
     :members:
     :undoc-members:
     :show-inheritance:
@@ -24,6 +24,14 @@ uncurl.evaluation module
 ------------------------
 
 .. automodule:: uncurl.evaluation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+uncurl.experiment_runner module
+------------------------
+
+.. automodule:: uncurl.experiment_runner
     :members:
     :undoc-members:
     :show-inheritance:
@@ -80,14 +88,6 @@ uncurl.simulation module
 ------------------------
 
 .. automodule:: uncurl.simulation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-uncurl.spatial_inference module
--------------------------------
-
-.. automodule:: uncurl.spatial_inference
     :members:
     :undoc-members:
     :show-inheritance:

@@ -161,11 +161,36 @@ M (array): 1d array of zero-inflation parameter</td>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="module-uncurl.dim_reduce">
-<span id="uncurl-dim-reduce-module"></span><h2>uncurl.dim_reduce module<a class="headerlink" href="#module-uncurl.dim_reduce" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="uncurl-dimensionality-reduction-module">
+<h2>uncurl.dimensionality_reduction module<a class="headerlink" href="#uncurl-dimensionality-reduction-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-uncurl.dimensionality_reduction"></span><dl class="function">
+<dt id="uncurl.dimensionality_reduction.diffusion_mds">
+<code class="descclassname">uncurl.dimensionality_reduction.</code><code class="descname">diffusion_mds</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>d</em>, <em>diffusion_rounds=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dimensionality_reduction.html#diffusion_mds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.dimensionality_reduction.diffusion_mds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dimensionality reduction using MDS, while running diffusion on W.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; genes x clusters</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; clusters x cells</li>
+<li><strong>d</strong> (<em>int</em>) &#8211; desired dimensionality</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">array of shape (d, cells)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">W_reduced (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="function">
-<dt id="uncurl.dim_reduce.dim_reduce">
-<code class="descclassname">uncurl.dim_reduce.</code><code class="descname">dim_reduce</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#uncurl.dim_reduce.dim_reduce" title="Permalink to this definition">¶</a></dt>
+<dt id="uncurl.dimensionality_reduction.dim_reduce">
+<code class="descclassname">uncurl.dimensionality_reduction.</code><code class="descname">dim_reduce</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dimensionality_reduction.html#dim_reduce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.dimensionality_reduction.dim_reduce" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dimensionality reduction using Poisson distances and MDS.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -187,8 +212,8 @@ of the cluster centers.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="uncurl.dim_reduce.dim_reduce_data">
-<code class="descclassname">uncurl.dim_reduce.</code><code class="descname">dim_reduce_data</code><span class="sig-paren">(</span><em>data</em>, <em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#uncurl.dim_reduce.dim_reduce_data" title="Permalink to this definition">¶</a></dt>
+<dt id="uncurl.dimensionality_reduction.dim_reduce_data">
+<code class="descclassname">uncurl.dimensionality_reduction.</code><code class="descname">dim_reduce_data</code><span class="sig-paren">(</span><em>data</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dimensionality_reduction.html#dim_reduce_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.dimensionality_reduction.dim_reduce_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Does a MDS on the data directly, not on the means.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -201,6 +226,31 @@ of the cluster centers.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">X, a cells x d matrix</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.dimensionality_reduction.mds">
+<code class="descclassname">uncurl.dimensionality_reduction.</code><code class="descname">mds</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dimensionality_reduction.html#mds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.dimensionality_reduction.mds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dimensionality reduction using MDS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>means</strong> (<em>array</em>) &#8211; genes x clusters</li>
+<li><strong>weights</strong> (<em>array</em>) &#8211; clusters x cells</li>
+<li><strong>d</strong> (<em>int</em>) &#8211; desired dimensionality</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">array of shape (d, cells)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">W_reduced (array)</p>
 </td>
 </tr>
 </tbody>
@@ -233,6 +283,451 @@ log-likelihood and k, the number of cell types.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">purity score - a float bewteen 0 and 1. Closer to 1 is better.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="uncurl-experiment-runner-module">
+<h2>uncurl.experiment_runner module<a class="headerlink" href="#uncurl-experiment-runner-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-uncurl.experiment_runner"></span><dl class="class">
+<dt id="uncurl.experiment_runner.Argmax">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Argmax</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Argmax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Argmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Argmax.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Argmax.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Argmax.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.BasicNMF">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">BasicNMF</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#BasicNMF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.BasicNMF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs NMF on data, returning H and W*H.</p>
+<p>Requires a &#8216;k&#8217; parameter, which is the rank of the matrices.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.BasicNMF.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#BasicNMF.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.BasicNMF.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Cluster">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Cluster</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Clustering methods take in a matrix of shape k x cells, and
+return an array of integers in (0, n_classes-1).</p>
+<p>They should be able to run on the output of pre-processing...</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Cluster.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Cluster.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Cluster.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleClusterPoissonSE">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleClusterPoissonSE</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleClusterPoissonSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleClusterPoissonSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs Poisson state estimation initialized from the consensus
+of 10 runs of Poisson KM.</p>
+<p>params: k - dimensionality</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.EnsembleClusterPoissonSE.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleClusterPoissonSE.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleClusterPoissonSE.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleNMF">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleNMF</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleNMF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleNMF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs Ensemble NMF on log(data+1), returning the consensus
+results for H and W*H.</p>
+<p>Requires a &#8216;k&#8217; parameter, which is the rank of the matrices.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.EnsembleNMF.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleNMF.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleNMF.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleNMFKm">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleNMFKm</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleNMFKm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleNMFKm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>Returns the result of ensemble clustering of 10 NMF-tSNE-KMeans runs.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleTSVDKm">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleTSVDKm</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTSVDKm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTSVDKm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>Returns the result of ensemble clustering of 10 TSVD-KMeans runs.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleTSVDPoissonSE">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleTSVDPoissonSE</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTSVDPoissonSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTSVDPoissonSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs Poisson state estimation initialized from 8 runs of tsvd-km.</p>
+<p>params: k - dimensionality</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.EnsembleTSVDPoissonSE.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTSVDPoissonSE.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTSVDPoissonSE.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleTsneLightLDASE">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleTsneLightLDASE</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTsneLightLDASE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTsneLightLDASE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs tsne-based LightLDA Poisson state estimation</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.EnsembleTsneLightLDASE.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTsneLightLDASE.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTsneLightLDASE.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleTsneNMF">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleTsneNMF</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTsneNMF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTsneNMF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs tsne-based ensemble NMF</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.EnsembleTsneNMF.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTsneNMF.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTsneNMF.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.EnsembleTsnePoissonSE">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">EnsembleTsnePoissonSE</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTsnePoissonSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTsnePoissonSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs tsne-based ensemble Poisson state estimation</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.EnsembleTsnePoissonSE.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#EnsembleTsnePoissonSE.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.EnsembleTsnePoissonSE.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.KFoldNMF">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">KFoldNMF</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#KFoldNMF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.KFoldNMF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs K-fold ensemble NMF on log(data+1), returning the consensus
+results for H and W*H.</p>
+<p>Requires a &#8216;k&#8217; parameter, which is the rank of the matrices.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.KFoldNMF.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#KFoldNMF.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.KFoldNMF.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.KM">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">KM</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#KM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.KM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>k-means clustering</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.KM.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#KM.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.KM.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.LightLDASE">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">LightLDASE</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LightLDASE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LightLDASE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs LightLDA State Estimation, returning W and MW.
+Requires a &#8216;k&#8217; parameter.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.LightLDASE.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LightLDASE.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LightLDASE.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Log">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Log</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Takes the natural log of the data+1.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Log.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Log.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Log.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.LogNMF">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">LogNMF</code><span class="sig-paren">(</span><em>return_mds=False</em>, <em>return_wh=False</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LogNMF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LogNMF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs NMF on log(normalize(data)+1), returning H and W*H.</p>
+<p>Requires a &#8216;k&#8217; parameter, which is the rank of the matrices.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.LogNMF.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LogNMF.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LogNMF.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.LogNorm">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">LogNorm</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LogNorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LogNorm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>First, normalizes the counts per cell, and then takes log(normalized_counts+1).</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.LogNorm.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LogNorm.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LogNorm.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Magic">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Magic</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Magic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Magic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Magic.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Magic.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Magic.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.PLDASE">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">PLDASE</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PLDASE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PLDASE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs PLDA State Estimation, returning W and MW.
+Requires a &#8216;k&#8217; parameter.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.PLDASE.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PLDASE.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PLDASE.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Pca">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Pca</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Pca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Pca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>PCA preprocessing</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Pca.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Pca.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Pca.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.PcaKm">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">PcaKm</code><span class="sig-paren">(</span><em>n_classes</em>, <em>use_log=False</em>, <em>name='pca_km'</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PcaKm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PcaKm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>PCA + kmeans</p>
+<p>Requires a parameter k, where k is the dimensionality
+of PCA.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.PcaKm.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PcaKm.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PcaKm.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.PoissonCluster">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">PoissonCluster</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PoissonCluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PoissonCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>Poisson k-means clustering</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.PoissonCluster.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PoissonCluster.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PoissonCluster.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.PoissonSE">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">PoissonSE</code><span class="sig-paren">(</span><em>return_w=True</em>, <em>return_m=False</em>, <em>return_mw=False</em>, <em>return_mds=False</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PoissonSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PoissonSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs Poisson State Estimation, returning W and MW.</p>
+<p>Requires a &#8216;k&#8217; parameter.</p>
+<p>Optional args: return_m=True: returns M in outputs
+return_mw=True: returns MW in outputs</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.PoissonSE.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#PoissonSE.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.PoissonSE.run" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of W, M*W
+ll</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Preprocess">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Preprocess</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Preprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Pre-processing methods take in a genes x cells data matrix of integer
+counts, and return a k x cells matrix, where k &lt;= genes.</p>
+<p>Preprocessing methods can return multiple outputs. the outputs are</p>
+<p>If k=2, then the method can be used for visualization...</p>
+<p>This class represents a &#8216;blank&#8217; preprocessing.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Preprocess.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Preprocess.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Preprocess.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>should return a list of output matrices of the same length
+as self.output_names, and an objective value.</p>
+<p>data is of shape (genes, cells).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Simlr">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Simlr</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Simlr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Simlr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Simlr.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Simlr.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Simlr.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.SimlrKm">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">SimlrKm</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#SimlrKm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.SimlrKm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>Fast minibatch Kmeans from the simlr library</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.SimlrKm.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#SimlrKm.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.SimlrKm.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.SimlrSmall">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">SimlrSmall</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#SimlrSmall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.SimlrSmall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Simlr for small-scale datasets (no PCA preprocessing)</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.SimlrSmall.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#SimlrSmall.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.SimlrSmall.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.TSVD">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">TSVD</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#TSVD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.TSVD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>Runs truncated SVD on the data. the input param k is the number of
+dimensions.</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.TSVD.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#TSVD.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.TSVD.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Tsne">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Tsne</code><span class="sig-paren">(</span><em>metric='euclidean'</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Tsne"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Tsne" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>2d tsne dimensionality reduction - tsne always uses 2d</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Tsne.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Tsne.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Tsne.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.TsneKm">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">TsneKm</code><span class="sig-paren">(</span><em>n_classes</em>, <em>use_log=False</em>, <em>name='tsne_km'</em>, <em>metric='euclidean'</em>, <em>use_exp=False</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#TsneKm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.TsneKm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>TSNE(2) + Kmeans</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.TsneKm.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#TsneKm.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.TsneKm.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.Zifa">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Zifa</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Zifa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Zifa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>ZIFA preprocessing</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.Zifa.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Zifa.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Zifa.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.experiment_runner.generate_visualizations">
+<code class="descclassname">uncurl.experiment_runner.</code><code class="descname">generate_visualizations</code><span class="sig-paren">(</span><em>methods</em>, <em>data</em>, <em>true_labels</em>, <em>base_dir='visualizations'</em>, <em>figsize=(18</em>, <em>10)</em>, <em>**scatter_options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#generate_visualizations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.generate_visualizations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates visualization scatters for all the methods.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>methods</strong> &#8211; follows same format as run_experiments. List of tuples.</li>
+<li><strong>data</strong> &#8211; genes x cells</li>
+<li><strong>true_labels</strong> &#8211; array of integers</li>
+<li><strong>base_dir</strong> &#8211; base directory to save all the plots</li>
+<li><strong>figsize</strong> &#8211; tuple of ints representing size of figure</li>
+<li><strong>scatter_options</strong> &#8211; options for plt.scatter</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.experiment_runner.run_experiment">
+<code class="descclassname">uncurl.experiment_runner.</code><code class="descname">run_experiment</code><span class="sig-paren">(</span><em>methods</em>, <em>data</em>, <em>n_classes</em>, <em>true_labels</em>, <em>n_runs=10</em>, <em>use_purity=True</em>, <em>use_nmi=False</em>, <em>use_ari=False</em>, <em>consensus=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#run_experiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.run_experiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>runs a pre-processing + clustering experiment...</p>
+<p>exactly one of use_purity, use_nmi, or use_ari can be true</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>methods</strong> &#8211; list of pairs of Preprocess, (list of) Cluster objects</li>
+<li><strong>data</strong> &#8211; genes x cells array</li>
+<li><strong>true_labels</strong> &#8211; 1d array of length cells</li>
+<li><strong>consensus</strong> &#8211; if true, runs a consensus on cluster results for each method at the very end.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">purities (list of lists)
+names (list of lists)
+other (dict): keys: timing, preprocessing, clusterings</p>
 </td>
 </tr>
 </tbody>
@@ -626,7 +1121,7 @@ count per cell is equal.</p>
 
 <dl class="function">
 <dt id="uncurl.preprocessing.max_variance_genes">
-<code class="descclassname">uncurl.preprocessing.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=10</em>, <em>frac=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.max_variance_genes" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=5</em>, <em>frac=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.max_variance_genes" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function identifies the genes that have the max variance
 across a number of bins sorted by mean.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -923,14 +1418,6 @@ labels - array of cluster labels</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-uncurl.spatial_inference">
-<span id="uncurl-spatial-inference-module"></span><h2>uncurl.spatial_inference module<a class="headerlink" href="#module-uncurl.spatial_inference" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="uncurl.spatial_inference.spatial">
-<code class="descclassname">uncurl.spatial_inference.</code><code class="descname">spatial</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/spatial_inference.html#spatial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.spatial_inference.spatial" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
 <div class="section" id="module-uncurl.state_estimation">
 <span id="uncurl-state-estimation-module"></span><h2>uncurl.state_estimation module<a class="headerlink" href="#module-uncurl.state_estimation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
@@ -1041,8 +1528,9 @@ ll (float): final log-likelihood</p>
 <li><a class="reference internal" href="#">uncurl package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-uncurl.clustering">uncurl.clustering module</a></li>
-<li><a class="reference internal" href="#module-uncurl.dim_reduce">uncurl.dim_reduce module</a></li>
+<li><a class="reference internal" href="#uncurl-dimensionality-reduction-module">uncurl.dimensionality_reduction module</a></li>
 <li><a class="reference internal" href="#module-uncurl.evaluation">uncurl.evaluation module</a></li>
+<li><a class="reference internal" href="#uncurl-experiment-runner-module">uncurl.experiment_runner module</a></li>
 <li><a class="reference internal" href="#module-uncurl.lineage">uncurl.lineage module</a></li>
 <li><a class="reference internal" href="#module-uncurl.nb_cluster">uncurl.nb_cluster module</a></li>
 <li><a class="reference internal" href="#module-uncurl.nb_state_estimation">uncurl.nb_state_estimation module</a></li>
@@ -1050,7 +1538,6 @@ ll (float): final log-likelihood</p>
 <li><a class="reference internal" href="#module-uncurl.preprocessing">uncurl.preprocessing module</a></li>
 <li><a class="reference internal" href="#module-uncurl.qual2quant">uncurl.qual2quant module</a></li>
 <li><a class="reference internal" href="#module-uncurl.simulation">uncurl.simulation module</a></li>
-<li><a class="reference internal" href="#module-uncurl.spatial_inference">uncurl.spatial_inference module</a></li>
 <li><a class="reference internal" href="#module-uncurl.state_estimation">uncurl.state_estimation module</a></li>
 <li><a class="reference internal" href="#module-uncurl">Module contents</a></li>
 </ul>
