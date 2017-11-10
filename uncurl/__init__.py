@@ -18,7 +18,7 @@ from . import sampling
 try:
     from . import experiment_runner
 except:
-    pass
+    print('unable to import experiment_runner')
 
 try:
     from . import ensemble
