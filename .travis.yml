@@ -3,7 +3,7 @@ sudo: enabled
 python:
     - 2.7
 install: 
-    - python setup.py install
+    - pip install --upgrade .
     - pip install pytest
     - pip install flaky
 script: pytest
