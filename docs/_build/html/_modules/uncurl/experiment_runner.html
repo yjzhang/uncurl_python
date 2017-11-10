@@ -1,0 +1,1080 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.experiment_runner &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.experiment_runner</h1><div class="highlight"><pre>
+<span></span><span class="c1"># general framework for running purity experiments on 10x dataset</span>
+
+<span class="c1"># two steps: dimensionality reduction/preprocessing, and clustering</span>
+<span class="c1"># preprocessing -&gt; dim_red -&gt; clustering?</span>
+<span class="c1"># ex. uncurl_mw -&gt; tsne -&gt; km???</span>
+
+<span class="c1"># preprocessing returns a matrix of shape (k, cells), where k &lt;= genes</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># optional dependencies...</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">log1p</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.metrics.cluster</span> <span class="k">import</span> <span class="n">normalized_mutual_info_score</span> <span class="k">as</span> <span class="n">nmi</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.cluster</span> <span class="k">import</span> <span class="n">adjusted_rand_score</span> <span class="k">as</span> <span class="n">ari</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">NMF</span><span class="p">,</span> <span class="n">TruncatedSVD</span><span class="p">,</span> <span class="n">PCA</span>
+<span class="kn">from</span> <span class="nn">sklearn.manifold</span> <span class="k">import</span> <span class="n">TSNE</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">Cluster_Ensembles</span> <span class="k">as</span> <span class="nn">CE</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="c1"># optional dependencies?</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">SIMLR</span>
+    <span class="kn">from</span> <span class="nn">ZIFA</span> <span class="k">import</span> <span class="n">ZIFA</span>
+    <span class="kn">from</span> <span class="nn">ZIFA</span> <span class="k">import</span> <span class="n">block_ZIFA</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="c1"># optional dependencies?</span>
+    <span class="k">pass</span>
+
+<span class="c1"># magic (requires python 3)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="kn">import</span> <span class="nn">magic</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="kn">from</span> <span class="nn">.state_estimation</span> <span class="k">import</span> <span class="n">poisson_estimate_state</span>
+<span class="kn">from</span> <span class="nn">.dimensionality_reduction</span> <span class="k">import</span> <span class="n">dim_reduce</span>
+<span class="kn">from</span> <span class="nn">.evaluation</span> <span class="k">import</span> <span class="n">purity</span>
+<span class="kn">from</span> <span class="nn">.preprocessing</span> <span class="k">import</span> <span class="n">cell_normalize</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">ensemble</span>
+    <span class="kn">from</span> <span class="nn">.ensemble</span> <span class="k">import</span> <span class="n">nmf_ensemble</span><span class="p">,</span> <span class="n">nmf_kfold</span><span class="p">,</span> <span class="n">nmf_tsne</span><span class="p">,</span> <span class="n">poisson_se_tsne</span><span class="p">,</span> <span class="n">poisson_se_multiclust</span><span class="p">,</span> <span class="n">lightlda_se_tsne</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;unable to import ensemble methods.&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.clustering</span> <span class="k">import</span> <span class="n">poisson_cluster</span>
+<span class="kn">from</span> <span class="nn">.lightlda_utils</span> <span class="k">import</span> <span class="n">lightlda_estimate_state</span>
+<span class="kn">from</span> <span class="nn">.plda_utils</span> <span class="k">import</span> <span class="n">plda_estimate_state</span>
+
+
+<div class="viewcode-block" id="Preprocess"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Preprocess">[docs]</a><span class="k">class</span> <span class="nc">Preprocess</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pre-processing methods take in a genes x cells data matrix of integer</span>
+<span class="sd">    counts, and return a k x cells matrix, where k &lt;= genes.</span>
+
+<span class="sd">    Preprocessing methods can return multiple outputs. the outputs are</span>
+
+<span class="sd">    If k=2, then the method can be used for visualization...</span>
+
+<span class="sd">    This class represents a &#39;blank&#39; preprocessing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;output_names&#39;</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;output_names&#39;</span><span class="p">]</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;output_names&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;output_names&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Data&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Preprocess.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Preprocess.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        should return a list of output matrices of the same length</span>
+<span class="sd">        as self.output_names, and an objective value.</span>
+
+<span class="sd">        data is of shape (genes, cells).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="Log"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Log">[docs]</a><span class="k">class</span> <span class="nc">Log</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes the natural log of the data+1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;LogData&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Log</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Log.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Log.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">log1p</span><span class="p">()],</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">)],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="LogNorm"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LogNorm">[docs]</a><span class="k">class</span> <span class="nc">LogNorm</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First, normalizes the counts per cell, and then takes log(normalized_counts+1).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;LogNorm&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LogNorm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LogNorm.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LogNorm.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">data_norm</span> <span class="o">=</span> <span class="n">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">data_norm</span><span class="o">.</span><span class="n">log1p</span><span class="p">()],</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">data_norm</span><span class="p">)],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="TSVD"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.TSVD">[docs]</a><span class="k">class</span> <span class="nc">TSVD</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs truncated SVD on the data. the input param k is the number of</span>
+<span class="sd">    dimensions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TSVD&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsvd</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">])</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TSVD</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TSVD.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.TSVD.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tsvd</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="Tsne"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Tsne">[docs]</a><span class="k">class</span> <span class="nc">Tsne</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    2d tsne dimensionality reduction - tsne always uses 2d</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        metric can be any metric usable with tsne.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TSNE&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Tsne</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Tsne.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Tsne.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="Pca"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Pca">[docs]</a><span class="k">class</span> <span class="nc">Pca</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    PCA preprocessing</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;PCA&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">])</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Pca</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Pca.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Pca.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="Zifa"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Zifa">[docs]</a><span class="k">class</span> <span class="nc">Zifa</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ZIFA preprocessing</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ZIFA&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Zifa</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Zifa.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Zifa.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">Z</span><span class="p">,</span> <span class="n">model_params</span> <span class="o">=</span> <span class="n">block_ZIFA</span><span class="o">.</span><span class="n">fitModel</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Z</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+
+<div class="viewcode-block" id="PoissonSE"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PoissonSE">[docs]</a><span class="k">class</span> <span class="nc">PoissonSE</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs Poisson State Estimation, returning W and MW.</span>
+
+<span class="sd">    Requires a &#39;k&#39; parameter.</span>
+
+<span class="sd">    Optional args: return_m=True: returns M in outputs</span>
+<span class="sd">    return_mw=True: returns MW in outputs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_w</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_m</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_mw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">return_mds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_w</span> <span class="o">=</span> <span class="n">return_w</span>
+        <span class="k">if</span> <span class="n">return_w</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Poisson_W&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span> <span class="o">=</span> <span class="n">return_m</span>
+        <span class="k">if</span> <span class="n">return_m</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Poisson_M&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="n">return_mw</span>
+        <span class="k">if</span> <span class="n">return_mw</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Poisson_MW&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="n">return_mds</span>
+        <span class="k">if</span> <span class="n">return_mds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Poisson_MDS&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PoissonSE</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PoissonSE.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PoissonSE.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            list of W, M*W</span>
+<span class="sd">            ll</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_w</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">ll</span></div></div>
+
+
+<div class="viewcode-block" id="LightLDASE"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LightLDASE">[docs]</a><span class="k">class</span> <span class="nc">LightLDASE</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs LightLDA State Estimation, returning W and MW.</span>
+<span class="sd">    Requires a &#39;k&#39; parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;LightLDA_W&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_w</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mw&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mw&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;LightLDA_MW&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mw&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mds&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mds&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;LightLDA_MDS&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mds&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LightLDASE</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LightLDASE.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LightLDASE.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">lightlda_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="n">W</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">ll</span></div></div>
+
+<div class="viewcode-block" id="PLDASE"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PLDASE">[docs]</a><span class="k">class</span> <span class="nc">PLDASE</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs PLDA State Estimation, returning W and MW.</span>
+<span class="sd">    Requires a &#39;k&#39; parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;PLDA_W&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mw&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mw&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;PLDA_MW&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mw&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mds&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mds&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;PLDA_MDS&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mds&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PLDASE</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PLDASE.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PLDASE.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">M</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">plda_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="n">W</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="mi">0</span></div></div>
+
+
+
+<div class="viewcode-block" id="EnsembleTsneLightLDASE"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTsneLightLDASE">[docs]</a><span class="k">class</span> <span class="nc">EnsembleTsneLightLDASE</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs tsne-based LightLDA Poisson state estimation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;LightLDA_Ensemble_W&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mw&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mw&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;LightLDA_Ensemble_MW&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mw&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mds&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mds&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;LightLDA_Ensemble_MDS&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mds&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EnsembleTsneLightLDASE</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EnsembleTsneLightLDASE.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTsneLightLDASE.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">lightlda_se_tsne</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="n">W</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">ll</span></div></div>
+
+
+<div class="viewcode-block" id="LogNMF"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LogNMF">[docs]</a><span class="k">class</span> <span class="nc">LogNMF</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs NMF on log(normalize(data)+1), returning H and W*H.</span>
+
+<span class="sd">    Requires a &#39;k&#39; parameter, which is the rank of the matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_mds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_wh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;logNMF_H&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LogNMF</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nmf</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="n">return_mds</span>
+        <span class="k">if</span> <span class="n">return_mds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;logNMF_MDS&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_wh</span> <span class="o">=</span> <span class="n">return_wh</span>
+        <span class="k">if</span> <span class="n">return_wh</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;logNMF_WH&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LogNMF.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LogNMF.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">data_norm</span> <span class="o">=</span> <span class="n">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data_norm</span><span class="o">.</span><span class="n">log1p</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">data_norm</span><span class="p">)</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data_norm</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmf</span><span class="o">.</span><span class="n">components_</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="c1">#ws = sparse.csr_matrix(W)</span>
+            <span class="c1">#hs = sparse.csr_matrix(H)</span>
+            <span class="c1">#cost = 0.5*((data_norm - ws.dot(hs)).power(2)).sum()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data_norm</span> <span class="o">-</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;normalize_h&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;normalize h&#39;</span><span class="p">)</span>
+            <span class="n">H</span> <span class="o">=</span> <span class="n">H</span><span class="o">/</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="n">H</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_wh</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">cost</span></div></div>
+
+<div class="viewcode-block" id="BasicNMF"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.BasicNMF">[docs]</a><span class="k">class</span> <span class="nc">BasicNMF</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs NMF on data, returning H and W*H.</span>
+
+<span class="sd">    Requires a &#39;k&#39; parameter, which is the rank of the matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;NMF_H&#39;</span><span class="p">,</span> <span class="s1">&#39;NMF_WH&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BasicNMF</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nmf</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="BasicNMF.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.BasicNMF.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmf</span><span class="o">.</span><span class="n">components_</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+            <span class="n">hs</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">ws</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">hs</span><span class="p">))</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;normalize_h&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="n">H</span> <span class="o">=</span> <span class="n">H</span><span class="o">/</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">H</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">)],</span> <span class="n">cost</span></div></div>
+
+<div class="viewcode-block" id="EnsembleNMF"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleNMF">[docs]</a><span class="k">class</span> <span class="nc">EnsembleNMF</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs Ensemble NMF on log(data+1), returning the consensus</span>
+<span class="sd">    results for H and W*H.</span>
+
+<span class="sd">    Requires a &#39;k&#39; parameter, which is the rank of the matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;WH&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EnsembleNMF</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EnsembleNMF.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleNMF.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">data_norm</span> <span class="o">=</span> <span class="n">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data_norm</span><span class="o">.</span><span class="n">log1p</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">data_norm</span><span class="p">)</span>
+        <span class="n">W</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">nmf_ensemble</span><span class="p">(</span><span class="n">data_norm</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+            <span class="n">hs</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data_norm</span> <span class="o">-</span> <span class="n">ws</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">hs</span><span class="p">))</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data_norm</span> <span class="o">-</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">H</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">)],</span> <span class="n">cost</span></div></div>
+
+<div class="viewcode-block" id="KFoldNMF"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.KFoldNMF">[docs]</a><span class="k">class</span> <span class="nc">KFoldNMF</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs K-fold ensemble NMF on log(data+1), returning the consensus</span>
+<span class="sd">    results for H and W*H.</span>
+
+<span class="sd">    Requires a &#39;k&#39; parameter, which is the rank of the matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;WH&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KFoldNMF</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KFoldNMF.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.KFoldNMF.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">data_norm</span> <span class="o">=</span> <span class="n">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data_norm</span><span class="o">.</span><span class="n">log1p</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">data_norm</span><span class="p">)</span>
+        <span class="n">W</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">nmf_kfold</span><span class="p">(</span><span class="n">data_norm</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+            <span class="n">hs</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data_norm</span> <span class="o">-</span> <span class="n">ws</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">hs</span><span class="p">))</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data_norm</span> <span class="o">-</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">H</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">)],</span> <span class="n">cost</span></div></div>
+
+<div class="viewcode-block" id="EnsembleTsneNMF"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTsneNMF">[docs]</a><span class="k">class</span> <span class="nc">EnsembleTsneNMF</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs tsne-based ensemble NMF</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Ensemble_NMF_H&#39;</span><span class="p">,</span> <span class="s1">&#39;Ensemble_NMF_WH&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EnsembleTsneNMF</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EnsembleTsneNMF.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTsneNMF.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">data_norm</span> <span class="o">=</span> <span class="n">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data_norm</span><span class="o">.</span><span class="n">log1p</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_norm</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">data_norm</span><span class="p">)</span>
+        <span class="n">W</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">nmf_tsne</span><span class="p">(</span><span class="n">data_norm</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data_norm</span><span class="p">):</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+            <span class="n">hs</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data_norm</span> <span class="o">-</span> <span class="n">ws</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">hs</span><span class="p">))</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data_norm</span> <span class="o">-</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">H</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H</span><span class="p">)],</span> <span class="n">cost</span></div></div>
+
+<div class="viewcode-block" id="EnsembleTsnePoissonSE"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTsnePoissonSE">[docs]</a><span class="k">class</span> <span class="nc">EnsembleTsnePoissonSE</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs tsne-based ensemble Poisson state estimation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Ensemble_W&#39;</span><span class="p">,</span> <span class="s1">&#39;Ensemble_MW&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EnsembleTsnePoissonSE</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EnsembleTsnePoissonSE.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTsnePoissonSE.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="n">poisson_se_tsne</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_m&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_m&#39;</span><span class="p">]:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mw&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mw&#39;</span><span class="p">]:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">obj</span></div></div>
+
+<div class="viewcode-block" id="EnsembleTSVDPoissonSE"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTSVDPoissonSE">[docs]</a><span class="k">class</span> <span class="nc">EnsembleTSVDPoissonSE</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs Poisson state estimation initialized from 8 runs of tsvd-km.</span>
+
+<span class="sd">    params: k - dimensionality</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TSVDEnsemble_W&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;return_m&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_m&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;TSVDEnsemble_M&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_m&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mw&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mw&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;TSVDEnsemble_MW&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mw&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mds&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mds&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;TSVDEnsemble_MDS&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mds&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EnsembleTSVDPoissonSE</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EnsembleTSVDPoissonSE.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTSVDPoissonSE.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="n">poisson_se_multiclust</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">obj</span></div></div>
+
+<div class="viewcode-block" id="EnsembleClusterPoissonSE"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleClusterPoissonSE">[docs]</a><span class="k">class</span> <span class="nc">EnsembleClusterPoissonSE</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs Poisson state estimation initialized from the consensus</span>
+<span class="sd">    of 10 runs of Poisson KM.</span>
+
+<span class="sd">    params: k - dimensionality</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ConsensusPoisson_W&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;return_m&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_m&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;ConsensusPoisson_M&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_m&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mw&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mw&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;ConsensusPoisson_MW&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mw&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;return_mds&#39;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;return_mds&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;ConsensusPoisson_MDS&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;return_mds&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EnsembleClusterPoissonSE</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EnsembleClusterPoissonSE.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleClusterPoissonSE.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># make the data sparse for runtime improvements in poisson clustering</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csc_matrix</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="n">ensemble</span><span class="o">.</span><span class="n">poisson_consensus_se</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_m</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mw</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_mds</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">obj</span></div></div>
+
+<div class="viewcode-block" id="Simlr"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Simlr">[docs]</a><span class="k">class</span> <span class="nc">Simlr</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;PCA50_SIMLR&#39;</span><span class="p">]</span>
+        <span class="c1"># TODO: make params tunable... what do these numbers even mean???</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simlr</span> <span class="o">=</span> <span class="n">SIMLR</span><span class="o">.</span><span class="n">SIMLR_LARGE</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">],</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Simlr</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Simlr.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Simlr.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">X_log</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;n_pca_components&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="n">n_components</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;n_pca_components&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_components</span> <span class="o">=</span> <span class="mi">50</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">SIMLR</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">fast_pca</span><span class="p">(</span><span class="n">X_log</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">n_components</span><span class="p">)</span>
+        <span class="n">S</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simlr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">F</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="SimlrSmall"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.SimlrSmall">[docs]</a><span class="k">class</span> <span class="nc">SimlrSmall</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simlr for small-scale datasets (no PCA preprocessing)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;SIMLR&#39;</span><span class="p">]</span>
+        <span class="c1"># TODO: make params tunable... what do these numbers even mean???</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simlr</span> <span class="o">=</span> <span class="n">SIMLR</span><span class="o">.</span><span class="n">SIMLR</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">],</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Simlr</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SimlrSmall.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.SimlrSmall.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="c1"># TODO: the python implementation of simlr only contains the</span>
+        <span class="c1"># large-scale (PCA-dependent) methods.</span>
+        <span class="k">if</span> <span class="s1">&#39;n_pca_components&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="n">n_components</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;n_pca_components&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_components</span> <span class="o">=</span> <span class="mi">50</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">SIMLR</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">fast_pca</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">n_components</span><span class="p">)</span>
+        <span class="n">S</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simlr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">F</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="Magic"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Magic">[docs]</a><span class="k">class</span> <span class="nc">Magic</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="c1"># TODO: this requires python 3</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;magic&#39;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Magic</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Magic.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Magic.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;n_pca_components&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="n">n_components</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;n_pca_components&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_components</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="n">scdata</span> <span class="o">=</span> <span class="n">magic</span><span class="o">.</span><span class="n">mg</span><span class="o">.</span><span class="n">SCData</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">),</span> <span class="n">data_type</span><span class="o">=</span><span class="s1">&#39;sc-seq&#39;</span><span class="p">)</span>
+        <span class="n">scdata</span> <span class="o">=</span> <span class="n">scdata</span><span class="o">.</span><span class="n">normalize_scseq_data</span><span class="p">()</span>
+        <span class="n">scdata</span><span class="o">.</span><span class="n">run_magic</span><span class="p">(</span><span class="n">n_pca_components</span><span class="o">=</span><span class="n">n_components</span><span class="p">,</span> <span class="n">random_pca</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">t</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">ka</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rescale_percent</span><span class="o">=</span><span class="mi">99</span><span class="p">)</span>
+        <span class="c1">#scdata.run_tsne()</span>
+        <span class="k">if</span> <span class="s1">&#39;use_tsne&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;use_tsne&#39;</span><span class="p">]:</span>
+            <span class="n">scdata</span><span class="o">.</span><span class="n">magic</span><span class="o">.</span><span class="n">run_tsne</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">scdata</span><span class="o">.</span><span class="n">magic</span><span class="o">.</span><span class="n">tsne</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">scdata</span><span class="o">.</span><span class="n">magic</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">],</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="Cluster"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Cluster">[docs]</a><span class="k">class</span> <span class="nc">Cluster</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clustering methods take in a matrix of shape k x cells, and</span>
+<span class="sd">    return an array of integers in (0, n_classes-1).</span>
+
+<span class="sd">    They should be able to run on the output of pre-processing...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_classes</span> <span class="o">=</span> <span class="n">n_classes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+
+<div class="viewcode-block" id="Cluster.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Cluster.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+<div class="viewcode-block" id="Argmax"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Argmax">[docs]</a><span class="k">class</span> <span class="nc">Argmax</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Argmax</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;argmax&#39;</span>
+
+<div class="viewcode-block" id="Argmax.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Argmax.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">n_classes</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="KM"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.KM">[docs]</a><span class="k">class</span> <span class="nc">KM</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    k-means clustering</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KM</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;km&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_classes</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KM.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.KM.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">km</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="PoissonCluster"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PoissonCluster">[docs]</a><span class="k">class</span> <span class="nc">PoissonCluster</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Poisson k-means clustering</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PoissonCluster</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;poisson_km&#39;</span>
+
+<div class="viewcode-block" id="PoissonCluster.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PoissonCluster.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">assignments</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">assignments</span></div></div>
+
+
+<div class="viewcode-block" id="PcaKm"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PcaKm">[docs]</a><span class="k">class</span> <span class="nc">PcaKm</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    PCA + kmeans</span>
+
+<span class="sd">    Requires a parameter k, where k is the dimensionality</span>
+<span class="sd">    of PCA.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="n">use_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pca_km&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PcaKm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_log</span> <span class="o">=</span> <span class="n">use_log</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_classes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+<div class="viewcode-block" id="PcaKm.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PcaKm.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_log</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">data_pca</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">km</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data_pca</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">labels</span></div></div>
+
+<div class="viewcode-block" id="TsneKm"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.TsneKm">[docs]</a><span class="k">class</span> <span class="nc">TsneKm</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    TSNE(2) + Kmeans</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="n">use_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;tsne_km&#39;</span><span class="p">,</span>
+            <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span> <span class="n">use_exp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TsneKm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_log</span><span class="o">=</span><span class="n">use_log</span>
+        <span class="k">if</span> <span class="s1">&#39;k&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">],</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_classes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_exp</span> <span class="o">=</span> <span class="n">use_exp</span>
+
+<div class="viewcode-block" id="TsneKm.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.TsneKm.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_log</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_exp</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">data_tsne</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">km</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data_tsne</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">labels</span></div></div>
+
+<div class="viewcode-block" id="SimlrKm"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.SimlrKm">[docs]</a><span class="k">class</span> <span class="nc">SimlrKm</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fast minibatch Kmeans from the simlr library</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SimlrKm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simlr</span> <span class="o">=</span> <span class="n">SIMLR</span><span class="o">.</span><span class="n">SIMLR_LARGE</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;km&#39;</span>
+
+<div class="viewcode-block" id="SimlrKm.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.SimlrKm.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simlr</span><span class="o">.</span><span class="n">fast_minibatch_kmeans</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div></div>
+
+<div class="viewcode-block" id="EnsembleNMFKm"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleNMFKm">[docs]</a><span class="k">class</span> <span class="nc">EnsembleNMFKm</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the result of ensemble clustering of 10 NMF-tSNE-KMeans runs.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+    <span class="c1"># TODO</span>
+
+<div class="viewcode-block" id="EnsembleTSVDKm"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.EnsembleTSVDKm">[docs]</a><span class="k">class</span> <span class="nc">EnsembleTSVDKm</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the result of ensemble clustering of 10 TSVD-KMeans runs.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+    <span class="c1"># TODO</span>
+
+<div class="viewcode-block" id="run_experiment"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.run_experiment">[docs]</a><span class="k">def</span> <span class="nf">run_experiment</span><span class="p">(</span><span class="n">methods</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="n">true_labels</span><span class="p">,</span> <span class="n">n_runs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">use_purity</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_nmi</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_ari</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">consensus</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    runs a pre-processing + clustering experiment...</span>
+
+<span class="sd">    exactly one of use_purity, use_nmi, or use_ari can be true</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        methods: list of pairs of Preprocess, (list of) Cluster objects</span>
+<span class="sd">        data: genes x cells array</span>
+<span class="sd">        true_labels: 1d array of length cells</span>
+<span class="sd">        consensus: if true, runs a consensus on cluster results for each method at the very end.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        purities (list of lists)</span>
+<span class="sd">        names (list of lists)</span>
+<span class="sd">        other (dict): keys: timing, preprocessing, clusterings</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">clusterings</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">other_results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;timing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;run </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">purities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">method_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">preproc</span><span class="p">,</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
+            <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">preproc</span><span class="p">,</span> <span class="n">Preprocess</span><span class="p">):</span>
+                <span class="n">preprocessed</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">preproc</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">output_names</span> <span class="o">=</span> <span class="n">preproc</span><span class="o">.</span><span class="n">output_names</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># if the input is a list, only use the first preproc result</span>
+                <span class="n">p1</span> <span class="o">=</span> <span class="n">data</span>
+                <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">preproc</span><span class="p">:</span>
+                    <span class="n">p1</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">p1</span><span class="p">)</span>
+                    <span class="n">p1</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">output_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="o">.</span><span class="n">output_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">preprocessed</span> <span class="o">=</span> <span class="p">[</span><span class="n">p1</span><span class="p">]</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pre</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">output_names</span><span class="p">,</span> <span class="n">preprocessed</span><span class="p">):</span>
+                <span class="n">starting_index</span> <span class="o">=</span> <span class="n">method_index</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">Cluster</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                        <span class="n">labels</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+                        <span class="n">t2</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+                        <span class="k">if</span> <span class="n">use_purity</span><span class="p">:</span>
+                            <span class="n">purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">purity</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">true_labels</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">use_nmi</span><span class="p">:</span>
+                            <span class="n">purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nmi</span><span class="p">(</span><span class="n">true_labels</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">use_ari</span><span class="p">:</span>
+                            <span class="n">purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ari</span><span class="p">(</span><span class="n">true_labels</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">cluster</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                            <span class="n">clusterings</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                            <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;timing&#39;</span><span class="p">][</span><span class="n">names</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">names</span><span class="p">[</span><span class="n">r</span><span class="p">])</span>
+                        <span class="n">clusterings</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">r</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;time: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">t2</span><span class="p">))</span>
+                        <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;timing&#39;</span><span class="p">][</span><span class="n">names</span><span class="p">[</span><span class="n">r</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">purities</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">r</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">method_index</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;failed to do clustering&#39;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cluster</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                            <span class="n">labels</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+                            <span class="n">t2</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+                            <span class="k">if</span> <span class="n">use_purity</span><span class="p">:</span>
+                                <span class="n">purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">purity</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">true_labels</span><span class="p">))</span>
+                            <span class="k">if</span> <span class="n">use_nmi</span><span class="p">:</span>
+                                <span class="n">purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nmi</span><span class="p">(</span><span class="n">true_labels</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+                            <span class="k">if</span> <span class="n">use_ari</span><span class="p">:</span>
+                                <span class="n">purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ari</span><span class="p">(</span><span class="n">true_labels</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+                            <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                                <span class="n">clusterings</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                                <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;timing&#39;</span><span class="p">][</span><span class="n">names</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="n">names</span><span class="p">[</span><span class="n">r</span><span class="p">])</span>
+                            <span class="n">clusterings</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">r</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+                            <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;timing&#39;</span><span class="p">][</span><span class="n">names</span><span class="p">[</span><span class="n">r</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;time: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">t2</span><span class="p">))</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="n">purities</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                            <span class="n">r</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">method_index</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;failed to do clustering&#39;</span><span class="p">)</span>
+                <span class="c1"># find the highest purity for the pre-processing method</span>
+                <span class="c1"># save the preprocessing result with the highest NMI</span>
+                <span class="n">num_clustering_results</span> <span class="o">=</span> <span class="n">method_index</span> <span class="o">-</span> <span class="n">starting_index</span>
+                <span class="n">clustering_results</span> <span class="o">=</span> <span class="n">purities</span><span class="p">[</span><span class="o">-</span><span class="n">num_clustering_results</span><span class="p">:]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">old_clustering_results</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="n">num_clustering_results</span><span class="p">:]</span>
+                    <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">old_clustering_results</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">clustering_results</span><span class="p">):</span>
+                        <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pre</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pre</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;purities: &#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">purities</span><span class="p">)))</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">purities</span><span class="p">)</span>
+    <span class="n">consensus_purities</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">consensus</span><span class="p">:</span>
+        <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;consensus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">true_labels</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">clusts</span> <span class="ow">in</span> <span class="n">clusterings</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">clusts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">clusts</span><span class="p">)</span>
+            <span class="n">consensus_clust</span> <span class="o">=</span> <span class="n">CE</span><span class="o">.</span><span class="n">cluster_ensembles</span><span class="p">(</span><span class="n">clusts</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">N_clusters_max</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;consensus&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">consensus_clust</span>
+            <span class="k">if</span> <span class="n">use_purity</span><span class="p">:</span>
+                <span class="n">consensus_purity</span> <span class="o">=</span> <span class="n">purity</span><span class="p">(</span><span class="n">consensus_clust</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">true_labels</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;consensus purity: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">consensus_purity</span><span class="p">))</span>
+                <span class="n">consensus_purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">consensus_purity</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_nmi</span><span class="p">:</span>
+                <span class="n">consensus_nmi</span> <span class="o">=</span> <span class="n">nmi</span><span class="p">(</span><span class="n">true_labels</span><span class="p">,</span> <span class="n">consensus_clust</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;consensus NMI: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">consensus_nmi</span><span class="p">))</span>
+                <span class="n">consensus_purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">consensus_nmi</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_ari</span><span class="p">:</span>
+                <span class="n">consensus_ari</span> <span class="o">=</span> <span class="n">ari</span><span class="p">(</span><span class="n">true_labels</span><span class="p">,</span> <span class="n">consensus_clust</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;consensus ARI: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">consensus_ari</span><span class="p">))</span>
+                <span class="n">consensus_purities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">consensus_ari</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;consensus results: &#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">consensus_purities</span><span class="p">)))</span>
+    <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;clusterings&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">clusterings</span>
+    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">other_results</span></div>
+
+<div class="viewcode-block" id="generate_visualizations"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.generate_visualizations">[docs]</a><span class="k">def</span> <span class="nf">generate_visualizations</span><span class="p">(</span><span class="n">methods</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">true_labels</span><span class="p">,</span> <span class="n">base_dir</span> <span class="o">=</span> <span class="s1">&#39;visualizations&#39;</span><span class="p">,</span>
+        <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="o">**</span><span class="n">scatter_options</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates visualization scatters for all the methods.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        methods: follows same format as run_experiments. List of tuples.</span>
+<span class="sd">        data: genes x cells</span>
+<span class="sd">        true_labels: array of integers</span>
+<span class="sd">        base_dir: base directory to save all the plots</span>
+<span class="sd">        figsize: tuple of ints representing size of figure</span>
+<span class="sd">        scatter_options: options for plt.scatter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
+        <span class="n">preproc</span><span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">preproc</span><span class="p">,</span> <span class="n">Preprocess</span><span class="p">):</span>
+            <span class="n">preprocessed</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">preproc</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">output_names</span> <span class="o">=</span> <span class="n">preproc</span><span class="o">.</span><span class="n">output_names</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if the input is a list, only use the first preproc result</span>
+            <span class="n">p1</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">preproc</span><span class="p">:</span>
+                <span class="n">p1</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">p1</span><span class="p">)</span>
+                <span class="n">p1</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">output_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="o">.</span><span class="n">output_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">preprocessed</span> <span class="o">=</span> <span class="p">[</span><span class="n">p1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">preprocessed</span><span class="p">,</span> <span class="n">output_names</span><span class="p">):</span>
+            <span class="c1"># TODO: cluster labels</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="c1"># if it&#39;s 2d, just display it... else, do tsne to reduce to 2d</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                <span class="n">r_dim_red</span> <span class="o">=</span> <span class="n">r</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># sometimes the data is too big to do tsne... (for sklearn)</span>
+                <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;tsvd_&#39;</span> <span class="o">+</span> <span class="n">name</span>
+                    <span class="n">tsvd</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+                    <span class="n">r_dim_red</span> <span class="o">=</span> <span class="n">tsvd</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="n">r_dim_red</span> <span class="o">=</span> <span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">r_dim_red</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+                        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;tsne_&#39;</span> <span class="o">+</span> <span class="n">name</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="n">tsvd2</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="n">r_dim_red</span> <span class="o">=</span> <span class="n">tsvd2</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">r_dim_red</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;tsne_&#39;</span> <span class="o">+</span> <span class="n">name</span>
+                    <span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                    <span class="n">r_dim_red</span> <span class="o">=</span> <span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">clustering_method</span> <span class="ow">in</span> <span class="n">method</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">cluster_labels</span> <span class="o">=</span> <span class="n">clustering_method</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;clustering failed&#39;</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">cluster_labels</span><span class="p">):</span>
+                        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">r_dim_red</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">cluster_labels</span><span class="o">==</span><span class="n">i</span><span class="p">],</span> <span class="n">r_dim_red</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">cluster_labels</span><span class="o">==</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="o">**</span><span class="n">scatter_options</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+                    <span class="n">output_path</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">+</span> <span class="s1">&#39;/</span><span class="si">{0}</span><span class="s1">_</span><span class="si">{1}</span><span class="s1">_labels.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">clustering_method</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">clustering_method</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">cluster_labels</span> <span class="o">=</span> <span class="n">clustering_method</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;clustering failed&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">cluster_labels</span><span class="p">):</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">r_dim_red</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">cluster_labels</span><span class="o">==</span><span class="n">i</span><span class="p">],</span> <span class="n">r_dim_red</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">cluster_labels</span><span class="o">==</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="o">**</span><span class="n">scatter_options</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+                <span class="n">output_path</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">+</span> <span class="s1">&#39;/</span><span class="si">{0}</span><span class="s1">_</span><span class="si">{1}</span><span class="s1">_labels.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">clustering_method</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+                <span class="k">pass</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">true_labels</span><span class="p">):</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">r_dim_red</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">true_labels</span><span class="o">==</span><span class="n">i</span><span class="p">],</span> <span class="n">r_dim_red</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">true_labels</span><span class="o">==</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="o">**</span><span class="n">scatter_options</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+            <span class="n">output_path</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">+</span> <span class="s1">&#39;/</span><span class="si">{0}</span><span class="s1">_true_labels.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>
