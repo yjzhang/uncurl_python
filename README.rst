@@ -31,6 +31,7 @@ There are a number of different initialization methods and options for ``poisson
 Example:
 
 .. code-block:: python
+
     import numpy as np
     import scipy.io
     from uncurl import poisson_cluster, poisson_estimate_state, nb_estimate_state
@@ -55,6 +56,7 @@ Example:
     # initialization by providing means and weights
     assignments_p, centers = poisson_cluster(data, 2)
     M, W, ll = poisson_estimate_state(data, 2, init_means=centers, init_weights=assignments_p)
+
 
 Qualitative to Quantitative Framework
 -------------------------------------
