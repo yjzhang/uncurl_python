@@ -4,7 +4,7 @@ UNCURL
 .. image:: https://travis-ci.org/yjzhang/uncurl_python.svg
     :target: https://travis-ci.org/yjzhang/uncurl_python
 
-First, install Cython and numpy if they aren't installed already: ``pip install cython`` and ``pip install numpy`` (maybe ``sudo`` is necessary). Then, after cloning the repo, run ``pip install .``
+After cloning the repository, first run ``pip install -r requirements.txt`` to install the required libraries. Then, run ``pip install .``
 
 Requirements: numpy, scipy, cython, scikit-learn
 

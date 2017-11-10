@@ -11,7 +11,7 @@ from uncurl.simulation import generate_poisson_data, generate_zip_data
 from uncurl.evaluation import purity
 from uncurl.clustering import zip_fit_params_mle
 
-@flaky
+@flaky(max_runs=3)
 class ClusterTest(TestCase):
 
     def setUp(self):
