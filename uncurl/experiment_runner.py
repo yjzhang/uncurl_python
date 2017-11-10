@@ -10,7 +10,12 @@ from __future__ import print_function
 import time
 import sys
 
-import matplotlib.pyplot as plt
+try:
+    # optional dependencies...
+    import matplotlib.pyplot as plt
+except:
+    pass
+
 import numpy as np
 from scipy import sparse
 from scipy.special import log1p
