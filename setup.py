@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 from distutils.extension import Extension
 from Cython.Build import cythonize
+import numpy
 
 #directive_defaults['linetrace'] = True
 #directive_defaults['binding'] = True
@@ -32,6 +33,7 @@ setup(name='uncurl',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
       license='MIT',
+      include_dirs=[numpy.get_include()],
       ext_modules = cythonize(extensions) + parallel,
       packages=find_packages("."),
       install_requires=[
