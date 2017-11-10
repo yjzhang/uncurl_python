@@ -1,7 +1,7 @@
 UNCURL
 ======
 
-To install after cloning the repo: ``pip install .``
+First, install Cython if it isn't installed already: ``pip install cython``. Then, after cloning the repo, run ``pip install .``
 
 Requirements: numpy, scipy, cython, scikit-learn
 
@@ -74,7 +74,7 @@ Example:
     M2, W2, R, ll2 = nb_estimate_state(data, 2)
 
     # optional arguments
-    M, W, ll = poisson_estimate_state(data, 2, disp=False, max_iters=10, inner_max_iters=200, initialization='tsvd', threads=8)
+    M, W, ll = poisson_estimate_state(data, clusters=2, disp=False, max_iters=30, inner_max_iters=150, initialization='tsvd', threads=8)
 
     # initialization by providing means and weights
     assignments_p, centers = poisson_cluster(data, 2)
