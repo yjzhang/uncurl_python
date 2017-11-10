@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import itertools
 from unittest import TestCase
+from flaky import flaky
 
 import numpy as np
 from scipy.io import loadmat
@@ -9,6 +10,7 @@ from scipy.io import loadmat
 from uncurl import simulation
 from uncurl.robust import robust_estimate_state
 
+@flaky
 class RobustStateEstimationTest(TestCase):
     """
     These tests are exactly the same as the Poisson SE tests, but

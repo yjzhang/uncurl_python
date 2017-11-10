@@ -17,11 +17,13 @@ if __name__ == '__main__':
     # ZIP clustering
     assignments_zip, M, L = uncurl.zip_cluster(data, 2)
     true_labs = dat['Lab'][0]
-    print 'poisson purity:', purity(assignments_poisson, true_labs, 2)
-    print 'NB purity:', purity(assignments_nb, true_labs, 2)
-    print 'ZIP purity:', purity(assignments_zip, true_labs, 2)
+    print 'poisson purity:', purity(assignments_poisson, true_labs)
+    print 'NB purity:', purity(assignments_nb, true_labs)
+    print 'ZIP purity:', purity(assignments_zip, true_labs)
     # State estimation
-    means, weights, ll = uncurl.poisson_estimate_state(data, 2, max_iters=2, disp=False)
+    means, weights, ll = uncurl.poisson_estimate_state(data, 2, disp=False)
+    w_classes = weights.argmax(0)
+    print 'W argmax purity:', purity(w_classes, true_labs)
     # dimensionality reduction
     X = uncurl.dim_reduce(means, weights, 2)
     proj = np.dot(X, weights)

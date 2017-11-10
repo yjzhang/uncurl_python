@@ -51,7 +51,7 @@ class ClusterTest(TestCase):
                 distances[i,j] = uncurl.poisson_dist(centers[:,i], c_centers[:,j])
         self.assertTrue(purity(assignments, labs) > 0.8)
 
-    @flaky
+    @flaky(max_runs=3)
     def test_zip_simulation(self):
         """
         ZIP clustering on poisson-simulated data
@@ -63,7 +63,7 @@ class ClusterTest(TestCase):
         assignments, c_centers, c_zeros = uncurl.zip_cluster(data, 3)
         self.assertTrue(purity(assignments, labs) > 0.8)
 
-    @flaky
+    @flaky(max_runs=3)
     def test_zip_fit(self):
         """
         Tests the algorithm for fitting a ZIP distribution.
@@ -80,7 +80,7 @@ class ClusterTest(TestCase):
             self.assertTrue(np.mean(np.abs(M.flatten() - M_)) < 0.2)
             self.assertTrue(np.mean(np.abs(centers.flatten() - L_)) < 10)
 
-    @flaky
+    @flaky(max_runs=3)
     def test_zip_simulation_2(self):
         """
         ZIP clustering on ZIP-simulated data
