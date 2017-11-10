@@ -57,14 +57,63 @@
             
   <div class="section" id="uncurl">
 <h1>UNCURL<a class="headerlink" href="#uncurl" title="Permalink to this headline">¶</a></h1>
-<p>To install after cloning the repo: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
+<a class="reference external image-reference" href="https://travis-ci.org/yjzhang/uncurl_python"><img alt="https://travis-ci.org/yjzhang/uncurl_python.svg" src="https://travis-ci.org/yjzhang/uncurl_python.svg" /></a>
+<p>First, install Cython and numpy if they aren&#8217;t installed already: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">cython</span></code> and <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">numpy</span></code> (maybe <code class="docutils literal"><span class="pre">sudo</span></code> is necessary). Then, after cloning the repo, run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
 <p>Requirements: numpy, scipy, cython, scikit-learn</p>
+<p>For parallel state estimation, OpenMP is required.</p>
 <p>To run tests: <code class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">test</span></code></p>
 <p>Examples: see the examples folder.</p>
 <p><a class="reference external" href="https://yjzhang.github.io/uncurl_python/">Full documentation</a></p>
 </div>
 <div class="section" id="features">
 <h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="state-estimation">
+<h2>State Estimation<a class="headerlink" href="#state-estimation" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code> function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization.</p>
+<p>The <code class="docutils literal"><span class="pre">nb_estimate_state</span></code> function has a similar output, but uses a negative binomial distribution, is much slower, and is not capable of dealing with sparse inputs.</p>
+<p>There are a number of different initialization methods and options for <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code>. By default, it is initialized using <code class="docutils literal"><span class="pre">poisson_cluster</span></code>, but it can also be initialized using truncated SVD + K-means or just K-means.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.io</span>
+<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_cluster</span><span class="p">,</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">nb_estimate_state</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+
+<span class="c1"># sparse data (matrix market format)</span>
+<span class="n">data_sparse</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s1">&#39;matrix.mtx&#39;</span><span class="p">)</span>
+
+<span class="c1"># poisson state estimation</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data_sparse</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># labels in 0...k-1</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Negative binomial clustering cannot deal with sparse data</span>
+<span class="n">M2</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">ll2</span> <span class="o">=</span> <span class="n">nb_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># optional arguments</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data_sparse</span><span class="p">,</span> <span class="n">clusters</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">inner_max_iters</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">initialization</span><span class="o">=</span><span class="s1">&#39;tsvd&#39;</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="c1"># initialization by providing means and weights</span>
+<span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="n">centers</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="n">assignments_p</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="qualitative-to-quantitative-framework">
+<h2>Qualitative to Quantitative Framework<a class="headerlink" href="#qualitative-to-quantitative-framework" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">qualNorm</span></code> function is used to convert binary data with shape (genes, types) into starting points for clustering and state estimation.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">qualNorm</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+<span class="n">bin_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;binary.txt&#39;</span><span class="p">)</span>
+<span class="n">starting_centers</span> <span class="o">=</span> <span class="n">qualNorm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bin_data</span><span class="p">)</span>
+<span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="n">starting_centers</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="clustering">
 <h2>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal"><span class="pre">poisson_cluster</span></code> function does Poisson clustering with hard assignments. It takes an array of features by examples and the number of clusters, and returns two arrays: an array of cluster assignments and an array of cluster centers.</p>
@@ -77,42 +126,6 @@
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
 <span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">assignments_nb</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">nb_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="qualitative-to-quantitative-framework">
-<h2>Qualitative to Quantitative Framework<a class="headerlink" href="#qualitative-to-quantitative-framework" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">qualNorm</span></code> function is used to convert binary data into starting points for clustering.</p>
-<p>Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">qualNorm</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-
-<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
-<span class="n">bin_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;binary.txt&#39;</span><span class="p">)</span>
-<span class="n">starting_centers</span> <span class="o">=</span> <span class="n">qualNorm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bin_data</span><span class="p">)</span>
-<span class="n">assignments</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="n">starting_centers</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="state-estimation">
-<h2>State Estimation<a class="headerlink" href="#state-estimation" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code> function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization.</p>
-<p>The <code class="docutils literal"><span class="pre">nb_estimate_state</span></code> function has a similar output, but uses a negative binomial distribution, is much slower, and is not capable of dealing with sparse inputs.</p>
-<p>There are a number of different initialization methods and options for <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code>. By default, it is initialized using <code class="docutils literal"><span class="pre">poisson_cluster</span></code>, but it can also be initialized using truncated SVD + K-means or just K-means.</p>
-<p>Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">nb_estimate_state</span>
-
-<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
-
-<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">M2</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">ll2</span> <span class="o">=</span> <span class="n">nb_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-
-<span class="c1"># optional arguments</span>
-<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">inner_max_iters</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">initialization</span><span class="o">=</span><span class="s1">&#39;tsvd&#39;</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-
-<span class="c1"># initialization by providing means and weights</span>
-<span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="n">centers</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="n">assignments_p</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -180,9 +193,9 @@
   <ul>
 <li><a class="reference internal" href="#">UNCURL</a></li>
 <li><a class="reference internal" href="#features">Features</a><ul>
-<li><a class="reference internal" href="#clustering">Clustering</a></li>
-<li><a class="reference internal" href="#qualitative-to-quantitative-framework">Qualitative to Quantitative Framework</a></li>
 <li><a class="reference internal" href="#state-estimation">State Estimation</a></li>
+<li><a class="reference internal" href="#qualitative-to-quantitative-framework">Qualitative to Quantitative Framework</a></li>
+<li><a class="reference internal" href="#clustering">Clustering</a></li>
 <li><a class="reference internal" href="#dimensionality-reduction">Dimensionality Reduction</a></li>
 <li><a class="reference internal" href="#lineage-estimation-pseudotime">Lineage Estimation &amp; Pseudotime</a></li>
 </ul>

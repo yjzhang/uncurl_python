@@ -176,7 +176,7 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 <h2>uncurl.poisson_estimate_state<a class="headerlink" href="#uncurl-poisson-estimate-state" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.poisson_estimate_state">
-<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=20</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=400</em>, <em>normalize=True</em>, <em>initialization='cluster'</em>, <em>parallel=True</em>, <em>n_threads=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=15</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=300</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
 <p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
@@ -190,14 +190,15 @@ cell state mixing weights.</p>
 <li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: from Poisson kmeans</li>
 <li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans</li>
 <li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
-<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 20</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 15</li>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
 <li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 400</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 300</li>
 <li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
-<li><strong>initialization</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; If initial means and weights are not provided, this describes how they are initialized. Options: &#8216;cluster&#8217; (poisson cluster for means and weights), &#8216;kmpp&#8217; (kmeans++ for means, random weights), &#8216;km&#8217; (regular k-means), &#8216;tsvd&#8217; (tsvd(50) + k-means). Default: cluster.</li>
+<li><strong>initialization</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; If initial means and weights are not provided, this describes how they are initialized. Options: &#8216;cluster&#8217; (poisson cluster for means and weights), &#8216;kmpp&#8217; (kmeans++ for means, random weights), &#8216;km&#8217; (regular k-means), &#8216;tsvd&#8217; (tsvd(50) + k-means). Default: tsvd.</li>
 <li><strong>parallel</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether to use parallel updates (sparse NoLips only). Default: True</li>
-<li><strong>n_threads</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; How many threads to use in the parallel computation. Default: 4</li>
+<li><strong>threads</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; How many threads to use in the parallel computation. Default: 4</li>
+<li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75</li>
 </ul>
 </td>
 </tr>
@@ -259,26 +260,8 @@ ll (float): Log-likelihood of final iteration</p>
 <h2>uncurl.dim_reduce<a class="headerlink" href="#uncurl-dim-reduce" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.dim_reduce">
-<code class="descclassname">uncurl.</code><code class="descname">dim_reduce</code><span class="sig-paren">(</span><em>means</em>, <em>weights</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/dim_reduce.html#dim_reduce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.dim_reduce" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dimensionality reduction using Poisson distances and MDS.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>means</strong> (<em>array</em>) &#8211; genes x clusters</li>
-<li><strong>weights</strong> (<em>array</em>) &#8211; clusters x cells</li>
-<li><strong>d</strong> (<em>int</em>) &#8211; desired dimensionality</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">X, a clusters x d matrix representing the reduced dimensions
-of the cluster centers.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
+<code class="descclassname">uncurl.</code><code class="descname">dim_reduce</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#uncurl.dim_reduce" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="uncurl-lineage">

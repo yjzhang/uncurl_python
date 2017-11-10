@@ -56,6 +56,8 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
 
+<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">sparse_cell_normalize</span>
+
 <div class="viewcode-block" id="sparse_var"><a class="viewcode-back" href="../../uncurl.html#uncurl.preprocessing.sparse_var">[docs]</a><span class="k">def</span> <span class="nf">sparse_var</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculates the variance for each row of a sparse matrix.</span>
@@ -88,7 +90,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">var</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">mean_indices</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
-    <span class="n">n_elements</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">nbins</span>
+    <span class="n">n_elements</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">nbins</span><span class="p">)</span>
     <span class="n">frac_elements</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_elements</span><span class="o">*</span><span class="n">frac</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbins</span><span class="p">):</span>
         <span class="n">bin_i</span> <span class="o">=</span> <span class="n">mean_indices</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">n_elements</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">n_elements</span><span class="p">]</span>
@@ -108,6 +110,8 @@
 <span class="sd">    Returns the data where the expression is normalized so that the total</span>
 <span class="sd">    count per cell is equal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sparse_cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">total_umis</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
