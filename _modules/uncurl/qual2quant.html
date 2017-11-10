@@ -52,9 +52,22 @@
 <span></span><span class="c1"># Qualitative to Quantitative semi-supervision framework</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span>
 <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span>
 
-<span class="kn">from</span> <span class="nn">clustering</span> <span class="k">import</span> <span class="n">poisson_cluster</span>
+<span class="kn">from</span> <span class="nn">.clustering</span> <span class="k">import</span> <span class="n">poisson_cluster</span>
+
+<div class="viewcode-block" id="find_bimodal"><a class="viewcode-back" href="../../uncurl.html#uncurl.qual2quant.find_bimodal">[docs]</a><span class="k">def</span> <span class="nf">find_bimodal</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_genes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    finds putatively bimodal genes</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="supervised_init"><a class="viewcode-back" href="../../uncurl.html#uncurl.qual2quant.supervised_init">[docs]</a><span class="k">def</span> <span class="nf">supervised_init</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">quantitative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initializes means and weights from quantitative data using Spearman</span>
+<span class="sd">    correlation.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 <div class="viewcode-block" id="qualNorm"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.qual2quant.qualNorm">[docs]</a><span class="k">def</span> <span class="nf">qualNorm</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">qualitative</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -68,21 +81,22 @@
 <span class="sd">        Array of starting positions for state estimation or</span>
 <span class="sd">        clustering, with shape genes x clusters</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># TODO: if &#39;binarized&#39; is not binary... convert it to binary by setting</span>
-    <span class="c1"># the threshhold at the midpoint of the range for each gene</span>
-    <span class="c1"># cluster the genes</span>
     <span class="n">genes</span><span class="p">,</span> <span class="n">cells</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">clusters</span> <span class="o">=</span> <span class="n">qualitative</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">genes</span><span class="p">,</span> <span class="n">clusters</span><span class="p">))</span>
     <span class="n">missing_indices</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">qual_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># crude differential expression measure</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">genes</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">qualitative</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">qualitative</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
             <span class="n">missing_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
             <span class="k">continue</span>
         <span class="n">qual_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
         <span class="n">threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">qualitative</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">qualitative</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="o">/</span><span class="mf">2.0</span>
-        <span class="n">assignments</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">cells</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">assignments</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">assignments</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">cells</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">high_mean</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
         <span class="n">low_mean</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
@@ -90,11 +104,15 @@
                 <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">high_mean</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">low_mean</span>
+    <span class="c1"># sort by diffs</span>
     <span class="k">if</span> <span class="n">missing_indices</span><span class="p">:</span>
         <span class="n">assignments</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">qual_indices</span><span class="p">,</span> <span class="p">:],</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">output</span><span class="p">[</span><span class="n">qual_indices</span><span class="p">,</span> <span class="p">:],</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">missing_indices</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
-                <span class="n">output</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">assignments</span><span class="o">==</span><span class="n">k</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">assignments</span><span class="o">==</span><span class="n">k</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">output</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ind</span><span class="p">,:]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">output</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">assignments</span><span class="o">==</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">output</span></div>
 
 
@@ -140,6 +158,7 @@
         <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">missing_indices</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
                 <span class="n">output</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">assignments</span><span class="o">==</span><span class="n">k</span><span class="p">])</span>
+    <span class="c1"># TODO: assign to closest</span>
     <span class="k">return</span> <span class="n">output</span></div>
 </pre></div>
 

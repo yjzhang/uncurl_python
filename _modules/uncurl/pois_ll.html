@@ -56,7 +56,7 @@
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">poisson</span>
 <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">xlogy</span><span class="p">,</span> <span class="n">gammaln</span>
 
-<span class="kn">from</span> <span class="nn">sparse_utils</span> <span class="k">import</span> <span class="n">sparse_poisson_ll</span>
+<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">sparse_poisson_ll</span>
 
 <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-10</span>
 
@@ -89,7 +89,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">p1_1</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">+</span> <span class="n">eps</span>
     <span class="n">p2_1</span> <span class="o">=</span> <span class="n">p2</span> <span class="o">+</span> <span class="n">eps</span>
-    <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p2_1</span> <span class="o">+</span> <span class="n">p1_1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p2_1</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="n">p2_1</span> <span class="o">+</span> <span class="n">p1_1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p2_1</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="poisson_dist"><a class="viewcode-back" href="../../uncurl.html#uncurl.pois_ll.poisson_dist">[docs]</a><span class="k">def</span> <span class="nf">poisson_dist</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
