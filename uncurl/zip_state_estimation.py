@@ -1,7 +1,8 @@
 # state estimation with Zero-Inflated Poisson model
 # TODO
 
-from .clustering import kmeans_pp, zip_fit_params_mle
+from .clustering import kmeans_pp
+from .zip_clustering import zip_fit_params_mle
 from .state_estimation import initialize_from_assignments
 
 import numpy as np
