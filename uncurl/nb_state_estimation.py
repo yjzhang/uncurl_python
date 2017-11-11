@@ -1,7 +1,7 @@
 # state estimation with NB convex mixture model
 
 from .clustering import kmeans_pp
-from .nb_cluster import nb_fit, find_nb_genes
+from .nb_clustering import nb_fit, find_nb_genes
 from .state_estimation import initialize_from_assignments
 
 import numpy as np
