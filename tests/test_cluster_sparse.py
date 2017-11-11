@@ -36,7 +36,7 @@ class SparseClusterTest(TestCase):
         self.assertEqual(centers.shape[0], data.shape[0])
         # just checking that the values are valid
         self.assertFalse(np.isnan(centers).any())
-        self.assertTrue(purity(assignments, self.labs) > 0.7)
+        self.assertTrue(purity(assignments, self.labs) > 0.8)
 
     def test_simulation(self):
         """
@@ -56,5 +56,5 @@ class SparseClusterTest(TestCase):
         print(assignments)
         print(labs)
         print(purity(assignments, labs))
-        self.assertTrue(purity(assignments, labs) > 0.8)
+        self.assertTrue(purity(assignments, labs) > 0.7)
 

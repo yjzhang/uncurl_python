@@ -8,7 +8,7 @@ from .nb_state_estimation import nb_estimate_state
 from .zip_state_estimation import zip_estimate_state
 from .dimensionality_reduction import mds, dim_reduce, dim_reduce_data
 from .lineage import lineage, pseudotime
-from .nb_cluster import nb_cluster
+from .nb_clustering import nb_cluster
 
 from .preprocessing import max_variance_genes
 

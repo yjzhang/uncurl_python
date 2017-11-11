@@ -7,7 +7,7 @@ from flaky import flaky
 import numpy as np
 
 from uncurl import nb_cluster, simulation
-from uncurl.nb_cluster import nb_ll, nb_fit
+from uncurl.nb_clustering import nb_ll, nb_fit
 from uncurl.evaluation import purity
 
 
