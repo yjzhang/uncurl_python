@@ -1,6 +1,9 @@
+import unittest
 from unittest import TestCase
 
 import numpy as np
+
+from scipy import sparse
 
 import uncurl
 from uncurl import pois_ll
@@ -19,9 +22,36 @@ class PoissonTest(TestCase):
 
     def test_poisson_ll(self):
         """
+        Test Poisson log-likelihood
         """
-        pois_ll.poisson_ll_2(self.p1, self.p2)
+        centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
+        centers = centers.astype(float)
+        data, labs = generate_poisson_data(centers, 500)
+        data = data.astype(float)
+        starting_centers = centers
+        poisson_ll = pois_ll.poisson_ll(data, starting_centers)
+        p_isnan = np.isnan(poisson_ll)
+        # just test that it's not nan
+        self.assertFalse(p_isnan.any())
 
+    def test_sparse_poisson_ll(self):
+        """
+        Test Poisson log-likelihood
+        """
+        centers = np.array([[0.1,10,20], [5, 15, 1], [50, 1, 0.1]])
+        centers = centers.astype(float)
+        data, labs = generate_poisson_data(centers, 500)
+        data = data.astype(float)
+        data = sparse.csc_matrix(data)
+        starting_centers = centers
+        poisson_ll = pois_ll.poisson_ll(data, starting_centers)
+        p_isnan = np.isnan(poisson_ll)
+        self.assertFalse(p_isnan.any())
+        labels = poisson_ll.argmax(1)
+        self.assertTrue((labels==labs).all())
+
+
+    @unittest.skip('zip methods currently not supported')
     def test_zip_ll(self):
         centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
         centers = centers.astype(float)

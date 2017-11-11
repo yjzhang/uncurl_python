@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import unittest
 from unittest import TestCase
 from flaky import flaky
 
@@ -11,6 +12,7 @@ from uncurl.evaluation import purity
 
 
 @flaky
+@unittest.skip('nb methods currently not supported')
 class NBTest(TestCase):
 
     def setUp(self):

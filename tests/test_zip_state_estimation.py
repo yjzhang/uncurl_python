@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import unittest
 from unittest import TestCase
 from flaky import flaky
 
@@ -9,6 +10,7 @@ from scipy.io import loadmat
 from uncurl import zip_state_estimation, simulation
 
 @flaky
+@unittest.skip('zip methods currently not supported')
 class ZIPStateEstimationTest(TestCase):
 
     def setUp(self):

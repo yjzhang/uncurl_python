@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import unittest
 from unittest import TestCase
 from flaky import flaky
 
@@ -52,6 +53,7 @@ class ClusterTest(TestCase):
         self.assertTrue(purity(assignments, labs) > 0.8)
 
     @flaky(max_runs=3)
+    @unittest.skip('zip methods are unsupported')
     def test_zip_simulation(self):
         """
         ZIP clustering on poisson-simulated data
@@ -64,6 +66,7 @@ class ClusterTest(TestCase):
         self.assertTrue(purity(assignments, labs) > 0.8)
 
     @flaky(max_runs=3)
+    @unittest.skip('zip methods are unsupported')
     def test_zip_fit(self):
         """
         Tests the algorithm for fitting a ZIP distribution.
@@ -81,6 +84,7 @@ class ClusterTest(TestCase):
             self.assertTrue(np.mean(np.abs(centers.flatten() - L_)) < 10)
 
     @flaky(max_runs=3)
+    @unittest.skip('zip methods are unsupported')
     def test_zip_simulation_2(self):
         """
         ZIP clustering on ZIP-simulated data

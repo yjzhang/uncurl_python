@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import unittest
 from unittest import TestCase
 
 import numpy as np
@@ -7,6 +8,7 @@ import numpy as np
 from uncurl import nb_state_estimation, simulation
 from uncurl.evaluation import purity
 
+@unittest.skip('nb methods currently not supported')
 class StateEstimationTest(TestCase):
 
     def setUp(self):
