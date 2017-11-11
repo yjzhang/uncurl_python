@@ -10,7 +10,7 @@ from scipy.io import loadmat
 import uncurl
 from uncurl.simulation import generate_poisson_data, generate_zip_data
 from uncurl.evaluation import purity
-from uncurl.clustering import zip_fit_params_mle
+from uncurl.zip_clustering import zip_fit_params_mle
 
 @flaky(max_runs=3)
 class ClusterTest(TestCase):

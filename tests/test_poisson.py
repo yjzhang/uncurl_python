@@ -51,20 +51,3 @@ class PoissonTest(TestCase):
         self.assertTrue((labels==labs).all())
 
 
-    @unittest.skip('zip methods currently not supported')
-    def test_zip_ll(self):
-        centers = np.array([[1,10,20], [1, 11, 1], [50, 1, 100]])
-        centers = centers.astype(float)
-        data, labs = generate_poisson_data(centers, 500)
-        data = data.astype(float)
-        starting_centers = centers
-        starting_L = np.array([[0,0,0], [0, 0, 0], [0, 0, 0]])
-        starting_L = starting_L.astype(float)
-        zip_ll = pois_ll.zip_ll(data, starting_centers, starting_L)
-        poisson_ll = pois_ll.poisson_ll(data, starting_centers)
-        #self.assertTrue((zip_ll<=poisson_ll).all())
-        zip_ll2 = pois_ll.zip_ll(data, starting_centers + 1.0, starting_L)
-        p_isnan = np.isnan(poisson_ll)
-        pll = poisson_ll[p_isnan]
-        zll2 = zip_ll2[p_isnan]
-        self.assertTrue((zll2<=pll).all())
