@@ -15,6 +15,8 @@ from .preprocessing import max_variance_genes
 from . import robust
 from . import sampling
 
+from .nmf_wrapper import log_norm_nmf
+
 try:
     from . import experiment_runner
 except:
