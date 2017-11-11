@@ -61,6 +61,8 @@ from .clustering import poisson_cluster
 from .lightlda_utils import lightlda_estimate_state
 from .plda_utils import plda_estimate_state
 
+from uncurl.sparse_utils import symmetric_kld
+
 
 class Preprocess(object):
     """
@@ -146,6 +148,8 @@ class Tsne(Preprocess):
         metric can be any metric usable with tsne.
         """
         self.output_names = ['TSNE']
+        if metric=='kld':
+            metric = symmetric_kld
         self.tsne = TSNE(2, metric=metric)
         super(Tsne, self).__init__(**params)
 
@@ -725,6 +729,8 @@ class TsneKm(Cluster):
             metric='euclidean', use_exp=False, **params):
         super(TsneKm, self).__init__(n_classes, **params)
         self.use_log=use_log
+        if metric=='kld':
+            metric = symmetric_kld
         if 'k' in self.params:
             self.tsne = TSNE(self.params['k'], metric=metric)
         else:
