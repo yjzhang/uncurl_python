@@ -3,6 +3,7 @@ from __future__ import print_function
 import itertools
 
 from unittest import TestCase
+from flaky import flaky
 
 import numpy as np
 from scipy import sparse
@@ -15,6 +16,7 @@ class SparseStateEstimationTest(TestCase):
     def setUp(self):
         pass
 
+    @flaky
     def test_state_estimation(self):
         """
         Generate sample data from a small set to see that the state

@@ -15,7 +15,7 @@ def log_norm_nmf(data, k, normalize_h=True, **kwargs):
     Returns:
         Two matrices W of shape (genes, k) and H of shape (k, cells)
     """
-    nmf = NMF(k)
+    nmf = NMF(k, **kwargs)
     data = log1p(cell_normalize(data))
     W = nmf.fit_transform(data)
     H = nmf.components_
