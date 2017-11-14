@@ -30,7 +30,7 @@ Before running state estimation, it is often a good idea to subset the number of
 
 The ``log_norm_nmf`` function is a wrapper around scikit-Learn's NMF class that performs a log-transform and per-cell count normalization before running NMF. It returns two matrices, W and H, which correspond to the M and W returned by ``poisson_estimate_state``.
 
-There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using ``poisson_cluster``, but it can also be initialized using truncated SVD + K-means or just K-means.
+There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using truncated SVD + K-means, but it can also be initialized using ``poisson_cluster`` or just K-means.
 
 Example:
 
