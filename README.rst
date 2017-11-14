@@ -131,7 +131,7 @@ Example (including visualization):
     import numpy as np
     import matplotlib.pyplot as plt
 
-    from uncurl import poisson_estimate_state, dim_reduce_data, lineage, pseudotime
+    from uncurl import poisson_estimate_state, mds, lineage, pseudotime
 
     data = np.loadtxt('counts.txt')
     # pretend that there are three natural clusters in the dataset.
@@ -143,8 +143,7 @@ Example (including visualization):
     ptime = pseudotime(0, edges, smoothed_points)
 
     # visualizing the lineage
-    X = dim_reduce_data(M, 2)
-    proj = np.dot(X.T, W)
+    proj = mds(M, W, 2)
 
     plt.scatter(proj[0,:], proj[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)
     plt.scatter(smoothed_points[0,:], smoothed_points[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)

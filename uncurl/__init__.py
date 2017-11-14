@@ -25,4 +25,4 @@ except:
 try:
     from . import ensemble
 except:
-    pass
+    print('unable to import ensemble')
