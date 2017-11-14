@@ -145,6 +145,10 @@ Example:
     # you should probably use mds from scikit-learn instead of this method.
     data_reduced = dim_reduce_data(data, 2)
 
+
+In addition to using MDS, it's easy to use standard dimensionality reduction techniques such as t-SNE and PCA. When using t-SNE on W (from ``poisson_estimate_state``), we recommend using a symmetric relative entropy based metric, which is available as ``uncurl.sparse_utils.symmetric_kld``. Cosine distance has also worked better than Euclidean distance on W.
+
+
 Lineage Estimation & Pseudotime
 -------------------------------
 
