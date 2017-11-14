@@ -24,9 +24,9 @@ Features
 State Estimation
 ----------------
 
-The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. 
+The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. The input is of shape (genes, cells). It has three outputs: two matrices ``M`` and ``W``, and ``ll``, the negative log-likelihood. M is a (genes, clusters) matrix, and W is a (clusters, cells) matrix where each column sums to 1. W can be used for further visualization or dimensionality reduction, such as with t-SNE, or the MDS-based method described later.
 
-The ``nb_estimate_state`` function has a similar output, but uses a negative binomial distribution, is much slower, and is not capable of dealing with sparse inputs.
+The ``log_norm_nmf`` function is a wrapper around scikit-Learn's NMF class that performs a log-transform and per-cell count normalization before running NMF. It returns two matrices, W and H, which correspond to the M and W returned by ``poisson_estimate_state``.
 
 There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using ``poisson_cluster``, but it can also be initialized using truncated SVD + K-means or just K-means.
 
@@ -36,7 +36,7 @@ Example:
 
     import numpy as np
     import scipy.io
-    from uncurl import poisson_cluster, poisson_estimate_state, nb_estimate_state
+    from uncurl import poisson_cluster, poisson_estimate_state
 
     data = np.loadtxt('counts.txt')
 
@@ -48,9 +48,6 @@ Example:
 
     # labels in 0...k-1
     labels = W.argmax(0)
-
-    # Negative binomial clustering cannot deal with sparse data
-    M2, W2, R, ll2 = nb_estimate_state(data, 2)
 
     # optional arguments
     M, W, ll = poisson_estimate_state(data_sparse, clusters=2, disp=False, max_iters=30, inner_max_iters=150, initialization='tsvd', threads=8)
@@ -83,42 +80,42 @@ Clustering
 
 The ``poisson_cluster`` function does Poisson clustering with hard assignments. It takes an array of features by examples and the number of clusters, and returns two arrays: an array of cluster assignments and an array of cluster centers.
 
-The ``nb_cluster`` function is used for negative binomial clustering with the same parameters. It returns three arrays: P and R, the negative binomial parameters for all genes and clusters, and the cluster assignments for each cell.
 
 Example:
 
 .. code-block:: python
 
-  from uncurl import poisson_cluster, nb_cluster
+  from uncurl import poisson_cluster
   import numpy as np
 
   # data is a 2d array of floats, with dimensions genes x cells
   data = np.loadtxt('counts.txt')
   assignments_p, centers = poisson_cluster(data, 2)
-  assignments_nb, P, R = nb_cluster(data, 2)
 
 
 Dimensionality Reduction
 ------------------------
 
-The ``dim_reduce_data`` function performs dimensionality reduction using MDS. Alternatively, dimensionality reduction can be performed using the results of state estimation, by converting the output means of state estimation into a projection matrix. 
+Dimensionality reduction can be performed using the results of state estimation, by converting the output means of state estimation into a projection matrix. 
+
+Alternatively, ``dim_reduce_data`` function performs dimensionality reduction using MDS. 
 
 Example:
 
 .. code-block:: python
 
     import numpy as np
-    from uncurl import dim_reduce, dim_reduce_data
+    from uncurl import mds, dim_reduce_data
 
     data = np.loadtxt('counts.txt')
-    data_reduced = dim_reduce_data(data, 2)
 
     # dimensionality reduction using MDS on state estimation means
     M, W, ll = poisson_estimate_state(data, 2)
-    X = dim_reduce(M, W, 2)
     # proj is a 2d projection of the data.
-    proj = np.dot(X, W)
+    proj = mds(M, W, 2)
 
+    # you should probably use mds from scikit-learn instead of this method.
+    data_reduced = dim_reduce_data(data, 2)
 
 Lineage Estimation & Pseudotime
 -------------------------------
