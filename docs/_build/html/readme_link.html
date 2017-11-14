@@ -58,8 +58,9 @@
   <div class="section" id="uncurl">
 <h1>UNCURL<a class="headerlink" href="#uncurl" title="Permalink to this headline">¶</a></h1>
 <a class="reference external image-reference" href="https://travis-ci.org/yjzhang/uncurl_python"><img alt="https://travis-ci.org/yjzhang/uncurl_python.svg" src="https://travis-ci.org/yjzhang/uncurl_python.svg" /></a>
-<p>First, install Cython and numpy if they aren&#8217;t installed already: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">cython</span></code> and <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">numpy</span></code> (maybe <code class="docutils literal"><span class="pre">sudo</span></code> is necessary). Then, after cloning the repo, run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
+<p>After cloning the repository, first run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code> to install the required libraries. Then, run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
 <p>Requirements: numpy, scipy, cython, scikit-learn</p>
+<p>Tested on python 2.7, 3.4</p>
 <p>For parallel state estimation, OpenMP is required.</p>
 <p>To run tests: <code class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">test</span></code></p>
 <p>Examples: see the examples folder.</p>
@@ -69,34 +70,53 @@
 <h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="state-estimation">
 <h2>State Estimation<a class="headerlink" href="#state-estimation" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code> function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization.</p>
-<p>The <code class="docutils literal"><span class="pre">nb_estimate_state</span></code> function has a similar output, but uses a negative binomial distribution, is much slower, and is not capable of dealing with sparse inputs.</p>
+<p>The <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code> function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. The input is of shape (genes, cells). It has three outputs: two matrices <code class="docutils literal"><span class="pre">M</span></code> and <code class="docutils literal"><span class="pre">W</span></code>, and <code class="docutils literal"><span class="pre">ll</span></code>, the negative log-likelihood. M is a (genes, clusters) matrix, and W is a (clusters, cells) matrix where each column sums to 1. The outputs <code class="docutils literal"><span class="pre">W</span></code> and <code class="docutils literal"><span class="pre">M*W</span></code> can be used for further visualization or dimensionality reduction, such as with t-SNE, or the MDS-based method described later.</p>
+<p>Before running state estimation, it is often a good idea to subset the number of genes. This can be done using the function <code class="docutils literal"><span class="pre">max_variance_genes</span></code>, which bins the genes by mean expression, and selects a top fraction of genes by variance from each bin. It also removes genes that have all zero expression counts.</p>
+<p>The <code class="docutils literal"><span class="pre">log_norm_nmf</span></code> function is a wrapper around scikit-Learn&#8217;s NMF class that performs a log-transform and per-cell count normalization before running NMF. It returns two matrices, W and H, which correspond to the M and W returned by <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code>.</p>
 <p>There are a number of different initialization methods and options for <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code>. By default, it is initialized using <code class="docutils literal"><span class="pre">poisson_cluster</span></code>, but it can also be initialized using truncated SVD + K-means or just K-means.</p>
 <p>Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
-<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_cluster</span><span class="p">,</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">nb_estimate_state</span>
+<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">max_variance_genes</span><span class="p">,</span> <span class="n">poisson_cluster</span><span class="p">,</span> <span class="n">poisson_estimate_state</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
 
 <span class="c1"># sparse data (matrix market format)</span>
 <span class="n">data_sparse</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s1">&#39;matrix.mtx&#39;</span><span class="p">)</span>
 
+<span class="c1"># max variance genes, default parameters</span>
+<span class="n">genes</span> <span class="o">=</span> <span class="n">max_variance_genes</span><span class="p">(</span><span class="n">data_sparse</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">data_subset</span> <span class="o">=</span> <span class="n">data_sparse</span><span class="p">[</span><span class="n">genes</span><span class="p">,:]</span>
+
 <span class="c1"># poisson state estimation</span>
-<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data_sparse</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data_subset</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
 <span class="c1"># labels in 0...k-1</span>
 <span class="n">labels</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-<span class="c1"># Negative binomial clustering cannot deal with sparse data</span>
-<span class="n">M2</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">ll2</span> <span class="o">=</span> <span class="n">nb_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-
 <span class="c1"># optional arguments</span>
-<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data_sparse</span><span class="p">,</span> <span class="n">clusters</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">inner_max_iters</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">initialization</span><span class="o">=</span><span class="s1">&#39;tsvd&#39;</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data_subset</span><span class="p">,</span> <span class="n">clusters</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">inner_max_iters</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">initialization</span><span class="o">=</span><span class="s1">&#39;tsvd&#39;</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 
 <span class="c1"># initialization by providing means and weights</span>
-<span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="n">centers</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="n">assignments_p</span><span class="p">)</span>
+<span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data_subset</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data_subset</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">init_means</span><span class="o">=</span><span class="n">centers</span><span class="p">,</span> <span class="n">init_weights</span><span class="o">=</span><span class="n">assignments_p</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="distribution-selection">
+<h2>Distribution Selection<a class="headerlink" href="#distribution-selection" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">GetDistFitError</span></code> function is used to determine the distribution of each gene in a dataset by calculating the fit error for the Poisson, Normal, and Log-Normal distributions. It currently only works for dense matrices.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">GetDistFitError</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
+
+<span class="n">fit_errors</span> <span class="o">=</span> <span class="n">GetDistFitError</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="n">poiss_fit_error</span> <span class="o">=</span> <span class="n">fit_errors</span><span class="p">[</span><span class="s1">&#39;poiss&#39;</span><span class="p">]</span>
+<span class="n">norm_fit_error</span> <span class="o">=</span> <span class="n">fit_errors</span><span class="p">[</span><span class="s1">&#39;norm&#39;</span><span class="p">]</span>
+<span class="n">lognorm_fit_errors</span> <span class="o">=</span> <span class="n">fit_errors</span><span class="p">[</span><span class="s1">&#39;lognorm&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -117,35 +137,36 @@
 <div class="section" id="clustering">
 <h2>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal"><span class="pre">poisson_cluster</span></code> function does Poisson clustering with hard assignments. It takes an array of features by examples and the number of clusters, and returns two arrays: an array of cluster assignments and an array of cluster centers.</p>
-<p>The <code class="docutils literal"><span class="pre">nb_cluster</span></code> function is used for negative binomial clustering with the same parameters. It returns three arrays: P and R, the negative binomial parameters for all genes and clusters, and the cluster assignments for each cell.</p>
 <p>Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_cluster</span><span class="p">,</span> <span class="n">nb_cluster</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_cluster</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="c1"># data is a 2d array of floats, with dimensions genes x cells</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
 <span class="n">assignments_p</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">poisson_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">assignments_nb</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">nb_cluster</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="dimensionality-reduction">
 <h2>Dimensionality Reduction<a class="headerlink" href="#dimensionality-reduction" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">dim_reduce_data</span></code> function performs dimensionality reduction using MDS. Alternatively, dimensionality reduction can be performed using the results of state estimation, by converting the output means of state estimation into a projection matrix.</p>
+<p>Dimensionality reduction can be performed using the results of state estimation, by converting the output means of state estimation into a projection matrix.</p>
+<p>Alternatively, <code class="docutils literal"><span class="pre">dim_reduce_data</span></code> function performs dimensionality reduction using MDS.</p>
 <p>Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">dim_reduce</span><span class="p">,</span> <span class="n">dim_reduce_data</span>
+<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">mds</span><span class="p">,</span> <span class="n">dim_reduce_data</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
-<span class="n">data_reduced</span> <span class="o">=</span> <span class="n">dim_reduce_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
 <span class="c1"># dimensionality reduction using MDS on state estimation means</span>
 <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="c1"># proj is a 2d projection of the data.</span>
-<span class="n">proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">mds</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># you should probably use mds from scikit-learn instead of this method.</span>
+<span class="n">data_reduced</span> <span class="o">=</span> <span class="n">dim_reduce_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>In addition to using MDS, it&#8217;s easy to use standard dimensionality reduction techniques such as t-SNE and PCA. When using t-SNE on W (from <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code>), we recommend using a symmetric relative entropy based metric, which is available as <code class="docutils literal"><span class="pre">uncurl.sparse_utils.symmetric_kld</span></code>. Cosine distance has also worked better than Euclidean distance on W.</p>
 </div>
 <div class="section" id="lineage-estimation-pseudotime">
 <h2>Lineage Estimation &amp; Pseudotime<a class="headerlink" href="#lineage-estimation-pseudotime" title="Permalink to this headline">¶</a></h2>
@@ -155,7 +176,7 @@
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
-<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">dim_reduce_data</span><span class="p">,</span> <span class="n">lineage</span><span class="p">,</span> <span class="n">pseudotime</span>
+<span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">poisson_estimate_state</span><span class="p">,</span> <span class="n">mds</span><span class="p">,</span> <span class="n">lineage</span><span class="p">,</span> <span class="n">pseudotime</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;counts.txt&#39;</span><span class="p">)</span>
 <span class="c1"># pretend that there are three natural clusters in the dataset.</span>
@@ -167,8 +188,7 @@
 <span class="n">ptime</span> <span class="o">=</span> <span class="n">pseudotime</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">smoothed_points</span><span class="p">)</span>
 
 <span class="c1"># visualizing the lineage</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">dim_reduce_data</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">mds</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">proj</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span> <span class="n">proj</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">cell_assignments</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">smoothed_points</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span> <span class="n">smoothed_points</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">cell_assignments</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
@@ -194,6 +214,7 @@
 <li><a class="reference internal" href="#">UNCURL</a></li>
 <li><a class="reference internal" href="#features">Features</a><ul>
 <li><a class="reference internal" href="#state-estimation">State Estimation</a></li>
+<li><a class="reference internal" href="#distribution-selection">Distribution Selection</a></li>
 <li><a class="reference internal" href="#qualitative-to-quantitative-framework">Qualitative to Quantitative Framework</a></li>
 <li><a class="reference internal" href="#clustering">Clustering</a></li>
 <li><a class="reference internal" href="#dimensionality-reduction">Dimensionality Reduction</a></li>

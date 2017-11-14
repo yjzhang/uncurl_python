@@ -112,6 +112,8 @@
 <span class="kn">from</span> <span class="nn">.lightlda_utils</span> <span class="k">import</span> <span class="n">lightlda_estimate_state</span>
 <span class="kn">from</span> <span class="nn">.plda_utils</span> <span class="k">import</span> <span class="n">plda_estimate_state</span>
 
+<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">symmetric_kld</span>
+
 
 <div class="viewcode-block" id="Preprocess"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Preprocess">[docs]</a><span class="k">class</span> <span class="nc">Preprocess</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -197,6 +199,8 @@
 <span class="sd">        metric can be any metric usable with tsne.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TSNE&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">metric</span><span class="o">==</span><span class="s1">&#39;kld&#39;</span><span class="p">:</span>
+            <span class="n">metric</span> <span class="o">=</span> <span class="n">symmetric_kld</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Tsne</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
@@ -776,6 +780,8 @@
             <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span> <span class="n">use_exp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">TsneKm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_log</span><span class="o">=</span><span class="n">use_log</span>
+        <span class="k">if</span> <span class="n">metric</span><span class="o">==</span><span class="s1">&#39;kld&#39;</span><span class="p">:</span>
+            <span class="n">metric</span> <span class="o">=</span> <span class="n">symmetric_kld</span>
         <span class="k">if</span> <span class="s1">&#39;k&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">],</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -919,7 +925,7 @@
                 <span class="c1"># save the preprocessing result with the highest NMI</span>
                 <span class="n">num_clustering_results</span> <span class="o">=</span> <span class="n">method_index</span> <span class="o">-</span> <span class="n">starting_index</span>
                 <span class="n">clustering_results</span> <span class="o">=</span> <span class="n">purities</span><span class="p">[</span><span class="o">-</span><span class="n">num_clustering_results</span><span class="p">:]</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">clustering_results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">old_clustering_results</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="n">num_clustering_results</span><span class="p">:]</span>
                     <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">old_clustering_results</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">clustering_results</span><span class="p">):</span>
                         <span class="n">other_results</span><span class="p">[</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pre</span>
