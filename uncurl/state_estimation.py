@@ -313,3 +313,5 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         w_new = w_new/w_new.sum(0)
     m_ll = objective_fn(X, means, w_new)
     return means, w_new, m_ll
+
+
