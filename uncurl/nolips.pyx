@@ -9,6 +9,8 @@ cimport cython
 
 from scipy import sparse
 
+from libc.stdint cimport int64_t
+
 import numpy as np
 cimport numpy as np
 DTYPE = np.double
@@ -104,7 +106,7 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     cdef double obj = 0
     # use a csc matrix, iterate through 
     X_csc = sparse.csc_matrix(X)
-    cdef long[:] indices, indptr
+    cdef int64_t[:] indices, indptr
     indices = X_csc.indices.astype(np.int64)
     indptr = X_csc.indptr.astype(np.int64)
     cdef double[:] data_ = X_csc.data

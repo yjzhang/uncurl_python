@@ -2,6 +2,7 @@
 
 #import cython
 cimport cython
+from libc.stdint cimport int64_t
 
 from cython.parallel import prange
 
@@ -82,10 +83,10 @@ cdef inline void _update(int i, double[:] data_, int[:] indices, int[:] indptr, 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cdef inline void _long_update(int i, double[:] data_, long[:] indices, long[:] indptr, double[:,:] cij, double[:] R_view, double[:,:] M_view, double[:,:] W_view, double[:,:] Wnew_view, double lam, float eps, int k) nogil:
-    cdef long start_ind = indptr[i]
-    cdef long end_ind = indptr[i+1]
-    cdef long ind, g
+cdef inline void _long_update(int i, double[:] data_, int64_t[:] indices, int64_t[:] indptr, double[:,:] cij, double[:] R_view, double[:,:] M_view, double[:,:] W_view, double[:,:] Wnew_view, double lam, float eps, int k) nogil:
+    cdef int64_t start_ind = indptr[i]
+    cdef int64_t end_ind = indptr[i+1]
+    cdef int64_t ind, g
     cdef int k2, j
     cdef double mw
     for ind in range(start_ind, end_ind):
@@ -122,7 +123,7 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef Py_ssize_t i
     #X_csc = X
     X_csc = sparse.csc_matrix(X)
-    # TODO: when there are more than 2 billion elements or so, will be long
+    # TODO: when there are more than 2 billion elements or so, will be int64_t
     cdef int[:] indices, indptr
     indices = X_csc.indices
     indptr = X_csc.indptr
@@ -136,10 +137,10 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sparse_nolips_update_w_long(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, int n_threads = 4, disp=False):
+def sparse_nolips_update_w_int64_t(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, int n_threads = 4, disp=False):
     """
     Parallel nolips...
-    when there are more than 2 billion elements or so, will be long
+    when there are more than 2 billion elements or so, will be int64_t
     """
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
@@ -157,7 +158,7 @@ def sparse_nolips_update_w_long(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTY
     cdef Py_ssize_t i
     #X_csc = X
     X_csc = sparse.csc_matrix(X)
-    cdef long[:] indices, indptr
+    cdef int64_t[:] indices, indptr
     indices = X_csc.indices
     indptr = X_csc.indptr
     cdef double[:] data_
