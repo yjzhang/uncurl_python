@@ -162,7 +162,13 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     """
     genes, cells = data.shape
     if init_means is None:
-        if initialization=='cluster':
+        if init_weights is not None:
+            if len(init_weights.shape)==1:
+                means = initialize_means(data, init_weights, clusters)
+            else:
+                means = initialize_means(data, init_weights.argmax(0),
+                        clusters, max_assign_weight=max_assign_weight)
+        elif initialization=='cluster':
             assignments, means = poisson_cluster(data, clusters)
             if init_weights is None:
                 init_weights = initialize_from_assignments(assignments, clusters,
@@ -171,8 +177,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             means, assignments = kmeans_pp(data, clusters)
         elif initialization=='km':
             km = KMeans(clusters)
-            # TODO: should the data be log-normalized? how much
-            # computational time does that add?
             assignments = km.fit_predict(log1p(cell_normalize(data)).T)
             init_weights = initialize_from_assignments(assignments, clusters,
                     max_assign_weight)
@@ -190,9 +194,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     means = means.astype(float)
     if init_weights is None:
         if init_means is not None:
-            # TODO: have some strategy here?
-            # current strategy is 1 round of poisson clustering, regardless
-            # of the value of 'initialization'
             if initialization == 'cluster':
                 assignments, means = poisson_cluster(data, clusters,
                         init=init_means, max_iters=1)
