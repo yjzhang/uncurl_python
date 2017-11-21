@@ -137,7 +137,7 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sparse_nolips_update_w_int64_t(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, int n_threads = 4, disp=False):
+def sparse_nolips_update_w_long(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, int n_threads = 4, disp=False):
     """
     Parallel nolips...
     when there are more than 2 billion elements or so, will be int64_t
