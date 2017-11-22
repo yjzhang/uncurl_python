@@ -290,25 +290,25 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             # step 1: given M, estimate W
             w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
             if disp:
-                w_ll = objective_fn(X.T, w_new.T, means.T)
+                w_ll = objective_fn(X, means, w_new)
                 print('Finished updating W. Objective value: {0}'.format(w_ll))
             # step 2: given W, update M
             means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M')
             means = means.T
             if disp:
-                w_ll = objective_fn(X.T, w_new.T, means.T)
+                w_ll = objective_fn(X, means, w_new)
                 print('Finished updating M. Objective value: {0}'.format(w_ll))
         else:
             # step 1: given W, update M
             means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M')
             means = means.T
             if disp:
-                w_ll = objective_fn(X.T, w_new.T, means.T)
+                w_ll = objective_fn(X, means, w_new)
                 print('Finished updating M. Objective value: {0}'.format(w_ll))
             # step 2: given M, estimate W
             w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
             if disp:
-                w_ll = objective_fn(X.T, w_new.T, means.T)
+                w_ll = objective_fn(X, means, w_new)
                 print('Finished updating W. Objective value: {0}'.format(w_ll))
     if normalize:
         w_new = w_new/w_new.sum(0)

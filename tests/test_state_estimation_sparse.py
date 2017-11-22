@@ -46,6 +46,7 @@ class SparseStateEstimationTest(TestCase):
         self.assertTrue(np.mean(np.abs(sim_assignments-w))<0.3 or
                 np.mean(np.abs(sim_assignments-w[[1,0],:]))<0.3)
 
+    @flaky
     def test_state_estimation_2(self):
         """
         Generate sample data from a slightly larger set to see that the state
@@ -132,6 +133,29 @@ class SparseStateEstimationTest(TestCase):
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='tsvd', threads=1)
+        self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
+        obj = sparse_objective(sim_data, m, w)
+        self.assertEqual(ll, obj)
+        dense_obj = objective(sim_data.toarray(), m, w)
+        self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
+        means_good = False
+        weights_good = False
+        for p in itertools.permutations([0,1]):
+            means_good = means_good or (np.mean(np.abs(sim_m-m[:,p]))<20.0)
+            weights_good = weights_good or (np.mean(np.abs(sim_w-w[p,:]))<0.3)
+        self.assertTrue(means_good)
+        self.assertTrue(weights_good)
+
+    def test_random_means_tsvd_init_m_first(self):
+        """
+        Test state estimation with random means and weights.
+
+        200 cells, 20 genes, 2 clusters
+        """
+        sim_m, sim_w = simulation.generate_poisson_states(2, 200, 20)
+        sim_data = simulation.generate_state_data(sim_m, sim_w)
+        sim_data = sparse.csc_matrix(sim_data)
+        m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=True, initialization='tsvd', threads=1, run_w_first=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
         obj = sparse_objective(sim_data, m, w)
         self.assertEqual(ll, obj)
