@@ -131,8 +131,36 @@ def initialize_weights_nn(data, means, lognorm=True):
         for j in range(k):
             pass
 
+def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True, parallel=True, threads=4, method='NoLips', tol=1e-10, disp=True, inner_max_iters=100, output_name='W'):
+    clusters, cells = w_init.shape
+    if method=='NoLips':
+        nolips_iters = inner_max_iters
+        for j in range(nolips_iters):
+            if is_sparse and parallel:
+                w_new = update_fn(X, means, w_init, Xsum, n_threads=threads)
+            else:
+                w_new = update_fn(X, means, w_init, Xsum)
+            #w_new = w_res.x.reshape((clusters, cells))
+            #w_new = w_new/w_new.sum(0)
+            if tol > 0:
+                w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
+                w_init = w_new
+                if w_diff < tol:
+                    break
+            else:
+                w_init = w_new
+    elif method=='L-BFGS-B':
+        w_objective = _create_w_objective(means, X)
+        w_bounds = [(0, None) for c in range(clusters*cells)]
+        w_res = minimize(w_objective, w_init.flatten(),
+                method='L-BFGS-B', jac=True, bounds=w_bounds,
+                options={'disp':disp, 'maxiter':inner_max_iters})
+        w_new = w_res.x.reshape((clusters, cells))
+        w_init = w_new
+    return w_new
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75):
+
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -154,6 +182,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
         threads (int, optional): How many threads to use in the parallel computation. Default: 4
         max_assign_weight (float, optional): If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75
+        run_w_first (bool, optional): Whether or not to optimize W first (if false, M will be optimized first). Default: True
 
     Returns:
         M (array): genes x clusters - state means
@@ -215,7 +244,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             init_weights = initialize_from_assignments(init_weights, clusters,
                     max_assign_weight)
         w_init = init_weights.copy()
-    nolips_iters = inner_max_iters
     X = data.astype(float)
     XT = X.T
     is_sparse = False
@@ -254,62 +282,34 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                     if X.indptr.dtype == np.int64:
                         update_fn = parallel_sparse_nolips_update_w_long
                 objective_fn = sparse_objective
+    w_new = w_init
     for i in range(max_iters):
         if disp:
             print('iter: {0}'.format(i))
-        # step 1: given M, estimate W
-        if method=='NoLips':
-            for j in range(nolips_iters):
-                if is_sparse and parallel:
-                    w_new = update_fn(X, means, w_init, Xsum, n_threads=threads)
-                else:
-                    w_new = update_fn(X, means, w_init, Xsum)
-                #w_new = w_res.x.reshape((clusters, cells))
-                #w_new = w_new/w_new.sum(0)
-                if tol > 0:
-                    w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
-                    w_init = w_new
-                    if w_diff < tol:
-                        break
-                else:
-                    w_init = w_new
-        elif method=='L-BFGS-B':
-            w_objective = _create_w_objective(means, data)
-            w_bounds = [(0, None) for c in range(clusters*cells)]
-            w_res = minimize(w_objective, w_init.flatten(),
-                    method='L-BFGS-B', jac=True, bounds=w_bounds,
-                    options={'disp':disp, 'maxiter':inner_max_iters})
-            w_new = w_res.x.reshape((clusters, cells))
-            w_init = w_new
-        if disp:
-            w_ll = objective_fn(X, means, w_new)
-            print('Finished updating W. Objective value: {0}'.format(w_ll))
-        # step 2: given W, update M
-        if method=='NoLips':
-            for j in range(nolips_iters):
-                if is_sparse and parallel:
-                    m_new = update_fn(XT, w_new.T, means.T, Xsum_m,
-                            n_threads=threads)
-                else:
-                    m_new = update_fn(XT, w_new.T, means.T, Xsum_m)
-                if tol > 0:
-                    m_diff = np.sqrt(np.sum((m_new.T - means)**2)/(clusters*genes))
-                    means = m_new.T
-                    if m_diff <= tol:
-                        break
-                else:
-                    means = m_new.T
-        elif method=='L-BFGS-B':
-            m_objective = _create_m_objective(w_new, data)
-            m_init = means.flatten()
-            m_bounds = [(0,None) for c in range(genes*clusters)]
-            m_res = minimize(m_objective, m_init,
-                    method='L-BFGS-B', jac=True, bounds=m_bounds,
-                    options={'disp':disp, 'maxiter':inner_max_iters})
-            means = m_res.x.reshape((genes, clusters))
-        if disp:
-            m_ll = objective_fn(X, means, w_new)
-            print('Finished updating M. Objective value: {0}'.format(m_ll))
+        if run_w_first:
+            # step 1: given M, estimate W
+            w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
+            if disp:
+                w_ll = objective_fn(X.T, w_new.T, means.T)
+                print('Finished updating W. Objective value: {0}'.format(w_ll))
+            # step 2: given W, update M
+            means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M')
+            means = means.T
+            if disp:
+                w_ll = objective_fn(X.T, w_new.T, means.T)
+                print('Finished updating M. Objective value: {0}'.format(w_ll))
+        else:
+            # step 1: given W, update M
+            means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M')
+            means = means.T
+            if disp:
+                w_ll = objective_fn(X.T, w_new.T, means.T)
+                print('Finished updating M. Objective value: {0}'.format(w_ll))
+            # step 2: given M, estimate W
+            w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
+            if disp:
+                w_ll = objective_fn(X.T, w_new.T, means.T)
+                print('Finished updating W. Objective value: {0}'.format(w_ll))
     if normalize:
         w_new = w_new/w_new.sum(0)
     m_ll = objective_fn(X, means, w_new)

@@ -22,3 +22,22 @@ def log_norm_nmf(data, k, normalize_h=True, **kwargs):
     if normalize_h:
         H = H/H.sum(0)
     return W, H
+
+def norm_nmf(data, k, normalize_h=True, **kwargs):
+    """
+    Args:
+        data (array): dense or sparse array with shape (genes, cells)
+        k (int): number of cell types
+        normalize_h (bool): True if H should be normalized (so that each column sums to 1)
+        **kwargs: arguments to NMF
+
+    Returns:
+        Two matrices W of shape (genes, k) and H of shape (k, cells)
+    """
+    nmf = NMF(k, **kwargs)
+    data = cell_normalize(data)
+    W = nmf.fit_transform(data)
+    H = nmf.components_
+    if normalize_h:
+        H = H/H.sum(0)
+    return W, H
