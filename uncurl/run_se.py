@@ -17,6 +17,7 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         clusters (int): number of mixture components
         dist (str, optional): Distribution used in state estimation. Options: 'Poiss', 'NB', 'ZIP', 'LogNorm'. Default: 'Poiss'
         reps (int, optional): number of times to run the state estimation, taking the result with the highest log-likelihood.
+        **kwargs: arguments to pass to the underlying state estimation function.
 
     Returns:
         M (array): genes x clusters - state means

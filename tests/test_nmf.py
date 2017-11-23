@@ -17,6 +17,6 @@ class NMFTest(TestCase):
         self.labs = dat['Lab'][0]
 
     def test_run_nmf(self):
-        w, h = uncurl.nmf_wrapper.log_norm_nmf(self.data, 2)
+        w, h, cost = uncurl.nmf_wrapper.log_norm_nmf(self.data, 2)
         labs = h.argmax(0)
         self.assertTrue(uncurl.evaluation.purity(labs, self.labs) > 0.85)
