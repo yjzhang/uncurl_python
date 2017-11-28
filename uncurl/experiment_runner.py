@@ -783,7 +783,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
     exactly one of use_purity, use_nmi, or use_ari can be true
 
     Args:
-        methods: list of pairs of Preprocess, (list of) Cluster objects
+        methods: list of 2-tuples. The first element is either a single Preprocess object or a list of Preprocess objects, to be applied in sequence to the data. The second element is either a single Cluster object, a list of Cluster objects, or a list of lists, where each list is a sequence of Preprocess objects with the final element being a Cluster object.
         data: genes x cells array
         true_labels: 1d array of length cells
         consensus: if true, runs a consensus on cluster results for each method at the very end.
@@ -799,6 +799,12 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
     other_results = {}
     other_results['timing'] = {}
     other_results['preprocessing'] = {}
+    if use_purity:
+        purity_method = purity
+    elif use_nmi:
+        purity_method = nmi
+    elif use_ari:
+        purity_method = ari
     for i in range(n_runs):
         print('run {0}'.format(i))
         purities = []
@@ -816,7 +822,10 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                 for p in preproc:
                     p1, ll = p.run(p1)
                     p1 = p1[0]
-                    output_names[0] = output_names[0] + '_' + p.output_names[0]
+                    if output_names[0] != '':
+                        output_names[0] = output_names[0] + '_' + p.output_names[0]
+                    else:
+                        output_names[0] = p.output_names[0]
                 preprocessed = [p1]
             t1 = time.time() - t0
             for name, pre in zip(output_names, preprocessed):
@@ -826,12 +835,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                         t0 = time.time()
                         labels = cluster.run(pre)
                         t2 = t1 + time.time() - t0
-                        if use_purity:
-                            purities.append(purity(labels, true_labels))
-                        if use_nmi:
-                            purities.append(nmi(true_labels, labels))
-                        if use_ari:
-                            purities.append(ari(true_labels, labels))
+                        purities.append(purity_method(labels, true_labels))
                         if i==0:
                             names.append(name + '_' + cluster.name)
                             clusterings[names[-1]] = []
@@ -847,18 +851,22 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                         print('failed to do clustering')
                 elif type(cluster) == list:
                     for c in cluster:
-                        try:
+                        if isinstance(c, list):
+                            t2 = t1
+                            name2 = name
+                            sub_data = pre.copy()
+                            for subproc in c[:-1]:
+                                t0 = time.time()
+                                subproc_out, ll = subproc.run(sub_data)
+                                sub_data = subproc_out[0]
+                                name2 = name2 + '_' + subproc.output_names[0]
+                                t2 += time.time() - t0
                             t0 = time.time()
-                            labels = c.run(pre)
-                            t2 = t1 + time.time() - t0
-                            if use_purity:
-                                purities.append(purity(labels, true_labels))
-                            if use_nmi:
-                                purities.append(nmi(true_labels, labels))
-                            if use_ari:
-                                purities.append(ari(true_labels, labels))
+                            labels = c[-1].run(sub_data)
+                            t2 += time.time() - t0
+                            purities.append(purity_method(labels, true_labels))
                             if i==0:
-                                names.append(name + '_' + c.name)
+                                names.append(name2 + '_' + c[-1].name)
                                 clusterings[names[-1]] = []
                                 other_results['timing'][names[-1]] = []
                             print(names[r])
@@ -868,14 +876,31 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                             print(purities[-1])
                             r += 1
                             method_index += 1
-                        except:
-                            print('failed to do clustering')
+                        else:
+                            try:
+                                t0 = time.time()
+                                labels = c.run(pre)
+                                t2 = t1 + time.time() - t0
+                                purities.append(purity_method(labels, true_labels))
+                                if i==0:
+                                    names.append(name + '_' + c.name)
+                                    clusterings[names[-1]] = []
+                                    other_results['timing'][names[-1]] = []
+                                print(names[r])
+                                clusterings[names[r]].append(labels)
+                                other_results['timing'][names[r]].append(t2)
+                                print('time: ' + str(t2))
+                                print(purities[-1])
+                                r += 1
+                                method_index += 1
+                            except:
+                                print('failed to do clustering')
                 # find the highest purity for the pre-processing method
                 # save the preprocessing result with the highest NMI
                 num_clustering_results = method_index - starting_index
                 clustering_results = purities[-num_clustering_results:]
-                if len(results) > 0 and len(clustering_results) > 0:
-                    old_clustering_results = results[-1][-num_clustering_results:]
+                if i > 0 and len(clustering_results) > 0:
+                    old_clustering_results = results[-1][starting_index:method_index]
                     if max(old_clustering_results) < max(clustering_results):
                         other_results['preprocessing'][name] = pre
                 else:
