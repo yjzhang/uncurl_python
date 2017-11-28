@@ -816,7 +816,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                 for p in preproc:
                     p1, ll = p.run(p1)
                     p1 = p1[0]
-                    output_names[0] = output_names[0] + p.output_names[0]
+                    output_names[0] = output_names[0] + '_' + p.output_names[0]
                 preprocessed = [p1]
             t1 = time.time() - t0
             for name, pre in zip(output_names, preprocessed):
@@ -874,7 +874,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                 # save the preprocessing result with the highest NMI
                 num_clustering_results = method_index - starting_index
                 clustering_results = purities[-num_clustering_results:]
-                if len(results) > 0:
+                if len(results) > 0 and len(clustering_results) > 0:
                     old_clustering_results = results[-1][-num_clustering_results:]
                     if max(old_clustering_results) < max(clustering_results):
                         other_results['preprocessing'][name] = pre
