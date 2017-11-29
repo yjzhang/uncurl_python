@@ -335,10 +335,13 @@ class LogNMF(Preprocess):
     Requires a 'k' parameter, which is the rank of the matrices.
     """
 
-    def __init__(self, return_mds=False, return_wh=False, **params):
-        self.output_names = ['logNMF_H']
+    def __init__(self, return_h = True, return_mds=False, return_wh=False, **params):
         super(LogNMF, self).__init__(**params)
+        self.output_names = []
         self.nmf = NMF(params['k'])
+        self.return_h = return_h
+        if return_h:
+            self.output_names.append('logNMF_H')
         self.return_mds = return_mds
         if return_mds:
             self.output_names.append('logNMF_MDS')
@@ -364,7 +367,9 @@ class LogNMF(Preprocess):
         if 'normalize_h' in self.params:
             print('normalize h')
             H = H/H.sum(0)
-        output = [H]
+        output = []
+        if self.return_h:
+            output.append(H)
         if self.return_wh:
             output.append(W.dot(H))
         if self.return_mds:
