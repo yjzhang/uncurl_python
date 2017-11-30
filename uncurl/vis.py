@@ -17,14 +17,26 @@ def visualize_poisson_w(w, labels, filename, method='pca', figsize=(18,10), titl
         return
     visualize_dim_red(r_dim_red, labels, filename, figsize, title, **scatter_options)
 
-def visualize_dim_red(r, labels, filename, figsize=(18,10), title='', legend=True, **scatter_options):
+def visualize_dim_red(r, labels, filename, figsize=(18,10), title='', legend=True, label_map=None, **scatter_options):
     """
     Saves a scatter plot of a (2,n) matrix r, where each column is a cell.
+
+    Args:
+        r (array): (2,n) matrix
+        labels (array): (n,) array of ints
+        filename (string): string to save the output graph
+        figsize (tuple): Default: (18, 10)
+        title (string): graph title
+        legend (bool): Default: True
+        label_map (dict): map of labels to label names. Default: None
     """
     plt.figure(figsize=figsize)
     plt.cla()
     for i in set(labels):
-        plt.scatter(r[0, labels==i], r[1, labels==i], label=i, **scatter_options)
+        label = i
+        if label_map is not None:
+            label = label_map[i]
+        plt.scatter(r[0, labels==i], r[1, labels==i], label=label, **scatter_options)
     plt.title(title)
     if legend:
         plt.legend()

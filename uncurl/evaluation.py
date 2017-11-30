@@ -1,8 +1,7 @@
-# TODO: evaluation
-
 from collections import Counter
 
 import numpy as np
+from sklearn.neighbors import BallTree
 
 def purity(labels, true_labels):
     """
@@ -25,6 +24,29 @@ def purity(labels, true_labels):
         lab, count = counts.most_common()[0]
         purity += count
     return float(purity)/len(labels)
+
+def nne(dim_red, true_labels):
+    """
+    Calculates the nearest neighbor accuracy (basically leave-one-out cross
+    validation with a 1NN classifier).
+
+    Args:
+        dim_red (array): dimensions (k, cells)
+        true_labels (array): 1d array of integers
+
+    Returns:
+        Nearest neighbor accuracy - fraction of points for which the 1NN
+        1NN classifier returns the correct value.
+    """
+    # use sklearn's BallTree
+    bt = BallTree(dim_red.T)
+    correct = 0
+    for i, l in enumerate(true_labels):
+        dist, ind = bt.query([dim_red[:,i]], k=2)
+        closest_cell = ind[0, 1]
+        if true_labels[closest_cell] == l:
+            correct += 1
+    return float(correct)/len(true_labels)
 
 def mdl(ll, k, data):
     """

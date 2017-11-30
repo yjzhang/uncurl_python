@@ -50,7 +50,7 @@ except:
 
 from .state_estimation import poisson_estimate_state
 from .dimensionality_reduction import dim_reduce
-from .evaluation import purity
+from .evaluation import purity, nne
 from .preprocessing import cell_normalize
 try:
     from . import ensemble
@@ -60,6 +60,7 @@ except:
 from .clustering import poisson_cluster
 from .lightlda_utils import lightlda_estimate_state
 from .plda_utils import plda_estimate_state
+from .vis import visualize_dim_red
 
 from uncurl.sparse_utils import symmetric_kld
 
@@ -781,7 +782,7 @@ class EnsembleTSVDKm(Cluster):
     """
     # TODO
 
-def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=True, use_nmi=False, use_ari=False, consensus=False):
+def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=True, use_nmi=False, use_ari=False, use_nne=False, consensus=False):
     """
     runs a pre-processing + clustering experiment...
 
@@ -792,6 +793,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
         data: genes x cells array
         true_labels: 1d array of length cells
         consensus: if true, runs a consensus on cluster results for each method at the very end.
+        use_purity, use_nmi, use_ari, use_nne: which error metric to use (at most one can be True)
 
     Returns:
         purities (list of lists)
@@ -810,6 +812,8 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
         purity_method = nmi
     elif use_ari:
         purity_method = ari
+    elif use_nne:
+        purity_method = nne
     for i in range(n_runs):
         print('run {0}'.format(i))
         purities = []
@@ -840,7 +844,10 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                         t0 = time.time()
                         labels = cluster.run(pre)
                         t2 = t1 + time.time() - t0
-                        purities.append(purity_method(labels, true_labels))
+                        if use_nne:
+                            purities.append(purity_method(pre, true_labels))
+                        else:
+                            purities.append(purity_method(labels, true_labels))
                         if i==0:
                             names.append(name + '_' + cluster.name)
                             clusterings[names[-1]] = []
@@ -869,7 +876,10 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                             t0 = time.time()
                             labels = c[-1].run(sub_data)
                             t2 += time.time() - t0
-                            purities.append(purity_method(labels, true_labels))
+                            if use_nne:
+                                purities.append(purity_method(sub_data, true_labels))
+                            else:
+                                purities.append(purity_method(labels, true_labels))
                             if i==0:
                                 names.append(name2 + '_' + c[-1].name)
                                 clusterings[names[-1]] = []
@@ -886,11 +896,14 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                                 t0 = time.time()
                                 labels = c.run(pre)
                                 t2 = t1 + time.time() - t0
-                                purities.append(purity_method(labels, true_labels))
                                 if i==0:
                                     names.append(name + '_' + c.name)
                                     clusterings[names[-1]] = []
                                     other_results['timing'][names[-1]] = []
+                                if use_nne:
+                                    purities.append(purity_method(pre, true_labels))
+                                else:
+                                    purities.append(purity_method(labels, true_labels))
                                 print(names[r])
                                 clusterings[names[r]].append(labels)
                                 other_results['timing'][names[r]].append(t2)
@@ -996,12 +1009,8 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
                     except:
                         print('clustering failed')
                         continue
-                    plt.cla()
-                    for i in set(cluster_labels):
-                        plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, **scatter_options)
-                    plt.legend()
                     output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
-                    plt.savefig(output_path, dpi=100)
+                    visualize_dim_red(r_dim_red, cluster_labels, output_path, **scatter_options)
             else:
                 clustering_method = method[1]
                 try:
@@ -1009,17 +1018,7 @@ def generate_visualizations(methods, data, true_labels, base_dir = 'visualizatio
                 except:
                     print('clustering failed')
                     continue
-                plt.cla()
-                for i in set(cluster_labels):
-                    plt.scatter(r_dim_red[0, cluster_labels==i], r_dim_red[1, cluster_labels==i], label=i, **scatter_options)
-                plt.legend()
                 output_path = base_dir + '/{0}_{1}_labels.png'.format(name, clustering_method.name)
-                plt.savefig(output_path, dpi=100)
-                pass
-            plt.cla()
-            for i in set(true_labels):
-                plt.scatter(r_dim_red[0, true_labels==i], r_dim_red[1, true_labels==i], label=i, **scatter_options)
-            plt.legend()
+                visualize_dim_red(r_dim_red, cluster_labels, output_path, **scatter_options)
             output_path = base_dir + '/{0}_true_labels.png'.format(name)
-            plt.savefig(output_path, dpi=100)
-
+            visualize_dim_red(r_dim_red, true_labels, output_path, **scatter_options)
