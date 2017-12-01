@@ -160,7 +160,7 @@ def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True,
     return w_new
 
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -183,6 +183,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         threads (int, optional): How many threads to use in the parallel computation. Default: 4
         max_assign_weight (float, optional): If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75
         run_w_first (bool, optional): Whether or not to optimize W first (if false, M will be optimized first). Default: True
+        constrain_w (bool, optional): If True, then W is normalized after every iteration. Default: False
 
     Returns:
         M (array): genes x clusters - state means
@@ -289,6 +290,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         if run_w_first:
             # step 1: given M, estimate W
             w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
+            if constrain_w:
+                w_new = w_new/w_new.sum(0)
             if disp:
                 w_ll = objective_fn(X, means, w_new)
                 print('Finished updating W. Objective value: {0}'.format(w_ll))
@@ -307,6 +310,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                 print('Finished updating M. Objective value: {0}'.format(w_ll))
             # step 2: given M, estimate W
             w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
+            if constrain_w:
+                w_new = w_new/w_new.sum(0)
             if disp:
                 w_ll = objective_fn(X, means, w_new)
                 print('Finished updating W. Objective value: {0}'.format(w_ll))
