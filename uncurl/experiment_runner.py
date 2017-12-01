@@ -203,7 +203,7 @@ class PoissonSE(Preprocess):
     """
 
     def __init__(self, return_w=True, return_m=False, return_mw=False,
-            return_mds=False, **params):
+            return_mds=False, normalize_data=False, **params):
         self.output_names = []
         self.return_w = return_w
         if return_w:
@@ -217,6 +217,7 @@ class PoissonSE(Preprocess):
         self.return_mds = return_mds
         if return_mds:
             self.output_names.append('Poisson_MDS')
+        self.normalize_data = normalize_data
         super(PoissonSE, self).__init__(**params)
 
     def run(self, data):
@@ -225,6 +226,8 @@ class PoissonSE(Preprocess):
             list of W, M*W
             ll
         """
+        if self.normalize_data:
+            data = cell_normalize(data)
         M, W, ll = poisson_estimate_state(data, **self.params)
         outputs = []
         if self.return_w:
@@ -336,13 +339,16 @@ class LogNMF(Preprocess):
     Requires a 'k' parameter, which is the rank of the matrices.
     """
 
-    def __init__(self, return_h = True, return_mds=False, return_wh=False, **params):
+    def __init__(self, return_h=True, return_w=False, return_mds=False, return_wh=False, **params):
         super(LogNMF, self).__init__(**params)
         self.output_names = []
         self.nmf = NMF(params['k'])
         self.return_h = return_h
         if return_h:
             self.output_names.append('logNMF_H')
+        self.return_w = return_w
+        if return_w:
+            self.output_names.append('logNMF_W')
         self.return_mds = return_mds
         if return_mds:
             self.output_names.append('logNMF_MDS')
@@ -371,6 +377,8 @@ class LogNMF(Preprocess):
         output = []
         if self.return_h:
             output.append(H)
+        if self.return_w:
+            output.append(W)
         if self.return_wh:
             output.append(W.dot(H))
         if self.return_mds:
@@ -385,13 +393,26 @@ class BasicNMF(Preprocess):
     Requires a 'k' parameter, which is the rank of the matrices.
     """
 
-    def __init__(self, **params):
-        self.output_names = ['NMF_H', 'NMF_WH']
+    def __init__(self, return_h=True, return_w=False, return_mds=False, return_wh=False, **params):
         super(BasicNMF, self).__init__(**params)
         self.nmf = NMF(params['k'])
+        self.output_names = []
+        self.return_h = return_h
+        if return_h:
+            self.output_names.append('NMF_H')
+        self.return_w = return_w
+        if return_w:
+            self.output_names.append('NMF_W')
+        self.return_mds = return_mds
+        if return_mds:
+            self.output_names.append('NMF_MDS')
+        self.return_wh = return_wh
+        if return_wh:
+            self.output_names.append('NMF_WH')
 
     def run(self, data):
-        W = self.nmf.fit_transform(data)
+        data_norm = cell_normalize(data)
+        W = self.nmf.fit_transform(data_norm)
         H = self.nmf.components_
         if sparse.issparse(data):
             ws = sparse.csr_matrix(W)
@@ -401,7 +422,17 @@ class BasicNMF(Preprocess):
             cost = 0.5*((data - W.dot(H))**2).sum()
         if 'normalize_h' in self.params:
             H = H/H.sum(0)
-        return [H, W.dot(H)], cost
+        output = []
+        if self.return_h:
+            output.append(H)
+        if self.return_w:
+            output.append(W)
+        if self.return_wh:
+            output.append(W.dot(H))
+        if self.return_mds:
+            X = dim_reduce(W, H, 2)
+            output.append(X.T.dot(H))
+        return output, cost
 
 class EnsembleNMF(Preprocess):
     """

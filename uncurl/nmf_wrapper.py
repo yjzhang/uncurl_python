@@ -5,6 +5,7 @@ from sklearn.decomposition import NMF
 
 from .preprocessing import log1p, cell_normalize
 
+# TODO: initialization
 def log_norm_nmf(data, k, normalize_h=True, return_cost=True, **kwargs):
     """
     Args:
