@@ -656,8 +656,14 @@ class SimlrSmall(Preprocess):
 class Magic(Preprocess):
     # TODO: this requires python 3
 
-    def __init__(self, **params):
+    def __init__(self, use_tsne=False, use_pca=False, **params):
         self.output_names = ['magic']
+        self.use_tsne = use_tsne
+        self.use_pca = use_pca
+        if self.use_tsne:
+            self.output_names.append('magic_tsne')
+        if self.use_tsne:
+            self.output_names.append('magic_pca')
         super(Magic, self).__init__(**params)
 
     def run(self, data):
@@ -667,16 +673,21 @@ class Magic(Preprocess):
             n_components = 20
         if sparse.issparse(data):
             data = data.toarray()
-        scdata = magic.mg.SCData(pd.DataFrame(data.T), data_type='sc-seq')
+        data_array = pd.DataFrame(data.T)
+        data_array.columns = data_array.columns.astype(str)
+        scdata = magic.mg.SCData(pd.DataFrame(data_array), data_type='sc-seq')
         scdata = scdata.normalize_scseq_data()
         scdata.run_magic(n_pca_components=n_components, random_pca=True,
                 t=6, k=30, ka=10, epsilon=1, rescale_percent=99)
         #scdata.run_tsne()
-        if 'use_tsne' in self.params and self.params['use_tsne']:
+        outputs = [scdata.magic.data.as_matrix().T]
+        if self.use_tsne:
             scdata.magic.run_tsne()
-            return [scdata.magic.tsne.as_matrix().T], 0
-        else:
-            return [scdata.magic.data.as_matrix().T], 0
+            outputs.append(scdata.magic.tsne.as_matrix().T)
+        if self.use_pca:
+            scdata.magic.run_pca()
+            outputs.append(scdata.magic.pca.as_matrix().T)
+        return outputs, 0
 
 class Cluster(object):
     """
