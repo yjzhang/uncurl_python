@@ -63,6 +63,15 @@ Example:
 
 The ``log_norm_nmf`` function is a wrapper around scikit-Learn's NMF class that performs a log-transform and per-cell count normalization before running NMF. It returns two matrices, W and H, which correspond to the M and W returned by ``poisson_estimate_state``. It can also take sparse matrix inputs.
 
+Example:
+
+.. code-block:: python
+
+    from uncurl import log_norm_nmf
+
+    W, H = log_norm_nmf(data_subset, k=2)
+
+
 In addition, we provide a wrapper function, ``run_state_estimation``, which can be used to call any of the state estimation functions for different distributions. The possible distributions are 'Poiss', 'NB', 'ZIP', or 'LogNorm'. Currently the NB and ZIP options are unsupported. 
 
 Example:
@@ -82,21 +91,21 @@ Example:
 Distribution Selection
 ----------------------
 
-The ``GetDistFitError`` function is used to determine the distribution of each gene in a dataset by calculating the fit error for the Poisson, Normal, and Log-Normal distributions. It currently only works for dense matrices.
+The ``DistFitDataset`` function is used to determine the distribution of each gene in a dataset by calculating the fit error for the Poisson, Normal, and Log-Normal distributions. It currently only works for dense matrices.
 
 Example:
 
 .. code-block:: python
 
     import numpy as np
-    from uncurl import GetDistFitError
+    from uncurl import DistFitDataset
 
     data = np.loadtxt('counts.txt')
 
-    fit_errors = GetDistFitError(data)
+    fit_errors = DistFitDataset(data)
 
-    poiss_fit_error = fit_errors['poiss']
-    norm_fit_error = fit_errors['norm']
+    poiss_fit_errors = fit_errors['poiss']
+    norm_fit_errors = fit_errors['norm']
     lognorm_fit_errors = fit_errors['lognorm']
 
 
