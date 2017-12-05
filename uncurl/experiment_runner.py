@@ -656,10 +656,13 @@ class SimlrSmall(Preprocess):
 class Magic(Preprocess):
     # TODO: this requires python 3
 
-    def __init__(self, use_tsne=False, use_pca=False, **params):
-        self.output_names = ['magic']
+    def __init__(self, use_magic=True, use_tsne=False, use_pca=False, **params):
+        self.output_names = []
+        self.use_magic = use_magic
         self.use_tsne = use_tsne
         self.use_pca = use_pca
+        if self.use_magic:
+            self.output_names.append('magic')
         if self.use_tsne:
             self.output_names.append('magic_tsne')
         if self.use_tsne:
@@ -680,7 +683,9 @@ class Magic(Preprocess):
         scdata.run_magic(n_pca_components=n_components, random_pca=True,
                 t=6, k=30, ka=10, epsilon=1, rescale_percent=99)
         #scdata.run_tsne()
-        outputs = [scdata.magic.data.as_matrix().T]
+        outputs = []
+        if self.use_magic:
+            outputs.append(scdata.magic.data.as_matrix().T)
         if self.use_tsne:
             scdata.magic.run_tsne()
             outputs.append(scdata.magic.tsne.as_matrix().T)
