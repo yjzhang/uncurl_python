@@ -665,7 +665,7 @@ class Magic(Preprocess):
             self.output_names.append('magic')
         if self.use_tsne:
             self.output_names.append('magic_tsne')
-        if self.use_tsne:
+        if self.use_pca:
             self.output_names.append('magic_pca')
         super(Magic, self).__init__(**params)
 
@@ -887,7 +887,7 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
             for name, pre in zip(output_names, preprocessed):
                 starting_index = method_index
                 if isinstance(cluster, Cluster):
-                    try:
+                    #try:
                         t0 = time.time()
                         labels = cluster.run(pre)
                         t2 = t1 + time.time() - t0
@@ -906,8 +906,8 @@ def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=
                         print(purities[-1])
                         r += 1
                         method_index += 1
-                    except:
-                        print('failed to do clustering')
+                    #except:
+                    #    print('failed to do clustering')
                 elif type(cluster) == list:
                     for c in cluster:
                         if isinstance(c, list):

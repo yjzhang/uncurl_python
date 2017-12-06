@@ -38,13 +38,14 @@ def kmeans_pp(data, k, centers=None):
         else:
             centers[:,0] = data[:, init]
         num_known_centers+=1
+    available_cells = list(range(cells))
     for c in range(num_known_centers, k):
         c2 = c-1
         # TODO: use different formulation for distance... if sparse, use lls
         # if not sparse, use poisson_dist
         if sparse.issparse(data):
             lls = poisson_ll(data, centers[:,c2:c2+1]).flatten()
-            distances[:,c2] = -(lls - lls.max())
+            distances[:,c2] = 1 + lls.max() - lls
             distances[:,c2] /= distances[:,c2].max()
         else:
             for cell in range(cells):
@@ -53,8 +54,11 @@ def kmeans_pp(data, k, centers=None):
         # to distance^2
         min_distances = np.min(distances, 1)
         min_distances = min_distances**2
-        min_dist = np.random.choice(range(cells),
+        min_distances = min_distances[available_cells]
+        # TODO: should be sampling without replacement
+        min_dist = np.random.choice(available_cells,
                 p=min_distances/min_distances.sum())
+        available_cells.pop(available_cells.index(min_dist))
         if sparse.issparse(data):
             centers[:,c] = data[:, min_dist].toarray().flatten()
         else:

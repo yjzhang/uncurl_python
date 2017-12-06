@@ -24,8 +24,8 @@ class Qual2QuantTest(TestCase):
         starting_points = uncurl.qualNorm(self.data, self.qualData)
         self.assertTrue(starting_points.shape==(500, 2))
         self.assertFalse(np.isnan(starting_points).any())
-        print((starting_points==0).sum())
-        self.assertTrue((starting_points == 0).sum() < 100)
+        print((starting_points[:,0] == starting_points[:,1]).sum())
+        self.assertTrue((starting_points[:,0] == starting_points[:,1]).sum() < 10)
 
 
     def test_qual2quant_sparse(self):
@@ -36,8 +36,8 @@ class Qual2QuantTest(TestCase):
         starting_points = uncurl.qualNorm(data_sparse, self.qualData)
         self.assertTrue(starting_points.shape==(500, 2))
         self.assertFalse(np.isnan(starting_points).any())
-        print((starting_points==0).sum())
-        self.assertTrue((starting_points == 0).sum() < 100)
+        print((starting_points[:,0] == starting_points[:,1]).sum())
+        self.assertTrue((starting_points[:,0] == starting_points[:,1]).sum() < 10)
 
 
     def test_qual2quant_missing_data(self):
@@ -50,5 +50,7 @@ class Qual2QuantTest(TestCase):
         starting_points = uncurl.qualNorm(self.data, qualData_m)
         self.assertTrue(starting_points.shape==(500, 2))
         self.assertFalse(np.isnan(starting_points).any())
-        print((starting_points==0).sum())
-        self.assertTrue((starting_points == 0).sum() < 100)
+        print((starting_points[:,0] == starting_points[:,1]).sum())
+        self.assertTrue((starting_points[:,0] == starting_points[:,1]).sum() < 10)
+
+

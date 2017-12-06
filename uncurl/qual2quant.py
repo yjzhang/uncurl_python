@@ -12,12 +12,6 @@ def find_bimodal(data, p_genes):
     finds putatively bimodal genes
     """
 
-def supervised_init(data, quantitative):
-    """
-    Initializes means and weights from quantitative data using Spearman
-    correlation.
-    """
-
 def qualNorm(data, qualitative):
     """
     Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.
@@ -35,25 +29,31 @@ def qualNorm(data, qualitative):
     output = np.zeros((genes, clusters))
     missing_indices = []
     qual_indices = []
-    # crude differential expression measure
     for i in range(genes):
         if qualitative[i,:].max() == -1 and qualitative[i,:].min() == -1:
             missing_indices.append(i)
             continue
         qual_indices.append(i)
         threshold = (qualitative[i,:].max() - qualitative[i,:].min())/2.0
+        data_i = data[i,:]
         if sparse.issparse(data):
-            assignments, means = poisson_cluster(data[i,:], 2)
-        else:
-            assignments, means = poisson_cluster(data[i,:].reshape((1, cells)), 2)
+            data_i = data_i.toarray().flatten()
+        assignments, means = poisson_cluster(data_i.reshape((1, cells)), 2)
+        means = means.flatten()
         high_mean = means.max()
         low_mean = means.min()
+        high_i = 1
+        low_i = 0
+        if means[0]>means[1]:
+            high_i = 0
+            low_i = 1
+        high_mean = np.median(data_i[assignments==high_i])
+        low_mean = np.median(data_i[assignments==low_i])
         for k in range(clusters):
             if qualitative[i,k]>threshold:
                 output[i,k] = high_mean
             else:
                 output[i,k] = low_mean
-    # sort by diffs
     if missing_indices:
         assignments, means = poisson_cluster(data[qual_indices, :], clusters, output[qual_indices, :], max_iters=1)
         for ind in missing_indices:
