@@ -12,6 +12,14 @@ def find_bimodal(data, p_genes):
     finds putatively bimodal genes
     """
 
+def binarize(qualitative):
+    """
+    binarizes an expression dataset.
+    """
+    thresholds = qualitative.min(1) + (qualitative.max(1) - qualitative.min(1))/2.0
+    binarized = qualitative > thresholds.reshape((len(thresholds), 1)).repeat(8,1)
+    return binarized.astype(int)
+
 def qualNorm(data, qualitative):
     """
     Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.
@@ -29,19 +37,18 @@ def qualNorm(data, qualitative):
     output = np.zeros((genes, clusters))
     missing_indices = []
     qual_indices = []
+    thresholds = qualitative.min(1) + (qualitative.max(1) - qualitative.min(1))/2.0
     for i in range(genes):
         if qualitative[i,:].max() == -1 and qualitative[i,:].min() == -1:
             missing_indices.append(i)
             continue
         qual_indices.append(i)
-        threshold = (qualitative[i,:].max() - qualitative[i,:].min())/2.0
+        threshold = thresholds[i]
         data_i = data[i,:]
         if sparse.issparse(data):
             data_i = data_i.toarray().flatten()
         assignments, means = poisson_cluster(data_i.reshape((1, cells)), 2)
         means = means.flatten()
-        high_mean = means.max()
-        low_mean = means.min()
         high_i = 1
         low_i = 0
         if means[0]>means[1]:
