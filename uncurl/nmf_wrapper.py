@@ -1,5 +1,6 @@
 # wrapper for various NMF methods
 
+import numpy as np
 from scipy import sparse
 from sklearn.decomposition import NMF, non_negative_factorization
 
@@ -62,8 +63,13 @@ def log_norm_nmf(data, k, normalize_h=True, return_cost=True, init_h=None, init_
         Two matrices W of shape (genes, k) and H of shape (k, cells). They correspond to M and W in Poisson state estimation. If return_cost is True (which it is by default), then the cost will also be returned. This might be prohibitably costly
     """
     init = None
-    if init_h is not None and init_w is not None:
+    if init_h is not None or init_w is not None:
         init = 'custom'
+        if init_h is None:
+            init_h_, _, n_iter = non_negative_factorization(data.T, n_components=k, init='custom', update_H=False, H=init_w.T)
+            init_h = init_h_.T
+        elif init_w is None:
+            init_w, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_H=False, H=init_h)
     nmf = NMF(k, init=init, **kwargs)
     data = log1p(cell_normalize(data))
     W = nmf.fit_transform(data, W=init_w, H=init_h)
