@@ -17,26 +17,33 @@ def visualize_poisson_w(w, labels, filename, method='pca', figsize=(18,10), titl
         return
     visualize_dim_red(r_dim_red, labels, filename, figsize, title, **scatter_options)
 
-def visualize_dim_red(r, labels, filename=None, figsize=(18,10), title='', legend=True, label_map=None, **scatter_options):
+def visualize_dim_red(r, labels, filename=None, figsize=(18,10), title='', legend=True, label_map=None, label_scale=False, **scatter_options):
     """
     Saves a scatter plot of a (2,n) matrix r, where each column is a cell.
 
     Args:
         r (array): (2,n) matrix
-        labels (array): (n,) array of ints
+        labels (array): (n,) array of ints/strings or floats. Can be None.
         filename (string): string to save the output graph. If None, then this just displays the plot.
         figsize (tuple): Default: (18, 10)
         title (string): graph title
         legend (bool): Default: True
         label_map (dict): map of labels to label names. Default: None
+        label_scale (bool): True if labels is should be treated as floats. Default: False
     """
     fig = plt.figure(figsize=figsize)
     plt.cla()
-    for i in set(labels):
-        label = i
-        if label_map is not None:
-            label = label_map[i]
-        plt.scatter(r[0, labels==i], r[1, labels==i], label=label, **scatter_options)
+    if not label_scale:
+        for i in set(labels):
+            label = i
+            if label_map is not None:
+                label = label_map[i]
+            plt.scatter(r[0, labels==i], r[1, labels==i], label=label, **scatter_options)
+    else:
+        if labels is None:
+            plt.scatter(r[0,:], r[1,:], **scatter_options)
+        else:
+            plt.scatter(r[0,:], r[1,:], c=labels/labels.max(), **scatter_options)
     plt.title(title)
     if legend:
         plt.legend()
