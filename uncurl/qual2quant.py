@@ -7,10 +7,34 @@ from sklearn.cluster import KMeans
 
 from .clustering import poisson_cluster
 
-def find_bimodal(data, p_genes):
+def poisson_test(data1, data2, smoothing=1e-5):
     """
-    finds putatively bimodal genes
+    Returns a p-value for the ratio of the means of two poisson-distributed datasets.
+
+    Source: http://ncss.wpengine.netdna-cdn.com/wp-content/themes/ncss/pdf/Procedures/PASS/Tests_for_Two_Poisson_Means.pdf
+
+    Gu, K., Ng, H.K.T., Tang, M.L., and Schucany, W. 2008. 'Testing the Ratio of Two Poisson Rates.' Biometrical Journal, 50, 2, 283-298
+
+    Args:
+        data1 (array): 1d array of floats - first distribution
+        data2 (array): 1d array of floats - second distribution
+        smoothing (float): number to add to each of the datasets...
     """
+    data1 = data1.astype(float)
+    data2 = data2.astype(float)
+    data1 += smoothing
+    data2 += smoothing
+    X1 = data1.sum()
+    X2 = data2.sum()
+    N1 = len(data1)
+    N2 = len(data2)
+    l1 = float(X1)/N1
+    l2 = float(X2)/N2
+    d = float(N2)/float(N1)
+    rho = 1.0
+    w2 = (X2-X1*(rho/d))/np.sqrt((X2+X1)*(rho/d))
+    # return p value
+    return 1.0 - scipy.stats.norm.cdf(w2)
 
 def binarize(qualitative):
     """
@@ -19,6 +43,52 @@ def binarize(qualitative):
     thresholds = qualitative.min(1) + (qualitative.max(1) - qualitative.min(1))/2.0
     binarized = qualitative > thresholds.reshape((len(thresholds), 1)).repeat(8,1)
     return binarized.astype(int)
+
+def qualNorm_filter_genes(data, qualitative, threshold=0.05, eps=1e-5):
+    """
+    Does qualNorm but returns a filtered gene set, based on a p-value threshold.
+    """
+    genes, cells = data.shape
+    clusters = qualitative.shape[1]
+    output = np.zeros((genes, clusters))
+    missing_indices = []
+    genes_included = []
+    qual_indices = []
+    thresholds = qualitative.min(1) + (qualitative.max(1) - qualitative.min(1))/2.0
+    pvals = np.zeros(genes)
+    for i in range(genes):
+        if qualitative[i,:].max() == -1 and qualitative[i,:].min() == -1:
+            missing_indices.append(i)
+            continue
+        qual_indices.append(i)
+        threshold = thresholds[i]
+        data_i = data[i,:]
+        if sparse.issparse(data):
+            data_i = data_i.toarray().flatten()
+        assignments, means = poisson_cluster(data_i.reshape((1, cells)), 2)
+        means = means.flatten()
+        high_i = 1
+        low_i = 0
+        if means[0]>means[1]:
+            high_i = 0
+            low_i = 1
+        # do a p-value test
+        p_val = poisson_test(data_i[assignments==low_i], data_i[assignments==high_i])
+        pvals[i] = p_val
+        if p_val <= threshold:
+            genes_included.append(i)
+        else:
+            continue
+        high_mean = np.median(data_i[assignments==high_i])
+        low_mean = np.median(data_i[assignments==low_i]) + eps
+        for k in range(clusters):
+            if qualitative[i,k]>threshold:
+                output[i,k] = high_mean
+            else:
+                output[i,k] = low_mean
+    output = output[genes_included,:]
+    pvals = pvals[genes_included]
+    return output, pvals, genes_included
 
 def qualNorm(data, qualitative):
     """
