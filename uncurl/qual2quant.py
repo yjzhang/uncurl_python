@@ -44,7 +44,7 @@ def binarize(qualitative):
     binarized = qualitative > thresholds.reshape((len(thresholds), 1)).repeat(8,1)
     return binarized.astype(int)
 
-def qualNorm_filter_genes(data, qualitative, threshold=0.05, eps=1e-5):
+def qualNorm_filter_genes(data, qualitative, pval_threshold=0.05, smoothing=1e-5, eps=1e-5):
     """
     Does qualNorm but returns a filtered gene set, based on a p-value threshold.
     """
@@ -73,9 +73,9 @@ def qualNorm_filter_genes(data, qualitative, threshold=0.05, eps=1e-5):
             high_i = 0
             low_i = 1
         # do a p-value test
-        p_val = poisson_test(data_i[assignments==low_i], data_i[assignments==high_i])
+        p_val = poisson_test(data_i[assignments==low_i], data_i[assignments==high_i], smoothing=smoothing)
         pvals[i] = p_val
-        if p_val <= threshold:
+        if p_val <= pval_threshold:
             genes_included.append(i)
         else:
             continue
