@@ -3,7 +3,7 @@
 from .state_estimation import poisson_estimate_state
 from .nb_state_estimation import nb_estimate_state
 from .zip_state_estimation import zip_estimate_state
-from .nmf_wrapper import log_norm_nmf
+from .nmf_wrapper import log_norm_nmf, norm_nmf
 
 import numpy as np
 from scipy import sparse
@@ -25,7 +25,7 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         ll (float): final log-likelihood
     """
     func = poisson_estimate_state
-    if dist=='Poiss':
+    if dist=='Poiss' or dist=='Poisson':
         pass
     elif dist=='NB':
         func = nb_estimate_state
@@ -33,8 +33,10 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         func = zip_estimate_state
     elif dist=='LogNorm':
         func = log_norm_nmf
+    elif dist=='Gaussian':
+        func = norm_nmf
     else:
-        print('dist should be one of Poiss, NB, ZIP, or LogNorm. Using Poiss.')
+        print('dist should be one of Poiss, NB, ZIP, LogNorm, or Gaussian. Using Poiss.')
     best_ll = np.inf
     best_M = None
     best_W = None
