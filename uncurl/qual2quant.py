@@ -15,10 +15,12 @@ def poisson_test(data1, data2, smoothing=1e-5):
 
     Gu, K., Ng, H.K.T., Tang, M.L., and Schucany, W. 2008. 'Testing the Ratio of Two Poisson Rates.' Biometrical Journal, 50, 2, 283-298
 
+    Based on W2
+
     Args:
         data1 (array): 1d array of floats - first distribution
         data2 (array): 1d array of floats - second distribution
-        smoothing (float): number to add to each of the datasets...
+        smoothing (float): number to add to each of the datasets
     """
     data1 = data1.astype(float)
     data2 = data2.astype(float)
@@ -28,9 +30,7 @@ def poisson_test(data1, data2, smoothing=1e-5):
     X2 = data2.sum()
     N1 = len(data1)
     N2 = len(data2)
-    l1 = float(X1)/N1
-    l2 = float(X2)/N2
-    d = float(N2)/float(N1)
+    d = float(N1)/float(N2)
     rho = 1.0
     w2 = (X2-X1*(rho/d))/np.sqrt((X2+X1)*(rho/d))
     # return p value
