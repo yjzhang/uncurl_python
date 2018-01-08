@@ -34,10 +34,10 @@ def poisson_test(data1, data2, smoothing=1e-5, return_pval=True):
     d = float(N1)/float(N2)
     rho = 1.0
     w2 = (X2-X1*(rho/d))/np.sqrt((X2+X1)*(rho/d))
-    # return test statistic value (higher is more different)
+    # return test statistic value (higher indicates that the ratio of data2 to data1 > 1.0)
     if not return_pval:
         return w2
-    # return p value (lower is more different)
+    # return p value (lower indicates that the ratio of data2 to data1 > 1.0)
     return 1.0 - scipy.stats.norm.cdf(w2)
 
 def binarize(qualitative):
