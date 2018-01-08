@@ -7,7 +7,7 @@ from sklearn.cluster import KMeans
 
 from .clustering import poisson_cluster
 
-def poisson_test(data1, data2, smoothing=1e-5):
+def poisson_test(data1, data2, smoothing=1e-5, return_pval=True):
     """
     Returns a p-value for the ratio of the means of two poisson-distributed datasets.
 
@@ -21,6 +21,7 @@ def poisson_test(data1, data2, smoothing=1e-5):
         data1 (array): 1d array of floats - first distribution
         data2 (array): 1d array of floats - second distribution
         smoothing (float): number to add to each of the datasets
+        return_pval (bool): True to return p value; False to return test statistic. Default: True
     """
     data1 = data1.astype(float)
     data2 = data2.astype(float)
@@ -33,7 +34,10 @@ def poisson_test(data1, data2, smoothing=1e-5):
     d = float(N1)/float(N2)
     rho = 1.0
     w2 = (X2-X1*(rho/d))/np.sqrt((X2+X1)*(rho/d))
-    # return p value
+    # return test statistic value (higher is more different)
+    if not return_pval:
+        return w2
+    # return p value (lower is more different)
     return 1.0 - scipy.stats.norm.cdf(w2)
 
 def binarize(qualitative):
