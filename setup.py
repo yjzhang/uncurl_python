@@ -8,14 +8,14 @@ import numpy
 
 extensions = [
         Extension('uncurl.nolips', ['uncurl/nolips.pyx'],
-            extra_compile_args=['-O3', '-march=native', '-ffast-math']),
+            extra_compile_args=['-O3', '-ffast-math']),
         Extension('uncurl.sparse_utils', ['uncurl/sparse_utils.pyx'],
-            extra_compile_args=['-O3', '-march=native', '-ffast-math'])
+            extra_compile_args=['-O3', '-ffast-math'])
         ]
 
 parallel_extensions = [
         Extension('uncurl.nolips_parallel', ['uncurl/nolips_parallel.pyx'],
-            extra_compile_args=['-O3', '-march=native', '-ffast-math', '-fopenmp'],
+            extra_compile_args=['-O3', '-ffast-math', '-fopenmp'],
             extra_link_args=['-fopenmp'])
         ]
 

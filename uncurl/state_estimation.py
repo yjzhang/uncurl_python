@@ -1,7 +1,7 @@
 # state estimation with poisson convex mixture model
 
 from .clustering import kmeans_pp, poisson_cluster
-from uncurl.nolips import nolips_update_w, objective, sparse_objective
+from uncurl.nolips import nolips_update_w, objective, sparse_objective, sparse_objective_long
 from uncurl.nolips import sparse_nolips_update_w
 # try to use parallel; otherwise
 #from uncurl.nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
@@ -263,6 +263,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         # L-BFGS-B won't work right now for sparse matrices
         method = 'NoLips'
         objective_fn = sparse_objective
+        if X.indptr.dtype == np.int64:
+            objective_fn = sparse_objective_long
     else:
         objective_fn = objective
         update_fn = nolips_update_w
@@ -283,6 +285,8 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                     if X.indptr.dtype == np.int64:
                         update_fn = parallel_sparse_nolips_update_w_long
                 objective_fn = sparse_objective
+                if X.indptr.dtype == np.int64:
+                    objective_fn = sparse_objective_long
     w_new = w_init
     for i in range(max_iters):
         if disp:

@@ -9,7 +9,7 @@ import numpy as np
 from scipy import sparse
 
 from uncurl import state_estimation, simulation
-from uncurl.nolips import objective, sparse_objective
+from uncurl.nolips import objective, sparse_objective, sparse_objective_long
 
 class SparseStateEstimationTest(TestCase):
 
@@ -182,7 +182,7 @@ class SparseStateEstimationTest(TestCase):
         sim_data.indptr = sim_data.indptr.astype(np.int64)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='tsvd')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        obj = sparse_objective(sim_data, m, w)
+        obj = sparse_objective_long(sim_data, m, w)
         self.assertEqual(ll, obj)
         dense_obj = objective(sim_data.toarray(), m, w)
         self.assertTrue(np.abs(obj-dense_obj) < 1e-6)

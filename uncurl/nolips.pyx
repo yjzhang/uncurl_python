@@ -9,8 +9,6 @@ cimport cython
 
 from scipy import sparse
 
-from libc.stdint cimport int64_t
-
 import numpy as np
 cimport numpy as np
 DTYPE = np.double
@@ -96,7 +94,7 @@ def cost(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarra
 @cython.nonecheck(False)
 def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
     """
-    Calculates the Poisson Mixture objective value for a sparse matrix x.
+    Calculates the Convex Poisson Mixture objective value for a sparse matrix x.
     """
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
@@ -106,7 +104,49 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
     cdef double obj = 0
     # use a csc matrix, iterate through 
     X_csc = sparse.csc_matrix(X)
-    cdef int64_t[:] indices, indptr
+    cdef int[:] indices, indptr
+    indices = X_csc.indices
+    indptr = X_csc.indptr
+    cdef double[:] data_ = X_csc.data
+    cdef double[:] mw = np.zeros(len(data_))
+    cdef double[:,:] m_view = M
+    cdef double[:,:] w_view = W
+    with nogil:
+        for i in range(cells):
+            c = i
+            start_ind = indptr[i]
+            end_ind = indptr[i+1]
+            for ind in range(start_ind, end_ind):
+                g = indices[ind]
+                d = 0
+                for k in range(clusters):
+                    d += M[g,k]*W[k,c]
+                mw[ind] = d
+    cdef np.ndarray[DTYPE_t, ndim=1] D = np.asarray(mw)
+    cdef np.ndarray[DTYPE_t, ndim=1] data = np.asarray(data_)
+    obj = np.sum(-data*np.log(D))
+    for c in range(cells):
+        for g in range(genes):
+            for k in range(clusters):
+                obj += m_view[g,k]*w_view[k,c]
+    return obj/genes
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def sparse_objective_long(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
+    """
+    Calculates the Convex Poisson Mixture objective value for a sparse matrix x.
+    """
+    cdef int cells = X.shape[1]
+    cdef int genes = X.shape[0]
+    cdef int clusters = W.shape[0]
+    cdef double d
+    cdef Py_ssize_t i, ind, g, c, start_ind, end_ind
+    cdef double obj = 0
+    # use a csc matrix, iterate through 
+    X_csc = sparse.csc_matrix(X)
+    cdef long[:] indices, indptr
     indices = X_csc.indices.astype(np.int64)
     indptr = X_csc.indptr.astype(np.int64)
     cdef double[:] data_ = X_csc.data
