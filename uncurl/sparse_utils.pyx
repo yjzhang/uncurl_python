@@ -91,7 +91,9 @@ def sparse_cell_normalize(data):
     #cdef int ind, g, c, start_ind, end_ind
     cdef double i, s
     csc = sparse.csc_matrix(data)
-    csc_new = data.copy().astype(np.double)
+    if csc.indptr.dtype == np.int64:
+        return sparse_cell_normalize_long(data)
+    csc_new = csc.copy().astype(np.double)
     indices = csc_new.indices
     indptr = csc_new.indptr
     data_ = csc_new.data
@@ -110,6 +112,40 @@ def sparse_cell_normalize(data):
     csc_new *= med
     return csc_new
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def sparse_cell_normalize_long(data):
+    """
+    cell_normalize for sparse matrices
+    """
+    cdef Py_ssize_t cells = data.shape[1]
+    cdef Py_ssize_t genes = data.shape[0]
+    cdef long[:] indices, indptr
+    cdef double[:] data_
+    cdef Py_ssize_t ind, g, c, start_ind, end_ind
+    cdef long i2
+    #cdef int ind, g, c, start_ind, end_ind
+    cdef double i, s
+    csc = sparse.csc_matrix(data)
+    csc_new = csc.copy().astype(np.double)
+    indices = csc_new.indices.astype(np.int64)
+    indptr = csc_new.indptr.astype(np.int64)
+    data_ = csc_new.data
+    cdef double[:] total_umis = np.empty(cells)
+    for c in range(cells):
+        start_ind = indptr[c]
+        end_ind = indptr[c+1]
+        s = 0
+        for i2 in range(start_ind, end_ind):
+            i = data_[i2]
+            s += i
+        for i2 in range(start_ind, end_ind):
+            data_[i2] /= s
+        total_umis[c] = s
+    med = np.median(np.asarray(total_umis))
+    csc_new *= med
+    return csc_new
 
 
 @cython.boundscheck(False)
