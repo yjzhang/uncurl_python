@@ -33,7 +33,8 @@ class ExperimentRunnerTest(TestCase):
         self.assertTrue('clusterings' in other)
         self.assertTrue('timing' in other)
         self.assertTrue('preprocessing' in other)
-        self.assertTrue(max(results)>0.8)
+        print(results)
+        self.assertTrue(results[0][0]>0.95)
 
     def test_runExperiment_2(self):
         se = uncurl.experiment_runner.PoissonSE(clusters=2, max_iters=10, inner_max_iters=50)
