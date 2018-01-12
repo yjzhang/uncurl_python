@@ -24,11 +24,9 @@ Features
 State Estimation
 ----------------
 
-The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. The input is of shape (genes, cells). It has three outputs: two matrices ``M`` and ``W``, and ``ll``, the negative log-likelihood. M is a (genes, clusters) matrix, and W is a (clusters, cells) matrix where each column sums to 1. The outputs ``W`` and ``M*W`` can be used for further visualization or dimensionality reduction, such as with t-SNE, or the MDS-based method described later.
+The simplest way to use state estimation is to use the ``run_state_estimation`` function, which can be used to call any of the state estimation functions for different distributions. The possible distributions are 'Poiss', 'NB', 'ZIP', or 'LogNorm'. Generally, 'Poiss' is recommended for sparse or count-valued datasets. Currently the NB and ZIP options are unsupported.
 
 Before running state estimation, it is often a good idea to subset the number of genes. This can be done using the function ``max_variance_genes``, which bins the genes by mean expression, and selects a top fraction of genes by variance from each bin. It also removes genes that have all zero expression counts.
-
-There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using truncated SVD + K-means, but it can also be initialized using ``poisson_cluster`` or just K-means.
 
 Example:
 
@@ -36,16 +34,31 @@ Example:
 
     import numpy as np
     import scipy.io
-    from uncurl import max_variance_genes, poisson_cluster, poisson_estimate_state
+    from uncurl import max_variance_genes, run_state_estimation
 
     data = np.loadtxt('counts.txt')
 
     # sparse data (matrix market format)
     data_sparse = scipy.io.mmread('matrix.mtx')
 
-    # max variance genes, default parameters
+    # max variance genes, default parameters 
     genes = max_variance_genes(data_sparse, nbins=5, frac=0.2)
     data_subset = data_sparse[genes,:]
+
+    M, W, ll = run_state_estimation(data_subset, clusters=4, dist='Poiss', disp=False, max_iters=30, inner_max_iters=100, initialization='tsvd', threads=8)
+
+    M2, W2, cost = run_state_estimation(data_subset, clusters=4, dist='LogNorm')
+
+
+The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. The input is of shape (genes, cells). It has three outputs: two matrices ``M`` and ``W``, and ``ll``, the negative log-likelihood. M is a (genes, clusters) matrix, and W is a (clusters, cells) matrix where each column sums to 1. The outputs ``W`` and ``M*W`` can be used for further visualization or dimensionality reduction, such as with t-SNE, or the MDS-based method described later.
+
+There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using truncated SVD + K-means, but it can also be initialized using ``poisson_cluster`` or just K-means.
+
+Example:
+
+.. code-block:: python
+
+    from uncurl import max_variance_genes, poisson_cluster, poisson_estimate_state
 
     # poisson state estimation
     M, W, ll = poisson_estimate_state(data_subset, 2)
@@ -61,6 +74,7 @@ Example:
     M, W, ll = poisson_estimate_state(data_subset, 2, init_means=centers, init_weights=assignments_p)
 
 
+
 The ``log_norm_nmf`` function is a wrapper around scikit-Learn's NMF class that performs a log-transform and per-cell count normalization before running NMF. It returns two matrices, W and H, which correspond to the M and W returned by ``poisson_estimate_state``. It can also take sparse matrix inputs.
 
 Example:
@@ -70,22 +84,6 @@ Example:
     from uncurl import log_norm_nmf
 
     W, H = log_norm_nmf(data_subset, k=2)
-
-
-In addition, we provide a wrapper function, ``run_state_estimation``, which can be used to call any of the state estimation functions for different distributions. The possible distributions are 'Poiss', 'NB', 'ZIP', or 'LogNorm'. Currently the NB and ZIP options are unsupported. 
-
-Example:
-
-.. code-block:: python
-
-    import numpy as np
-    import scipy.io
-    from uncurl import run_state_estimation
-
-    M, W, ll = run_state_estimation(data_subset, clusters=2, dist='Poiss', disp=False, max_iters=30, inner_max_iters=150, initialization='tsvd', threads=8)
-
-    M2, W2, cost = run_state_estimation(data_subset, clusters=2, dist='LogNorm')
-
 
 
 Distribution Selection
@@ -109,11 +107,13 @@ Example:
     lognorm_fit_errors = fit_errors['lognorm']
 
 
+The output, ``fit_errors``, contains the fit error for each gene, for each of the three distributions when fitted to the data using maximum likelihood.
+
 
 Qualitative to Quantitative Framework
 -------------------------------------
 
-The ``qualNorm`` function is used to convert binary data with shape (genes, types) into starting points for clustering and state estimation.
+The ``qualNorm`` function is used to convert binary (or otherwise) data with shape (genes, types) into starting points for clustering and state estimation.
 
 Example:
 
