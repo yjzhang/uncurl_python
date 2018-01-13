@@ -21,8 +21,3 @@ try:
     from . import experiment_runner
 except:
     print('unable to import experiment_runner')
-
-try:
-    from . import ensemble
-except:
-    print('unable to import ensemble')

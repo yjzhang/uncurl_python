@@ -158,6 +158,7 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
 
     returns a dense matrix of dimension cells x k
     """
+    # TODO: this does not deal with longs. maybe we need a more efficient way?
     cdef int genes, cells, clusters
     cdef double i, val, v2
     cdef Py_ssize_t j, c, g, k, ind
@@ -166,14 +167,13 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
     clusters = means.shape[1]
     cdef double[:,:] ll = np.zeros((cells, clusters), dtype=np.double) - means.sum(0)
     cdef double[:,:] mv = means
-    cdef long[:] row, col
+    cdef int[:] row, col
     cdef double[:] data_
     cdef double[:,:] logm = np.log(means+eps)
     # convert to coo format for quicker lookup...
-    # TODO: be able to deal with longs
     coo = sparse.coo_matrix(data)
-    row = coo.row.astype(long)
-    col = coo.col.astype(long)
+    row = coo.row
+    col = coo.col
     data_ = coo.data.astype(np.float64)
     for ind in range(len(data_)):
         i = data_[ind]

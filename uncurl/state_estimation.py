@@ -214,6 +214,10 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         elif initialization=='tsvd':
             tsvd = TruncatedSVD(min(50, genes-1))
             km = KMeans(clusters)
+            # TODO: remove dependence on sklearn tsvd b/c it has a bug that
+            # prevents it from working properly on long inputs
+            # (but how often will people use long inputs anyways? when you
+            # need like 50gb of memory just to store the data...)
             data_reduced = tsvd.fit_transform(log1p(cell_normalize(data)).T)
             assignments = km.fit_predict(data_reduced)
             init_weights = initialize_from_assignments(assignments, clusters,

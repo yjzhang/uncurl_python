@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-
-"""
 
 from __future__ import division
 import numpy as np
@@ -12,12 +9,10 @@ import math as math
 
 
 def GetDistFitError(Dat):
-    """
-    Given a data matrix, this returns the per-gene fit error for the
-    Poisson, Normal, and Log-Normal distributions.
-    """
     #Assumes data to be in the form of a numpy matrix 
     # TODO: make this work for sparse inputs?
+    # TODO: fixed number of bins, rather than use the maximum value?
+    # that would 
     Dat = np.round(Dat).astype(int)
     Dat2 = np.log(1 + Dat)
     BinDat = np.zeros(max(Dat)+1)
@@ -56,6 +51,16 @@ def NormPDF(x,mu,std):
     return temp
 
 def DistFitDataset(Dat):
+    """
+    Given a data matrix, this returns the per-gene fit error for the
+    Poisson, Normal, and Log-Normal distributions.
+
+    Args:
+        Dat (array): numpy array with shape (genes, cells)
+
+    Returns:
+        d (dict): 'poiss', 'norm', 'lognorm' give the fit error for each distribution.
+    """
     #Assumes data to be in the form of a numpy matrix 
     (r,c) = Dat.shape
     Poiss = np.zeros(r)
