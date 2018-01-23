@@ -176,7 +176,7 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 <h2>uncurl.poisson_estimate_state<a class="headerlink" href="#uncurl-poisson-estimate-state" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.poisson_estimate_state">
-<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em>, <em>run_w_first=True</em>, <em>constrain_w=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
 <p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
@@ -199,6 +199,8 @@ cell state mixing weights.</p>
 <li><strong>parallel</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether to use parallel updates (sparse NoLips only). Default: True</li>
 <li><strong>threads</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; How many threads to use in the parallel computation. Default: 4</li>
 <li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75</li>
+<li><strong>run_w_first</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether or not to optimize W first (if false, M will be optimized first). Default: True</li>
+<li><strong>constrain_w</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; If True, then W is normalized after every iteration. Default: False</li>
 </ul>
 </td>
 </tr>

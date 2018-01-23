@@ -52,49 +52,11 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-uncurl.robust.state_estimation">
-<span id="uncurl-robust-state-estimation-module"></span><h2>uncurl.robust.state_estimation module<a class="headerlink" href="#module-uncurl.robust.state_estimation" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="uncurl.robust.state_estimation.robust_estimate_state">
-<code class="descclassname">uncurl.robust.state_estimation.</code><code class="descname">robust_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>dist='Poiss'</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=10</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>reps=1</em>, <em>normalize=True</em>, <em>gene_portion=0.2</em>, <em>use_constant=True</em><span class="sig-paren">)</span><a class="headerlink" href="#uncurl.robust.state_estimation.robust_estimate_state" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
-cell state mixing weights.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
-<li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
-<li><strong>dist</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Distribution used - only &#8216;Poiss&#8217; is implemented. Default: &#8216;Poiss&#8217;</li>
-<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: kmeans++ initializations</li>
-<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: random(0,1)</li>
-<li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Options include &#8216;NoLips&#8217; or &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
-<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 10</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol, then the iteration is stopped. Default: 1e-10</li>
-<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 100</li>
-<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
-<li><strong>gene_portion</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; The proportion of genes to use for estimating W after hard thresholding. Default: 0.2</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">genes x clusters - state means
-W (array): clusters x cells - state mixing components for each cell
-ll (float): final log-likelihood
-genes (array): 1d array of all genes used in final iteration.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">M (array)</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+<div class="section" id="uncurl-robust-state-estimation-module">
+<h2>uncurl.robust.state_estimation module<a class="headerlink" href="#uncurl-robust-state-estimation-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-uncurl.robust">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-uncurl.robust" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -108,8 +70,8 @@ genes (array): 1d array of all genes used in final iteration.</p>
   <ul>
 <li><a class="reference internal" href="#">uncurl.robust package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-uncurl.robust.state_estimation">uncurl.robust.state_estimation module</a></li>
-<li><a class="reference internal" href="#module-uncurl.robust">Module contents</a></li>
+<li><a class="reference internal" href="#uncurl-robust-state-estimation-module">uncurl.robust.state_estimation module</a></li>
+<li><a class="reference internal" href="#module-contents">Module contents</a></li>
 </ul>
 </li>
 </ul>

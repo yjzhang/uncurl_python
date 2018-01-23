@@ -88,6 +88,12 @@
       <li><a href="uncurl.html#uncurl.experiment_runner.BasicNMF">BasicNMF (class in uncurl.experiment_runner)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncurl.html#uncurl.experiment_runner.Bicluster">Bicluster (class in uncurl.experiment_runner)</a>
+</li>
+      <li><a href="uncurl.html#uncurl.qual2quant.binarize">binarize() (in module uncurl.qual2quant)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
@@ -95,9 +101,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncurl.html#uncurl.preprocessing.cell_normalize">cell_normalize() (in module uncurl.preprocessing)</a>
 </li>
+      <li><a href="uncurl.html#uncurl.experiment_runner.Cluster">Cluster (class in uncurl.experiment_runner)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="uncurl.html#uncurl.experiment_runner.Cluster">Cluster (class in uncurl.experiment_runner)</a>
+      <li><a href="uncurl.html#uncurl.experiment_runner.Cocluster">Cocluster (class in uncurl.experiment_runner)</a>
 </li>
       <li><a href="uncurl.scalable.html#uncurl.scalable.state_estimation.cost_grad">cost_grad() (in module uncurl.scalable.state_estimation)</a>
 </li>
@@ -125,8 +133,6 @@
 </li>
       <li><a href="uncurl.html#uncurl.experiment_runner.EnsembleNMF">EnsembleNMF (class in uncurl.experiment_runner)</a>
 </li>
-      <li><a href="uncurl.html#uncurl.experiment_runner.EnsembleNMFKm">EnsembleNMFKm (class in uncurl.experiment_runner)</a>
-</li>
       <li><a href="uncurl.html#uncurl.experiment_runner.EnsembleTsneLightLDASE">EnsembleTsneLightLDASE (class in uncurl.experiment_runner)</a>
 </li>
   </ul></td>
@@ -135,8 +141,6 @@
 </li>
       <li><a href="uncurl.html#uncurl.experiment_runner.EnsembleTsnePoissonSE">EnsembleTsnePoissonSE (class in uncurl.experiment_runner)</a>
 </li>
-      <li><a href="uncurl.html#uncurl.experiment_runner.EnsembleTSVDKm">EnsembleTSVDKm (class in uncurl.experiment_runner)</a>
-</li>
       <li><a href="uncurl.html#uncurl.experiment_runner.EnsembleTSVDPoissonSE">EnsembleTSVDPoissonSE (class in uncurl.experiment_runner)</a>
 </li>
   </ul></td>
@@ -144,10 +148,6 @@
 
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="uncurl.html#uncurl.qual2quant.find_bimodal">find_bimodal() (in module uncurl.qual2quant)</a>
-</li>
-  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncurl.html#uncurl.lineage.fourier_series">fourier_series() (in module uncurl.lineage)</a>
 </li>
@@ -267,14 +267,16 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncurl_pub.html#uncurl.nb_cluster">nb_cluster() (in module uncurl)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncurl_pub.html#uncurl.nb_estimate_state">nb_estimate_state() (in module uncurl)</a>
 
       <ul>
         <li><a href="uncurl.html#uncurl.nb_state_estimation.nb_estimate_state">(in module uncurl.nb_state_estimation)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncurl.html#uncurl.evaluation.nne">nne() (in module uncurl.evaluation)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -309,6 +311,8 @@
 </li>
       <li><a href="uncurl.html#uncurl.pois_ll.poisson_ll_2">poisson_ll_2() (in module uncurl.pois_ll)</a>
 </li>
+      <li><a href="uncurl.html#uncurl.qual2quant.poisson_test">poisson_test() (in module uncurl.qual2quant)</a>
+</li>
       <li><a href="uncurl.html#uncurl.experiment_runner.PoissonCluster">PoissonCluster (class in uncurl.experiment_runner)</a>
 </li>
       <li><a href="uncurl.html#uncurl.experiment_runner.PoissonSE">PoissonSE (class in uncurl.experiment_runner)</a>
@@ -339,6 +343,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncurl.html#uncurl.qual2quant.qualNorm_filter_genes">qualNorm_filter_genes() (in module uncurl.qual2quant)</a>
+</li>
       <li><a href="uncurl.html#uncurl.qual2quant.qualNormGaussian">qualNormGaussian() (in module uncurl.qual2quant)</a>
 </li>
   </ul></td>
@@ -347,14 +353,16 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="uncurl.robust.html#uncurl.robust.state_estimation.robust_estimate_state">robust_estimate_state() (in module uncurl.robust.state_estimation)</a>
-</li>
       <li><a href="uncurl.html#uncurl.experiment_runner.Argmax.run">run() (uncurl.experiment_runner.Argmax method)</a>
 
       <ul>
         <li><a href="uncurl.html#uncurl.experiment_runner.BasicNMF.run">(uncurl.experiment_runner.BasicNMF method)</a>
 </li>
+        <li><a href="uncurl.html#uncurl.experiment_runner.Bicluster.run">(uncurl.experiment_runner.Bicluster method)</a>
+</li>
         <li><a href="uncurl.html#uncurl.experiment_runner.Cluster.run">(uncurl.experiment_runner.Cluster method)</a>
+</li>
+        <li><a href="uncurl.html#uncurl.experiment_runner.Cocluster.run">(uncurl.experiment_runner.Cocluster method)</a>
 </li>
         <li><a href="uncurl.html#uncurl.experiment_runner.EnsembleClusterPoissonSE.run">(uncurl.experiment_runner.EnsembleClusterPoissonSE method)</a>
 </li>
@@ -429,8 +437,6 @@
 </li>
       <li><a href="uncurl.html#uncurl.preprocessing.sparse_var">sparse_var() (in module uncurl.preprocessing)</a>
 </li>
-      <li><a href="uncurl.html#uncurl.qual2quant.supervised_init">supervised_init() (in module uncurl.qual2quant)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -465,17 +471,13 @@
 </li>
       <li><a href="uncurl.html#module-uncurl.nb_state_estimation">uncurl.nb_state_estimation (module)</a>
 </li>
-      <li><a href="uncurl.html#module-uncurl.pois_ll">uncurl.pois_ll (module)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncurl.html#module-uncurl.pois_ll">uncurl.pois_ll (module)</a>
+</li>
       <li><a href="uncurl.html#module-uncurl.preprocessing">uncurl.preprocessing (module)</a>
 </li>
       <li><a href="uncurl.html#module-uncurl.qual2quant">uncurl.qual2quant (module)</a>
-</li>
-      <li><a href="uncurl.robust.html#module-uncurl.robust">uncurl.robust (module)</a>
-</li>
-      <li><a href="uncurl.robust.html#module-uncurl.robust.state_estimation">uncurl.robust.state_estimation (module)</a>
 </li>
       <li><a href="uncurl.scalable.html#module-uncurl.scalable">uncurl.scalable (module)</a>
 </li>
