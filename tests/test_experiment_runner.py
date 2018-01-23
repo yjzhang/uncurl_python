@@ -48,3 +48,4 @@ class ExperimentRunnerTest(TestCase):
         self.assertTrue('clusterings' in other)
         self.assertTrue('timing' in other)
         self.assertTrue('preprocessing' in other)
+        self.assertTrue(results[0][0]>0.95)

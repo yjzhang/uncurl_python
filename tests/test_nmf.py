@@ -16,7 +16,14 @@ class NMFTest(TestCase):
         self.data_sparse = sparse.csc_matrix(self.data)
         self.labs = dat['Lab'][0]
 
-    def test_run_nmf(self):
+    def test_run_lognorm_nmf(self):
         w, h, cost = uncurl.nmf_wrapper.log_norm_nmf(self.data, 2)
         labs = h.argmax(0)
         self.assertTrue(uncurl.evaluation.purity(labs, self.labs) > 0.85)
+
+    def test_run_norm_nmf(self):
+        w, h = uncurl.nmf_wrapper.norm_nmf(self.data, 2)
+        labs = h.argmax(0)
+        self.assertTrue(uncurl.evaluation.purity(labs, self.labs) > 0.8)
+
+
