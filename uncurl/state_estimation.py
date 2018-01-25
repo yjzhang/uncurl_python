@@ -19,6 +19,7 @@ from scipy import sparse
 from scipy.optimize import minimize
 from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD
+from sklearn.utils.extmath import randomized_svd
 
 eps=1e-8
 
@@ -212,13 +213,16 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                     max_assign_weight)
             means = initialize_means(data, assignments, clusters)
         elif initialization=='tsvd':
-            tsvd = TruncatedSVD(min(50, genes-1))
+            n_components = min(50, genes-1)
+            #tsvd = TruncatedSVD(min(50, genes-1))
             km = KMeans(clusters)
             # TODO: remove dependence on sklearn tsvd b/c it has a bug that
-            # prevents it from working properly on long inputs
-            # (but how often will people use long inputs anyways? when you
-            # need like 50gb of memory just to store the data...)
-            data_reduced = tsvd.fit_transform(log1p(cell_normalize(data)).T)
+            # prevents it from working properly on long inputs 
+            # if num elements > 2**31
+            #data_reduced = tsvd.fit_transform(log1p(cell_normalize(data)).T)
+            U, Sigma, VT = randomized_svd(log1p(cell_normalize(data)).T,
+                    n_components)
+            data_reduced = U*Sigma
             assignments = km.fit_predict(data_reduced)
             init_weights = initialize_from_assignments(assignments, clusters,
                     max_assign_weight)
