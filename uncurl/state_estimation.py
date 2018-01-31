@@ -1,13 +1,12 @@
 # state estimation with poisson convex mixture model
 
 from .clustering import kmeans_pp, poisson_cluster
-from uncurl.nolips import nolips_update_w, objective, sparse_objective, sparse_objective_long
+from uncurl.nolips import nolips_update_w, objective, sparse_objective
 from uncurl.nolips import sparse_nolips_update_w
 # try to use parallel; otherwise
 #from uncurl.nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
 try:
     from uncurl.nolips_parallel import sparse_nolips_update_w as parallel_sparse_nolips_update_w
-    from uncurl.nolips_parallel import sparse_nolips_update_w_long as parallel_sparse_nolips_update_w_long
 except:
     print('Warning: cannot import sparse nolips')
     # if parallel can't be used, do not use parallel update function...
@@ -138,7 +137,7 @@ def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True,
         nolips_iters = inner_max_iters
         for j in range(nolips_iters):
             if is_sparse and parallel:
-                w_new = update_fn(X, means, w_init, Xsum, n_threads=threads)
+                w_new = update_fn(X.data, X.indices, X.indptr, X.shape[1], X.shape[0], means, w_init, Xsum, n_threads=threads)
             else:
                 w_new = update_fn(X, means, w_init, Xsum)
             #w_new = w_res.x.reshape((clusters, cells))
@@ -159,6 +158,10 @@ def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True,
         w_new = w_res.x.reshape((clusters, cells))
         w_init = w_new
     return w_new
+
+def _call_sparse_obj(X, M, W):
+    return sparse_objective(X.data, X.indices, X.indptr, X.shape[1], X.shape[0],
+            M, W)
 
 
 def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=True, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False):
@@ -264,15 +267,11 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         XT = sparse.csc_matrix(XT)
         if parallel:
             update_fn = parallel_sparse_nolips_update_w
-            if X.indptr.dtype == np.int64:
-                update_fn = parallel_sparse_nolips_update_w_long
         Xsum = np.asarray(X.sum(0)).flatten()
         Xsum_m = np.asarray(X.sum(1)).flatten()
         # L-BFGS-B won't work right now for sparse matrices
         method = 'NoLips'
-        objective_fn = sparse_objective
-        if X.indptr.dtype == np.int64:
-            objective_fn = sparse_objective_long
+        objective_fn = _call_sparse_obj
     else:
         objective_fn = objective
         update_fn = nolips_update_w
@@ -290,11 +289,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                 update_fn = sparse_nolips_update_w
                 if parallel:
                     update_fn = parallel_sparse_nolips_update_w
-                    if X.indptr.dtype == np.int64:
-                        update_fn = parallel_sparse_nolips_update_w_long
-                objective_fn = sparse_objective
-                if X.indptr.dtype == np.int64:
-                    objective_fn = sparse_objective_long
+                objective_fn = _call_sparse_obj
     w_new = w_init
     for i in range(max_iters):
         if disp:

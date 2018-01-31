@@ -150,7 +150,7 @@ Example:
 Dimensionality Reduction
 ------------------------
 
-We recommend using standard dimensionality reduction techniques such as t-SNE and PCA. They can be run on either W or ``MW = M.dot(W)``. When running t-SNE on MW, we suggest taking the log and then doing a PCA or truncated SVD, as you would do for the original input data. This is the basis for the UNCURL + tSNE results in our paper. When using t-SNE on W, we suggest using a symmetric relative entropy based metric, which is available as ``uncurl.sparse_utils.symmetric_kld`` (this can be passed in to scikit-learn's t-SNE implementation). Cosine distance has also worked better than Euclidean distance on W.
+We recommend using standard dimensionality reduction techniques such as t-SNE and PCA. They can be run on either W or ``MW = M.dot(W)``. When running t-SNE on MW, we suggest taking the log and then doing a PCA or truncated SVD, as you would do for the original input data. This is the basis for the UNCURL + tSNE results in our paper. When using t-SNE on W, we suggest using a symmetric relative entropy metric, which is available as ``uncurl.sparse_utils.symmetric_kld`` (this can be passed in to scikit-learn's t-SNE implementation). Cosine distance has also worked better than Euclidean distance on W.
 
 Alternatively, we provide an MDS-based dimensionality reduction method that takes advantage of the convex mixture model. It is generally less accurate than t-SNE, but much faster. See `docs for unsupported methods <https://yjzhang.github.io/uncurl_python/unsupported_methods.html#dimensionality-reduction>`_.
 

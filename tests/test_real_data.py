@@ -46,7 +46,7 @@ class RealDataTest(TestCase):
         data_subset = self.data_z[genes,:]
         # smaller # of iterations than default so it finishes faster...
         se = uncurl.experiment_runner.PoissonSE(clusters=7, max_iters=10,
-                inner_max_iters=50)
+                inner_max_iters=80)
         argmax = uncurl.experiment_runner.Argmax(n_classes=7)
         km = uncurl.experiment_runner.KM(n_classes=7)
         methods = [(se, [argmax, km])]

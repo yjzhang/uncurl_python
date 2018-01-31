@@ -12,7 +12,18 @@ from scipy import sparse
 import numpy as np
 cimport numpy as np
 DTYPE = np.double
-ctypedef np.double_t DTYPE_t
+#ctypedef np.double_t DTYPE_t
+
+ctypedef fused int2:
+    short
+    int
+    long
+    long long
+
+ctypedef fused DTYPE_t:
+    float
+    double
+
 
 cdef double eps = 1e-10
 
@@ -25,7 +36,7 @@ mx_cache = {}
 @cython.nonecheck(False)
 def nolips_update_w(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, np.ndarray[DTYPE_t, ndim=1] Xsum, disp=False):
     """
-    Iteratively runs nolips updates.
+    Iteratively runs nolips updates for a dense input matrix X.
     """
     cdef int cells = X.shape[1]
     cdef int genes = X.shape[0]
@@ -92,25 +103,26 @@ def cost(np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarra
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
+def sparse_objective(np.ndarray[DTYPE_t, ndim=1] X_data,
+        np.ndarray[int2, ndim=1] X_indices,
+        np.ndarray[int2, ndim=1] X_indptr,
+        Py_ssize_t cells,
+        Py_ssize_t genes,
+        np.ndarray[DTYPE_t, ndim=2] M,
+        np.ndarray[DTYPE_t, ndim=2] W):
     """
-    Calculates the Convex Poisson Mixture objective value for a sparse matrix x.
+    Calculates the Convex Poisson Mixture objective value for a CSC matrix x.
     """
-    cdef int cells = X.shape[1]
-    cdef int genes = X.shape[0]
-    cdef int clusters = W.shape[0]
-    cdef double d
-    cdef Py_ssize_t i, ind, g, c, start_ind, end_ind
-    cdef double obj = 0
-    # use a csc matrix, iterate through 
-    X_csc = sparse.csc_matrix(X)
-    cdef int[:] indices, indptr
-    indices = X_csc.indices
-    indptr = X_csc.indptr
-    cdef double[:] data_ = X_csc.data
+    cdef Py_ssize_t clusters = W.shape[0]
+    cdef DTYPE_t[:] data_ = X_data
+    cdef int2[:] indices = X_indices
+    cdef int2[:] indptr = X_indptr
+    cdef int2 i, ind, g, c, start_ind, end_ind
     cdef double[:] mw = np.zeros(len(data_))
     cdef double[:,:] m_view = M
     cdef double[:,:] w_view = W
+    cdef double d
+    cdef double obj = 0
     with nogil:
         for i in range(cells):
             c = i
@@ -131,47 +143,6 @@ def sparse_objective(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=
                 obj += m_view[g,k]*w_view[k,c]
     return obj/genes
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-def sparse_objective_long(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
-    """
-    Calculates the Convex Poisson Mixture objective value for a sparse matrix x.
-    """
-    cdef int cells = X.shape[1]
-    cdef int genes = X.shape[0]
-    cdef int clusters = W.shape[0]
-    cdef double d
-    cdef Py_ssize_t i, ind, g, c, start_ind, end_ind
-    cdef double obj = 0
-    # use a csc matrix, iterate through 
-    X_csc = sparse.csc_matrix(X)
-    cdef long[:] indices, indptr
-    indices = X_csc.indices.astype(np.int64)
-    indptr = X_csc.indptr.astype(np.int64)
-    cdef double[:] data_ = X_csc.data
-    cdef double[:] mw = np.zeros(len(data_))
-    cdef double[:,:] m_view = M
-    cdef double[:,:] w_view = W
-    with nogil:
-        for i in range(cells):
-            c = i
-            start_ind = indptr[i]
-            end_ind = indptr[i+1]
-            for ind in range(start_ind, end_ind):
-                g = indices[ind]
-                d = 0
-                for k in range(clusters):
-                    d += M[g,k]*W[k,c]
-                mw[ind] = d
-    cdef np.ndarray[DTYPE_t, ndim=1] D = np.asarray(mw)
-    cdef np.ndarray[DTYPE_t, ndim=1] data = np.asarray(data_)
-    obj = np.sum(-data*np.log(D))
-    for c in range(cells):
-        for g in range(genes):
-            for k in range(clusters):
-                obj += m_view[g,k]*w_view[k,c]
-    return obj/genes
 
 def cost(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
     """
@@ -205,7 +176,6 @@ def sparse_nolips_update_w(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t,
     cdef int[:] indptr = X_csc.indptr
     cdef double[:] data_ = X_csc.data
     cdef double[:,:] cij = np.zeros((cells, k))
-    # based on timing results, it seems that parallel w/guided schedule and 4 threads only improves runtime by 10%
     with nogil:
         for i in range(cells):
             start_ind = indptr[i]

@@ -9,7 +9,7 @@ import numpy as np
 from scipy import sparse
 
 from uncurl import state_estimation, simulation
-from uncurl.nolips import objective, sparse_objective, sparse_objective_long
+from uncurl.nolips import objective, sparse_objective
 
 class SparseStateEstimationTest(TestCase):
 
@@ -134,7 +134,10 @@ class SparseStateEstimationTest(TestCase):
         sim_data = sparse.csc_matrix(sim_data)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='tsvd', threads=1)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        obj = sparse_objective(sim_data, m, w)
+        obj = sparse_objective(sim_data.data,
+                sim_data.indices,
+                sim_data.indptr,
+                200, 20, m, w)
         self.assertEqual(ll, obj)
         dense_obj = objective(sim_data.toarray(), m, w)
         self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
@@ -157,7 +160,10 @@ class SparseStateEstimationTest(TestCase):
         sim_data = sparse.csc_matrix(sim_data)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=True, initialization='tsvd', threads=1, run_w_first=False)
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        obj = sparse_objective(sim_data, m, w)
+        obj = sparse_objective(sim_data.data,
+                sim_data.indices,
+                sim_data.indptr,
+                200, 20, m, w)
         self.assertEqual(ll, obj)
         dense_obj = objective(sim_data.toarray(), m, w)
         self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
@@ -182,7 +188,10 @@ class SparseStateEstimationTest(TestCase):
         sim_data.indptr = sim_data.indptr.astype(np.int64)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='tsvd')
         self.assertTrue(np.max(w.sum(0) - 1.0)<0.001)
-        obj = sparse_objective_long(sim_data, m, w)
+        obj = sparse_objective(sim_data.data,
+                sim_data.indices,
+                sim_data.indptr,
+                200, 20, m, w)
         self.assertEqual(ll, obj)
         dense_obj = objective(sim_data.toarray(), m, w)
         self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
@@ -205,7 +214,10 @@ class SparseStateEstimationTest(TestCase):
         sim_data = simulation.generate_state_data(sim_m, sim_w)
         sim_data = sparse.csc_matrix(sim_data)
         m, w, ll = state_estimation.poisson_estimate_state(sim_data, 2, max_iters=10, disp=False, initialization='cluster')
-        obj = sparse_objective(sim_data, m, w)
+        obj = sparse_objective(sim_data.data,
+                sim_data.indices,
+                sim_data.indptr,
+                20, 200, m, w)
         self.assertEqual(ll, obj)
         dense_obj = objective(sim_data.toarray(), m, w)
         self.assertTrue(np.abs(obj-dense_obj) < 1e-6)
