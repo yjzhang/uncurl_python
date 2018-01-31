@@ -49,8 +49,11 @@ Example:
 
     M2, W2, cost = run_state_estimation(data_subset, clusters=4, dist='LogNorm')
 
+Details
+^^^^^^^
+``run_state_estimation`` is actually a wrapper around several other functions for state estimation.
 
-The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. The input is of shape (genes, cells). It has three outputs: two matrices ``M`` and ``W``, and ``ll``, the negative log-likelihood. M is a (genes, clusters) matrix, and W is a (clusters, cells) matrix where each column sums to 1. The outputs ``W`` and ``M*W`` can be used for further visualization or dimensionality reduction, such as with t-SNE, or the MDS-based method described later.
+The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. The input is of shape (genes, cells). It has three outputs: two matrices ``M`` and ``W``, and ``ll``, the negative log-likelihood. M is a (genes, clusters) matrix, and W is a (clusters, cells) matrix where each column sums to 1. The outputs ``W`` and ``M*W`` can be used for further visualization or dimensionality reduction, as described latter.
 
 There are a number of different initialization methods and options for ``poisson_estimate_state``. By default, it is initialized using truncated SVD + K-means, but it can also be initialized using ``poisson_cluster`` or just K-means.
 
@@ -72,8 +75,6 @@ Example:
     # initialization by providing means and weights
     assignments_p, centers = poisson_cluster(data_subset, 2)
     M, W, ll = poisson_estimate_state(data_subset, 2, init_means=centers, init_weights=assignments_p)
-
-
 
 The ``log_norm_nmf`` function is a wrapper around scikit-Learn's NMF class that performs a log-transform and per-cell count normalization before running NMF. It returns two matrices, W and H, which correspond to the M and W returned by ``poisson_estimate_state``. It can also take sparse matrix inputs.
 
@@ -149,64 +150,14 @@ Example:
 Dimensionality Reduction
 ------------------------
 
-Dimensionality reduction can be performed using the results of state estimation, by converting the output means of state estimation into a projection matrix. 
+We recommend using standard dimensionality reduction techniques such as t-SNE and PCA. They can be run on either W or ``MW = M.dot(W)``. When running t-SNE on MW, we suggest taking the log and then doing a PCA or truncated SVD, as you would do for the original input data. This is the basis for the UNCURL + tSNE results in our paper. When using t-SNE on W, we suggest using a symmetric relative entropy based metric, which is available as ``uncurl.sparse_utils.symmetric_kld`` (this can be passed in to scikit-learn's t-SNE implementation). Cosine distance has also worked better than Euclidean distance on W.
 
-Alternatively, ``dim_reduce_data`` function performs dimensionality reduction using MDS. 
-
-Example:
-
-.. code-block:: python
-
-    import numpy as np
-    from uncurl import mds, dim_reduce_data
-
-    data = np.loadtxt('counts.txt')
-
-    # dimensionality reduction using MDS on state estimation means
-    M, W, ll = poisson_estimate_state(data, 2)
-    # proj is a 2d projection of the data.
-    proj = mds(M, W, 2)
-
-    # you should probably use mds from scikit-learn instead of this method.
-    data_reduced = dim_reduce_data(data, 2)
-
-
-In addition to using MDS, it's easy to use standard dimensionality reduction techniques such as t-SNE and PCA. When using t-SNE on W (from ``poisson_estimate_state``), we recommend using a symmetric relative entropy based metric, which is available as ``uncurl.sparse_utils.symmetric_kld``. Cosine distance has also worked better than Euclidean distance on W.
+Alternatively, we provide an MDS-based dimensionality reduction method that takes advantage of the convex mixture model. It is generally less accurate than t-SNE, but much faster. See `docs for unsupported methods <https://yjzhang.github.io/uncurl_python/unsupported_methods.html#dimensionality-reduction>`_.
 
 
 Lineage Estimation & Pseudotime
 -------------------------------
 
-The ``lineage`` function performs lineage estimation from the output of ``poisson_estimate_state``. It fits the data to a different 5th degree polynomial for each cell type.
+The output MW of UNCURL can be used as input for other lineage estimation tools.
 
-The ``pseudotime`` function calculates the pseudotime for each cell given the output of ``lineage`` and a starting cell.
-
-Example (including visualization):
-
-.. code-block:: python
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    from uncurl import poisson_estimate_state, mds, lineage, pseudotime
-
-    data = np.loadtxt('counts.txt')
-    # pretend that there are three natural clusters in the dataset.
-    M, W = poisson_estimate_state(data, 3)
-
-    curve_params, smoothed_points, edges, cell_assignments = lineage(M, W)
-
-    # assume the "root" is cell 0
-    ptime = pseudotime(0, edges, smoothed_points)
-
-    # visualizing the lineage
-    proj = mds(M, W, 2)
-
-    plt.scatter(proj[0,:], proj[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)
-    plt.scatter(smoothed_points[0,:], smoothed_points[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)
-    # connect the lines
-    for edge in edges:
-        plt.plot((smoothed_points[0, edge[0]], smoothed_points[0, edge[1]]),
-                (smoothed_points[1, edge[0]], smoothed_points[1, edge[1]]), 'black', linewidth=2)
-    plt.xlabel('dim 1')
-    plt.ylabel('dim 2')
+We also have implemented our own lineage estimation tools but have not thoroughly validated them. See `docs for unsupported methods <https://yjzhang.github.io/uncurl_python/unsupported_methods.html#lineage-estimation>`_.

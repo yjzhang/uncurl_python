@@ -6,13 +6,13 @@
 Welcome to UNCURL's documentation!
 ==================================
 
-Hello! Testing...
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    readme_link
+   unsupported_methods
    uncurl_pub
    uncurl
 
