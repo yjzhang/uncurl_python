@@ -8,6 +8,8 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
+from libc.math cimport log2
+
 from scipy import sparse
 from scipy.special import xlogy
 
@@ -298,9 +300,15 @@ def symmetric_kld(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2
     """
     Gets the symmetric KL divergence between the two points
     (assuming that they're of equal length, and both are probability distributions)
+
+    DOES NOT NORMALIZE THE INPUTS. If the inputs are bad, then the output will be bad.
     """
-    p1 = p1/p1.sum()
-    p2 = p2/p2.sum()
-    cdef np.ndarray[DTYPE_t, ndim=1] pq = p1*np.log(p1/(p2+eps))
-    cdef np.ndarray[DTYPE_t, ndim=1] qp = p2*np.log(p2/(p1+eps))
-    return pq.sum() + qp.sum()
+    cdef int i = 0
+    cdef double[:] p1_view = p1
+    cdef double[:] p2_view = p2
+    cdef double kl1 = 0.0
+    for i in range(len(p1)):
+        kl1 += p1_view[i]*log2(p1_view[i]/(p2_view[i]+eps))
+        kl1 += p2_view[i]*log2(p2_view[i]/(p1_view[i]+eps))
+    return kl1
+
