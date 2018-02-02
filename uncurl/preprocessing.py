@@ -10,10 +10,12 @@ from uncurl.sparse_utils import sparse_cell_normalize
 def sparse_var(data):
     """
     Calculates the variance for each row of a sparse matrix.
+
+    Timing; 4.170 s for 73233 cells, 32738 genes
     """
-    data_csr = sparse.csr_matrix(data, dtype=np.float64)
-    means = np.array(data_csr.mean(1)).flatten()
-    sq = data_csr.power(2)
+    # means for each gene
+    means = np.array(data.mean(1)).flatten()
+    sq = data.power(2)
     means_2 = np.array(sq.mean(1)).flatten()
     var = means_2 - means**2
     return var
@@ -31,6 +33,15 @@ def max_variance_genes(data, nbins=5, frac=0.2):
     Returns:
         list of gene indices (list of ints)
     """
+    # TODO: profile, make more efficient for large matrices
+    # 8000 cells: 0.325 seconds
+    # top time: sparse.csc_tocsr, csc_matvec, astype, copy, mul_scalar
+    # 73233 cells: 5.347 seconds, 4.762 s in sparse_var
+    # csc_tocsr: 1.736 s
+    # copy: 1.028 s
+    # astype: 0.999 s
+    # there is almost certainly something superlinear in this method
+    # maybe it's to_csr?
     indices = []
     means = data.mean(1)
     if sparse.issparse(data):
@@ -64,8 +75,9 @@ def cell_normalize(data):
     data_norm = data.copy().astype(float)
     total_umis = []
     for i in range(data.shape[1]):
-        total_umis.append(data_norm[:,i].sum())
-        data_norm[:,i] /= total_umis[i]
+        di = data_norm[:,i]
+        total_umis.append(di.sum())
+        di /= total_umis[i]
     med = np.median(total_umis)
     data_norm *= med
     return data_norm
