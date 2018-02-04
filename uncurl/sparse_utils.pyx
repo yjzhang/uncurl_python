@@ -312,3 +312,25 @@ def symmetric_kld(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2
         kl1 += p2_view[i]*log2(p2_view[i]/(p1_view[i]+eps))
     return kl1
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def jensen_shannon(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2,
+        eps=1e-10):
+    """
+    Jensen-Shannon divergence
+    (assuming that they're of equal length, and both are probability distributions)
+
+    DOES NOT NORMALIZE THE INPUTS. If the inputs are bad, then the output will be bad.
+    """
+    cdef int i = 0
+    cdef double[:] p1_view = p1
+    cdef double[:] p2_view = p2
+    cdef double kl1 = 0.0
+    cdef double m
+    for i in range(len(p1)):
+        m = (p1_view[i]+p2_view[i])/2 + eps
+        kl1 += p1_view[i]*log2(p1_view[i]/(m))
+        kl1 += p2_view[i]*log2(p2_view[i]/(m))
+    return kl1
+

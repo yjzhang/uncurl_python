@@ -26,6 +26,7 @@ from sklearn.metrics.cluster import adjusted_rand_score as ari
 from sklearn.decomposition import NMF, TruncatedSVD, PCA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
+from sklearn.cluster.bicluster import SpectralBiclustering, SpectralCoclustering
 
 try:
     import Cluster_Ensembles as CE
@@ -62,7 +63,7 @@ from .lightlda_utils import lightlda_estimate_state
 from .plda_utils import plda_estimate_state
 from .vis import visualize_dim_red
 
-from uncurl.sparse_utils import symmetric_kld
+from uncurl.sparse_utils import symmetric_kld, jensen_shannon
 
 
 class Preprocess(object):
@@ -151,6 +152,8 @@ class Tsne(Preprocess):
         self.output_names = ['TSNE']
         if metric=='kld':
             metric = symmetric_kld
+        elif metric == 'jensen-shannon':
+            metric = jensen_shannon
         self.tsne = TSNE(2, metric=metric)
         super(Tsne, self).__init__(**params)
 
@@ -694,6 +697,18 @@ class Magic(Preprocess):
             outputs.append(scdata.magic.pca.as_matrix().T)
         return outputs, 0
 
+class LoadPreproc(Preprocess):
+    """
+    takes preprocessed data matrix, just return that when run is called
+    """
+    def __init__(self, datasets, **params):
+        self.datasets = datasets
+        super(LoadPreproc, self).__init__(**params)
+
+    def run(self, data):
+        return self.datasets, 0
+
+
 class Cluster(object):
     """
     Clustering methods take in a matrix of shape k x cells, and
@@ -817,17 +832,41 @@ class SimlrKm(Cluster):
         y_pred = self.simlr.fast_minibatch_kmeans(data.T, 8)
         return y_pred.flatten()
 
-class EnsembleNMFKm(Cluster):
+class Bicluster(Cluster):
     """
-    Returns the result of ensemble clustering of 10 NMF-tSNE-KMeans runs.
+    Spectral Biclustering
     """
-    # TODO
 
-class EnsembleTSVDKm(Cluster):
+    def __init__(self, n_classes, n_gene_classes=10, **params):
+        super(Bicluster, self).__init__(n_classes, **params)
+        self.n_gene_classes = n_gene_classes
+        self.name = 'SpectralBicluster'
+
+    def run(self, data):
+        bc = SpectralBiclustering(n_clusters=(self.n_gene_classes, self.n_classes))
+        bc.fit(data)
+        gene_clusters = bc.row_labels_
+        cell_clusters = bc.column_labels_
+        return cell_clusters
+
+class Cocluster(Cluster):
     """
-    Returns the result of ensemble clustering of 10 TSVD-KMeans runs.
+    Spectral Coclustering
     """
-    # TODO
+
+    def __init__(self, n_classes, n_gene_classes=10, **params):
+        super(Cocluster, self).__init__(n_classes, **params)
+        self.n_gene_classes = n_gene_classes
+        self.name = 'SpectralCocluster'
+
+    def run(self, data):
+        bc = SpectralCoclustering(n_clusters=(self.n_gene_classes, self.n_classes))
+        bc.fit(data)
+        gene_clusters = bc.row_labels_
+        cell_clusters = bc.column_labels_
+        return cell_clusters
+
+
 
 def run_experiment(methods, data, n_classes, true_labels, n_runs=10, use_purity=True, use_nmi=False, use_ari=False, use_nne=False, consensus=False):
     """
