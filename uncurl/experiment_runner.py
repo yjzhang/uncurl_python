@@ -143,13 +143,18 @@ class TSVD(Preprocess):
 class Tsne(Preprocess):
     """
     2d tsne dimensionality reduction - tsne always uses 2d
+
+    metric is a string that could be any metric usable with tsne, or 'kld'
+    or 'jensen-shannon'
     """
 
     def __init__(self, metric='euclidean', **params):
         """
-        metric can be any metric usable with tsne.
+        metric (str) can be any metric usable with tsne.
         """
         self.output_names = ['TSNE']
+        if self.metric != 'euclidean':
+            self.output_names = ['TSNE_' + metric]
         if metric=='kld':
             metric = symmetric_kld
         elif metric == 'jensen-shannon':
