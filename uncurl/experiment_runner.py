@@ -153,7 +153,7 @@ class Tsne(Preprocess):
         metric (str) can be any metric usable with tsne.
         """
         self.output_names = ['TSNE']
-        if self.metric != 'euclidean':
+        if metric != 'euclidean':
             self.output_names = ['TSNE_' + metric]
         if metric=='kld':
             metric = symmetric_kld
