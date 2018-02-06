@@ -6,12 +6,18 @@ There are a number of unsupported or experimental methods part of the UNCURL pac
 Alternative state estimation methods
 ------------------------------------
 
-We provide implementations of the convex mixture model for the negative binomial (NB) and zero-inflated Poisson (ZIP) distributions.
+We provide implementations of the convex mixture model for the negative binomial (NB) and zero-inflated Poisson (ZIP) distributions. In our experiments they did not work as well as the Poisson model on most datasets.
 
 Alternative clustering methods
 ------------------------------
 
 As with state estimation, we provide NB and ZIP versions of k-means.
+
+Ensemble Methods
+----------------
+
+Consensus clustering, etc. 
+
 
 Dimensionality reduction
 ------------------------
@@ -74,3 +80,5 @@ Example (including visualization):
 
 Visualization
 -------------
+
+see ``vis.py``

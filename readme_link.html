@@ -169,13 +169,23 @@
 </div>
 <div class="section" id="dimensionality-reduction">
 <h2>Dimensionality Reduction<a class="headerlink" href="#dimensionality-reduction" title="Permalink to this headline">¶</a></h2>
-<p>We recommend using standard dimensionality reduction techniques such as t-SNE and PCA. They can be run on either W or <code class="docutils literal"><span class="pre">MW</span> <span class="pre">=</span> <span class="pre">M.dot(W)</span></code>. When running t-SNE on MW, we suggest taking the log and then doing a PCA or truncated SVD, as you would do for the original input data. This is the basis for the UNCURL + tSNE results in our paper. When using t-SNE on W, we suggest using a symmetric relative entropy based metric, which is available as <code class="docutils literal"><span class="pre">uncurl.sparse_utils.symmetric_kld</span></code> (this can be passed in to scikit-learn&#8217;s t-SNE implementation). Cosine distance has also worked better than Euclidean distance on W.</p>
+<p>We recommend using standard dimensionality reduction techniques such as t-SNE and PCA. They can be run on either W or <code class="docutils literal"><span class="pre">MW</span> <span class="pre">=</span> <span class="pre">M.dot(W)</span></code>. When running t-SNE on MW, we suggest taking the log and then doing a PCA or truncated SVD, as you would do for the original input data. This is the basis for the UNCURL + tSNE results in our paper. When using t-SNE on W, we suggest using a symmetric relative entropy metric, which is available as <code class="docutils literal"><span class="pre">uncurl.sparse_utils.symmetric_kld</span></code> (this can be passed in to scikit-learn&#8217;s t-SNE implementation). Cosine distance has also worked better than Euclidean distance on W.</p>
 <p>Alternatively, we provide an MDS-based dimensionality reduction method that takes advantage of the convex mixture model. It is generally less accurate than t-SNE, but much faster. See <a class="reference external" href="https://yjzhang.github.io/uncurl_python/unsupported_methods.html#dimensionality-reduction">docs for unsupported methods</a>.</p>
 </div>
 <div class="section" id="lineage-estimation-pseudotime">
 <h2>Lineage Estimation &amp; Pseudotime<a class="headerlink" href="#lineage-estimation-pseudotime" title="Permalink to this headline">¶</a></h2>
 <p>The output MW of UNCURL can be used as input for other lineage estimation tools.</p>
 <p>We also have implemented our own lineage estimation tools but have not thoroughly validated them. See <a class="reference external" href="https://yjzhang.github.io/uncurl_python/unsupported_methods.html#lineage-estimation">docs for unsupported methods</a>.</p>
+</div>
+<div class="section" id="included-datasets">
+<h2>Included datasets<a class="headerlink" href="#included-datasets" title="Permalink to this headline">¶</a></h2>
+<p>Real datasets:</p>
+<p>10x_pooled_400.mat: 50 cells each from 8 cell types: CD19+ b cells, CD14+ monocytes, CD34+, CD56+ NK, CD4+/CD45RO+ memory t, CD8+/CD45RA+ naive cytotoxic, CD4+/CD45RA+/CD25- naive t, and CD4+/CD25 regulatory t. Source: <a class="reference external" href="https://support.10xgenomics.com/single-cell-gene-expression/datasets">10x genomics</a>.</p>
+<p>GSE60361_dat.mat: subset of data from <a class="reference external" href="http://linnarssonlab.org/cortex">Zelsel et al. 2015</a>.</p>
+<p>SCDE_test.mat: data from <a class="reference external" href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE29087">Islam et al. 2011</a>.</p>
+<p>Synthetic datasets:</p>
+<p>BranchedSynDat.mat: simulated lineage dataset with 3 branches</p>
+<p>SynMouseESprog_1000.mat: simulated lineage dataset showing linear differentiation</p>
 </div>
 </div>
 
@@ -198,6 +208,7 @@
 <li><a class="reference internal" href="#clustering">Clustering</a></li>
 <li><a class="reference internal" href="#dimensionality-reduction">Dimensionality Reduction</a></li>
 <li><a class="reference internal" href="#lineage-estimation-pseudotime">Lineage Estimation &amp; Pseudotime</a></li>
+<li><a class="reference internal" href="#included-datasets">Included datasets</a></li>
 </ul>
 </li>
 </ul>

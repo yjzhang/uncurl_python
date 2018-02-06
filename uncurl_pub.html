@@ -26,9 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="uncurl package" href="uncurl.html" />
-    <link rel="prev" title="Details on unsupported methods" href="unsupported_methods.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,12 +38,6 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="uncurl.html" title="uncurl package"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="unsupported_methods.html" title="Details on unsupported methods"
-             accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
       </ul>
     </div>  
@@ -176,7 +168,7 @@ R (array): genes x k - value is inf for genes with mean &gt; var</p>
 <h2>uncurl.poisson_estimate_state<a class="headerlink" href="#uncurl-poisson-estimate-state" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.poisson_estimate_state">
-<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em>, <em>run_w_first=True</em>, <em>constrain_w=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=False</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em>, <em>run_w_first=True</em>, <em>constrain_w=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
 <p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
@@ -192,8 +184,8 @@ cell state mixing weights.</p>
 <li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
 <li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 30</li>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
-<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 120</li>
+<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization progress. Default: False</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 100</li>
 <li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
 <li><strong>initialization</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; If initial means and weights are not provided, this describes how they are initialized. Options: &#8216;cluster&#8217; (poisson cluster for means and weights), &#8216;kmpp&#8217; (kmeans++ for means, random weights), &#8216;km&#8217; (regular k-means), &#8216;tsvd&#8217; (tsvd(50) + k-means). Default: tsvd.</li>
 <li><strong>parallel</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether to use parallel updates (sparse NoLips only). Default: True</li>
@@ -366,12 +358,6 @@ cell cluster assignments: list of ints</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="unsupported_methods.html"
-                        title="previous chapter">Details on unsupported methods</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="uncurl.html"
-                        title="next chapter">uncurl package</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -402,12 +388,6 @@ cell cluster assignments: list of ints</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="uncurl.html" title="uncurl package"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="unsupported_methods.html" title="Details on unsupported methods"
-             >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
       </ul>
     </div>

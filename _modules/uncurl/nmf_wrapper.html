@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>uncurl.nmf_wrapper &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for uncurl.nmf_wrapper</h1><div class="highlight"><pre>
+<span></span><span class="c1"># wrapper for various NMF methods</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">NMF</span><span class="p">,</span> <span class="n">non_negative_factorization</span>
+
+<span class="kn">from</span> <span class="nn">.preprocessing</span> <span class="k">import</span> <span class="n">log1p</span><span class="p">,</span> <span class="n">cell_normalize</span>
+<span class="kn">from</span> <span class="nn">.state_estimation</span> <span class="k">import</span> <span class="n">initialize_from_assignments</span>
+
+<div class="viewcode-block" id="nmf_init"><a class="viewcode-back" href="../../uncurl.html#uncurl.nmf_wrapper.nmf_init">[docs]</a><span class="k">def</span> <span class="nf">nmf_init</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;enhanced&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates initial M and W given a data set and an array of cluster labels.</span>
+
+<span class="sd">    There are 3 options for init:</span>
+<span class="sd">        enhanced - uses EIn-NMF from Gong 2013</span>
+<span class="sd">        basic - uses means for M, assigns W such that the chosen cluster for a given cell has value 0.75 and all others have 0.25/(k-1).</span>
+<span class="sd">        nmf - uses means for M, and assigns W using the NMF objective while holding M constant.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">init_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">k</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[:,</span><span class="n">clusters</span><span class="o">==</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">point</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">init_m</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">point</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">init_m</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">clusters</span><span class="o">==</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[:,</span><span class="n">clusters</span><span class="o">==</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">point</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">init_m</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">point</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">init_m</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">clusters</span><span class="o">==</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">init_w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">init</span> <span class="o">==</span> <span class="s1">&#39;enhanced&#39;</span><span class="p">:</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">data</span><span class="p">[:,</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">init_m</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">init_w</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="p">((</span><span class="n">distances</span><span class="p">[:,</span><span class="n">j</span><span class="p">]</span><span class="o">/</span><span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">])</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">init</span> <span class="o">==</span> <span class="s1">&#39;basic&#39;</span><span class="p">:</span>
+        <span class="n">init_w</span> <span class="o">=</span> <span class="n">initialize_from_assignments</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">init</span> <span class="o">==</span> <span class="s1">&#39;nmf&#39;</span><span class="p">:</span>
+        <span class="n">init_w_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n_iter</span> <span class="o">=</span> <span class="n">non_negative_factorization</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;custom&#39;</span><span class="p">,</span> <span class="n">update_W</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="n">init_m</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">init_w</span> <span class="o">=</span> <span class="n">init_w_</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">init_m</span><span class="p">,</span> <span class="n">init_w</span></div>
+
+<span class="c1"># TODO: initialization if init_w is a cluster list?</span>
+<div class="viewcode-block" id="log_norm_nmf"><a class="viewcode-back" href="../../uncurl.html#uncurl.nmf_wrapper.log_norm_nmf">[docs]</a><span class="k">def</span> <span class="nf">log_norm_nmf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">normalize_w</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_cost</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init_w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_m</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): dense or sparse array with shape (genes, cells)</span>
+<span class="sd">        k (int): number of cell types</span>
+<span class="sd">        normalize_w (bool, optional): True if W should be normalized (so that each column sums to 1). Default: True</span>
+<span class="sd">        return_cost (bool, optional): True if the NMF objective value (squared error) should be returned. Default: True</span>
+<span class="sd">        init_w (array, optional): Initial value for W. Default: None</span>
+<span class="sd">        init_m (array, optional): Initial value for M. Default: None</span>
+<span class="sd">        **kwargs: misc arguments to NMF</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Two matrices M of shape (genes, k) and W of shape (k, cells). They correspond to M and M in Poisson state estimation. If return_cost is True (which it is by default), then the cost will also be returned. This might be prohibitably costly</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">init</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">init_w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">init_m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">init</span> <span class="o">=</span> <span class="s1">&#39;custom&#39;</span>
+        <span class="k">if</span> <span class="n">init_w</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">init_w_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n_iter</span> <span class="o">=</span> <span class="n">non_negative_factorization</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;custom&#39;</span><span class="p">,</span> <span class="n">update_W</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="n">init_m</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">init_w</span> <span class="o">=</span> <span class="n">init_w_</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">elif</span> <span class="n">init_m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">init_m</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n_iter</span> <span class="o">=</span> <span class="n">non_negative_factorization</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;custom&#39;</span><span class="p">,</span> <span class="n">update_W</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="n">init_w</span><span class="p">)</span>
+    <span class="n">nmf</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">nmf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="n">init_m</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">init_w</span><span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">nmf</span><span class="o">.</span><span class="n">components_</span>
+    <span class="k">if</span> <span class="n">normalize_w</span><span class="p">:</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">W</span><span class="o">/</span><span class="n">W</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">return_cost</span><span class="p">:</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+            <span class="n">hs</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">ws</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">hs</span><span class="p">))</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">M</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">cost</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span></div>
+
+<span class="c1"># TODO: initialization</span>
+<div class="viewcode-block" id="norm_nmf"><a class="viewcode-back" href="../../uncurl.html#uncurl.nmf_wrapper.norm_nmf">[docs]</a><span class="k">def</span> <span class="nf">norm_nmf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">init_w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_m</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize_w</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data (array): dense or sparse array with shape (genes, cells)</span>
+<span class="sd">        k (int): number of cell types</span>
+<span class="sd">        normalize_w (bool): True if W should be normalized (so that each column sums to 1)</span>
+<span class="sd">        init_w (array, optional): Initial value for W. Default: None</span>
+<span class="sd">        init_m (array, optional): Initial value for M. Default: None</span>
+<span class="sd">        **kwargs: misc arguments to NMF</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Two matrices M of shape (genes, k) and W of shape (k, cells)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">init</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">init_w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">init_m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">init</span> <span class="o">=</span> <span class="s1">&#39;custom&#39;</span>
+        <span class="k">if</span> <span class="n">init_w</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">init_w_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n_iter</span> <span class="o">=</span> <span class="n">non_negative_factorization</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;custom&#39;</span><span class="p">,</span> <span class="n">update_W</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="n">init_m</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">init_w</span> <span class="o">=</span> <span class="n">init_w_</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">elif</span> <span class="n">init_m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">init_m</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n_iter</span> <span class="o">=</span> <span class="n">non_negative_factorization</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;custom&#39;</span><span class="p">,</span> <span class="n">update_W</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="n">init_w</span><span class="p">)</span>
+    <span class="n">nmf</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">log1p</span><span class="p">(</span><span class="n">cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">nmf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="n">init_m</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">init_w</span><span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">nmf</span><span class="o">.</span><span class="n">components_</span>
+    <span class="k">if</span> <span class="n">normalize_w</span><span class="p">:</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">W</span><span class="o">/</span><span class="n">W</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">W</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">UNCURL 0.2.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

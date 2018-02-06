@@ -27,7 +27,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="UNCURL public functions" href="uncurl_pub.html" /> 
+    <link rel="prev" title="Details on unsupported methods" href="unsupported_methods.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,7 +40,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncurl_pub.html" title="UNCURL public functions"
+          <a href="unsupported_methods.html" title="Details on unsupported methods"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
       </ul>
@@ -55,6 +55,327 @@
 <h1>uncurl package<a class="headerlink" href="#uncurl-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-uncurl.preprocessing">
+<span id="uncurl-preprocessing-module"></span><h2>uncurl.preprocessing module<a class="headerlink" href="#module-uncurl.preprocessing" title="Permalink to this headline">¶</a></h2>
+<p>Misc functions...</p>
+<dl class="function">
+<dt id="uncurl.preprocessing.cell_normalize">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">cell_normalize</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#cell_normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.cell_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the data where the expression is normalized so that the total
+count per cell is equal.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.preprocessing.log1p">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">log1p</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#log1p"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.log1p" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns ln(data+1), whether the original data is dense or sparse.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.preprocessing.max_variance_genes">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=5</em>, <em>frac=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.max_variance_genes" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function identifies the genes that have the max variance
+across a number of bins sorted by mean.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>nbins</strong> (<em>int</em>) &#8211; number of bins to sort genes by mean expression level. Default: 10.</li>
+<li><strong>frac</strong> (<em>float</em>) &#8211; fraction of genes to return per bin - between 0 and 1. Default: 0.1</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of gene indices (list of ints)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.preprocessing.sparse_var">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">sparse_var</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#sparse_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.sparse_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the variance for each row of a sparse matrix.</p>
+<p>Timing; 4.170 s for 73233 cells, 32738 genes</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.run_se">
+<span id="uncurl-run-se-module"></span><h2>uncurl.run_se module<a class="headerlink" href="#module-uncurl.run_se" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.run_se.run_state_estimation">
+<code class="descclassname">uncurl.run_se.</code><code class="descname">run_state_estimation</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>dist='Poiss'</em>, <em>reps=1</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/run_se.html#run_state_estimation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.run_se.run_state_estimation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs state estimation for multiple initializations, returning the result with the highest log-likelihood. All the arguments are passed to the underlying state estimation functions (poisson_estimate_state, nb_estimate_state, zip_estimate_state).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
+<li><strong>dist</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; Distribution used in state estimation. Options: &#8216;Poiss&#8217;, &#8216;NB&#8217;, &#8216;ZIP&#8217;, &#8216;LogNorm&#8217;. Default: &#8216;Poiss&#8217;</li>
+<li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of times to run the state estimation, taking the result with the highest log-likelihood.</li>
+<li><strong>**kwargs</strong> &#8211; arguments to pass to the underlying state estimation function.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">genes x clusters - state means
+W (array): clusters x cells - state mixing components for each cell
+ll (float): final log-likelihood</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">M (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.state_estimation">
+<span id="uncurl-state-estimation-module"></span><h2>uncurl.state_estimation module<a class="headerlink" href="#module-uncurl.state_estimation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.state_estimation.initialize_from_assignments">
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_from_assignments</code><span class="sig-paren">(</span><em>assignments</em>, <em>k</em>, <em>max_assign_weight=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_from_assignments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_from_assignments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a weight initialization matrix from Poisson clustering assignments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>assignments</strong> (<em>array</em>) &#8211; 1D array of integers, of length cells</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of states/clusters</li>
+<li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; between 0 and 1 - how much weight to assign to the highest cluster. Default: 0.75</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">k x cells</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">init_W (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.state_estimation.initialize_means">
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_means</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_means"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_means" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the M matrix given the data and a set of cluster labels.
+Cluster centers are set to the mean of each cluster.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
+<li><strong>clusters</strong> (<em>array</em>) &#8211; 1d array of ints (0...k-1)</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of clusters</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.state_estimation.initialize_weights_nn">
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_weights_nn</code><span class="sig-paren">(</span><em>data</em>, <em>means</em>, <em>lognorm=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_weights_nn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_weights_nn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the weights with a nearest-neighbor approach using the means.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.state_estimation.poisson_estimate_state">
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=False</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em>, <em>run_w_first=True</em>, <em>constrain_w=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
+cell state mixing weights.</p>
+<p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells array or sparse matrix.</li>
+<li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: from Poisson kmeans</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans</li>
+<li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
+<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 30</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
+<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization progress. Default: False</li>
+<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 100</li>
+<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
+<li><strong>initialization</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; If initial means and weights are not provided, this describes how they are initialized. Options: &#8216;cluster&#8217; (poisson cluster for means and weights), &#8216;kmpp&#8217; (kmeans++ for means, random weights), &#8216;km&#8217; (regular k-means), &#8216;tsvd&#8217; (tsvd(50) + k-means). Default: tsvd.</li>
+<li><strong>parallel</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether to use parallel updates (sparse NoLips only). Default: True</li>
+<li><strong>threads</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; How many threads to use in the parallel computation. Default: 4</li>
+<li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75</li>
+<li><strong>run_w_first</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether or not to optimize W first (if false, M will be optimized first). Default: True</li>
+<li><strong>constrain_w</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; If True, then W is normalized after every iteration. Default: False</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">genes x clusters - state means
+W (array): clusters x cells - state mixing components for each cell
+ll (float): final log-likelihood</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">M (array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.nmf_wrapper">
+<span id="uncurl-nmf-wrapper-module"></span><h2>uncurl.nmf_wrapper module<a class="headerlink" href="#module-uncurl.nmf_wrapper" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.nmf_wrapper.log_norm_nmf">
+<code class="descclassname">uncurl.nmf_wrapper.</code><code class="descname">log_norm_nmf</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>normalize_w=True</em>, <em>return_cost=True</em>, <em>init_w=None</em>, <em>init_m=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nmf_wrapper.html#log_norm_nmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nmf_wrapper.log_norm_nmf" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; dense or sparse array with shape (genes, cells)</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of cell types</li>
+<li><strong>normalize_w</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if W should be normalized (so that each column sums to 1). Default: True</li>
+<li><strong>return_cost</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the NMF objective value (squared error) should be returned. Default: True</li>
+<li><strong>init_w</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for W. Default: None</li>
+<li><strong>init_m</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for M. Default: None</li>
+<li><strong>**kwargs</strong> &#8211; misc arguments to NMF</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two matrices M of shape (genes, k) and W of shape (k, cells). They correspond to M and M in Poisson state estimation. If return_cost is True (which it is by default), then the cost will also be returned. This might be prohibitably costly</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nmf_wrapper.nmf_init">
+<code class="descclassname">uncurl.nmf_wrapper.</code><code class="descname">nmf_init</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>k</em>, <em>init='enhanced'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nmf_wrapper.html#nmf_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nmf_wrapper.nmf_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates initial M and W given a data set and an array of cluster labels.</p>
+<dl class="docutils">
+<dt>There are 3 options for init:</dt>
+<dd>enhanced - uses EIn-NMF from Gong 2013
+basic - uses means for M, assigns W such that the chosen cluster for a given cell has value 0.75 and all others have 0.25/(k-1).
+nmf - uses means for M, and assigns W using the NMF objective while holding M constant.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.nmf_wrapper.norm_nmf">
+<code class="descclassname">uncurl.nmf_wrapper.</code><code class="descname">norm_nmf</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>init_w=None</em>, <em>init_m=None</em>, <em>normalize_w=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nmf_wrapper.html#norm_nmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nmf_wrapper.norm_nmf" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; dense or sparse array with shape (genes, cells)</li>
+<li><strong>k</strong> (<em>int</em>) &#8211; number of cell types</li>
+<li><strong>normalize_w</strong> (<em>bool</em>) &#8211; True if W should be normalized (so that each column sums to 1)</li>
+<li><strong>init_w</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for W. Default: None</li>
+<li><strong>init_m</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for M. Default: None</li>
+<li><strong>**kwargs</strong> &#8211; misc arguments to NMF</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two matrices M of shape (genes, k) and W of shape (k, cells)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncurl.qual2quant">
+<span id="uncurl-qual2quant-module"></span><h2>uncurl.qual2quant module<a class="headerlink" href="#module-uncurl.qual2quant" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncurl.qual2quant.binarize">
+<code class="descclassname">uncurl.qual2quant.</code><code class="descname">binarize</code><span class="sig-paren">(</span><em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#binarize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.binarize" title="Permalink to this definition">¶</a></dt>
+<dd><p>binarizes an expression dataset.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.qual2quant.poisson_test">
+<code class="descclassname">uncurl.qual2quant.</code><code class="descname">poisson_test</code><span class="sig-paren">(</span><em>data1</em>, <em>data2</em>, <em>smoothing=1e-05</em>, <em>return_pval=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#poisson_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.poisson_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a p-value for the ratio of the means of two poisson-distributed datasets.</p>
+<p>Source: <a class="reference external" href="http://ncss.wpengine.netdna-cdn.com/wp-content/themes/ncss/pdf/Procedures/PASS/Tests_for_Two_Poisson_Means.pdf">http://ncss.wpengine.netdna-cdn.com/wp-content/themes/ncss/pdf/Procedures/PASS/Tests_for_Two_Poisson_Means.pdf</a></p>
+<p>Gu, K., Ng, H.K.T., Tang, M.L., and Schucany, W. 2008. &#8216;Testing the Ratio of Two Poisson Rates.&#8217; Biometrical Journal, 50, 2, 283-298</p>
+<p>Based on W2</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data1</strong> (<em>array</em>) &#8211; 1d array of floats - first distribution</li>
+<li><strong>data2</strong> (<em>array</em>) &#8211; 1d array of floats - second distribution</li>
+<li><strong>smoothing</strong> (<em>float</em>) &#8211; number to add to each of the datasets</li>
+<li><strong>return_pval</strong> (<em>bool</em>) &#8211; True to return p value; False to return test statistic. Default: True</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.qual2quant.qualNorm">
+<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNorm</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNorm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells</li>
+<li><strong>qualitative</strong> (<em>array</em>) &#8211; 2d array of numerical data - genes x clusters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Array of starting positions for state estimation or
+clustering, with shape genes x clusters</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.qual2quant.qualNormGaussian">
+<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNormGaussian</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNormGaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNormGaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells</li>
+<li><strong>qualitative</strong> (<em>array</em>) &#8211; 2d array of numerical data - genes x clusters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Array of starting positions for state estimation or
+clustering, with shape genes x clusters</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncurl.qual2quant.qualNorm_filter_genes">
+<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNorm_filter_genes</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em>, <em>pval_threshold=0.05</em>, <em>smoothing=1e-05</em>, <em>eps=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNorm_filter_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNorm_filter_genes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does qualNorm but returns a filtered gene set, based on a p-value threshold.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-uncurl.clustering">
 <span id="uncurl-clustering-module"></span><h2>uncurl.clustering module<a class="headerlink" href="#module-uncurl.clustering" title="Permalink to this headline">¶</a></h2>
@@ -442,6 +763,18 @@ Requires a &#8216;k&#8217; parameter.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="uncurl.experiment_runner.LoadPreproc">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">LoadPreproc</code><span class="sig-paren">(</span><em>datasets</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LoadPreproc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LoadPreproc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
+<p>takes preprocessed data matrix, just return that when run is called</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.LoadPreproc.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#LoadPreproc.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.LoadPreproc.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="uncurl.experiment_runner.Log">
 <em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Log</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Log" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
@@ -636,6 +969,8 @@ dimensions.</p>
 <em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">Tsne</code><span class="sig-paren">(</span><em>metric='euclidean'</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Tsne"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Tsne" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Preprocess" title="uncurl.experiment_runner.Preprocess"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Preprocess</span></code></a></p>
 <p>2d tsne dimensionality reduction - tsne always uses 2d</p>
+<p>metric is a string that could be any metric usable with tsne, or &#8216;kld&#8217;
+or &#8216;jensen-shannon&#8217;</p>
 <dl class="method">
 <dt id="uncurl.experiment_runner.Tsne.run">
 <code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Tsne.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Tsne.run" title="Permalink to this definition">¶</a></dt>
@@ -890,135 +1225,6 @@ ll (float): Log-likelihood of final iteration</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-uncurl.preprocessing">
-<span id="uncurl-preprocessing-module"></span><h2>uncurl.preprocessing module<a class="headerlink" href="#module-uncurl.preprocessing" title="Permalink to this headline">¶</a></h2>
-<p>Misc functions...</p>
-<dl class="function">
-<dt id="uncurl.preprocessing.cell_normalize">
-<code class="descclassname">uncurl.preprocessing.</code><code class="descname">cell_normalize</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#cell_normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.cell_normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the data where the expression is normalized so that the total
-count per cell is equal.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.preprocessing.log1p">
-<code class="descclassname">uncurl.preprocessing.</code><code class="descname">log1p</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#log1p"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.log1p" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns ln(data+1), whether the original data is dense or sparse.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.preprocessing.max_variance_genes">
-<code class="descclassname">uncurl.preprocessing.</code><code class="descname">max_variance_genes</code><span class="sig-paren">(</span><em>data</em>, <em>nbins=5</em>, <em>frac=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#max_variance_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.max_variance_genes" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function identifies the genes that have the max variance
-across a number of bins sorted by mean.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
-<li><strong>nbins</strong> (<em>int</em>) &#8211; number of bins to sort genes by mean expression level. Default: 10.</li>
-<li><strong>frac</strong> (<em>float</em>) &#8211; fraction of genes to return per bin - between 0 and 1. Default: 0.1</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of gene indices (list of ints)</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.preprocessing.sparse_var">
-<code class="descclassname">uncurl.preprocessing.</code><code class="descname">sparse_var</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#sparse_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.sparse_var" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the variance for each row of a sparse matrix.</p>
-<p>Timing; 4.170 s for 73233 cells, 32738 genes</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-uncurl.qual2quant">
-<span id="uncurl-qual2quant-module"></span><h2>uncurl.qual2quant module<a class="headerlink" href="#module-uncurl.qual2quant" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="uncurl.qual2quant.binarize">
-<code class="descclassname">uncurl.qual2quant.</code><code class="descname">binarize</code><span class="sig-paren">(</span><em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#binarize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.binarize" title="Permalink to this definition">¶</a></dt>
-<dd><p>binarizes an expression dataset.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.qual2quant.poisson_test">
-<code class="descclassname">uncurl.qual2quant.</code><code class="descname">poisson_test</code><span class="sig-paren">(</span><em>data1</em>, <em>data2</em>, <em>smoothing=1e-05</em>, <em>return_pval=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#poisson_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.poisson_test" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a p-value for the ratio of the means of two poisson-distributed datasets.</p>
-<p>Source: <a class="reference external" href="http://ncss.wpengine.netdna-cdn.com/wp-content/themes/ncss/pdf/Procedures/PASS/Tests_for_Two_Poisson_Means.pdf">http://ncss.wpengine.netdna-cdn.com/wp-content/themes/ncss/pdf/Procedures/PASS/Tests_for_Two_Poisson_Means.pdf</a></p>
-<p>Gu, K., Ng, H.K.T., Tang, M.L., and Schucany, W. 2008. &#8216;Testing the Ratio of Two Poisson Rates.&#8217; Biometrical Journal, 50, 2, 283-298</p>
-<p>Based on W2</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>data1</strong> (<em>array</em>) &#8211; 1d array of floats - first distribution</li>
-<li><strong>data2</strong> (<em>array</em>) &#8211; 1d array of floats - second distribution</li>
-<li><strong>smoothing</strong> (<em>float</em>) &#8211; number to add to each of the datasets</li>
-<li><strong>return_pval</strong> (<em>bool</em>) &#8211; True to return p value; False to return test statistic. Default: True</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.qual2quant.qualNorm">
-<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNorm</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNorm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells</li>
-<li><strong>qualitative</strong> (<em>array</em>) &#8211; 2d array of numerical data - genes x clusters</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Array of starting positions for state estimation or
-clustering, with shape genes x clusters</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.qual2quant.qualNormGaussian">
-<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNormGaussian</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNormGaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNormGaussian" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates starting points using binarized data. If qualitative data is missing for a given gene, all of its entries should be -1 in the qualitative matrix.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; 2d array of genes x cells</li>
-<li><strong>qualitative</strong> (<em>array</em>) &#8211; 2d array of numerical data - genes x clusters</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Array of starting positions for state estimation or
-clustering, with shape genes x clusters</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.qual2quant.qualNorm_filter_genes">
-<code class="descclassname">uncurl.qual2quant.</code><code class="descname">qualNorm_filter_genes</code><span class="sig-paren">(</span><em>data</em>, <em>qualitative</em>, <em>pval_threshold=0.05</em>, <em>smoothing=1e-05</em>, <em>eps=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/qual2quant.html#qualNorm_filter_genes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.qual2quant.qualNorm_filter_genes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Does qualNorm but returns a filtered gene set, based on a p-value threshold.</p>
-</dd></dl>
-
-</div>
 <div class="section" id="module-uncurl.simulation">
 <span id="uncurl-simulation-module"></span><h2>uncurl.simulation module<a class="headerlink" href="#module-uncurl.simulation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
@@ -1228,102 +1434,6 @@ labels - array of cluster labels</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-uncurl.state_estimation">
-<span id="uncurl-state-estimation-module"></span><h2>uncurl.state_estimation module<a class="headerlink" href="#module-uncurl.state_estimation" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="uncurl.state_estimation.initialize_from_assignments">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_from_assignments</code><span class="sig-paren">(</span><em>assignments</em>, <em>k</em>, <em>max_assign_weight=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_from_assignments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_from_assignments" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a weight initialization matrix from Poisson clustering assignments.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>assignments</strong> (<em>array</em>) &#8211; 1D array of integers, of length cells</li>
-<li><strong>k</strong> (<em>int</em>) &#8211; number of states/clusters</li>
-<li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; between 0 and 1 - how much weight to assign to the highest cluster. Default: 0.75</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">k x cells</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">init_W (array)</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.state_estimation.initialize_means">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_means</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_means"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_means" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initializes the M matrix given the data and a set of cluster labels.
-Cluster centers are set to the mean of each cluster.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
-<li><strong>clusters</strong> (<em>array</em>) &#8211; 1d array of ints (0...k-1)</li>
-<li><strong>k</strong> (<em>int</em>) &#8211; number of clusters</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.state_estimation.initialize_weights_nn">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_weights_nn</code><span class="sig-paren">(</span><em>data</em>, <em>means</em>, <em>lognorm=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_weights_nn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_weights_nn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initializes the weights with a nearest-neighbor approach using the means.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncurl.state_estimation.poisson_estimate_state">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=True</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em>, <em>run_w_first=True</em>, <em>constrain_w=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
-cell state mixing weights.</p>
-<p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>array</em>) &#8211; genes x cells array or sparse matrix.</li>
-<li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
-<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial centers - genes x clusters. Default: from Poisson kmeans</li>
-<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans</li>
-<li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; optimization method. Current options are &#8216;NoLips&#8217; and &#8216;L-BFGS-B&#8217;. Default: &#8216;NoLips&#8217;.</li>
-<li><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; maximum number of iterations. Default: 30</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10</li>
-<li><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; whether or not to display optimization parameters. Default: True</li>
-<li><strong>inner_max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iterations to run in the optimization subroutine for M and W. Default: 120</li>
-<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the resulting W should sum to 1 for each cell. Default: True.</li>
-<li><strong>initialization</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; If initial means and weights are not provided, this describes how they are initialized. Options: &#8216;cluster&#8217; (poisson cluster for means and weights), &#8216;kmpp&#8217; (kmeans++ for means, random weights), &#8216;km&#8217; (regular k-means), &#8216;tsvd&#8217; (tsvd(50) + k-means). Default: tsvd.</li>
-<li><strong>parallel</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether to use parallel updates (sparse NoLips only). Default: True</li>
-<li><strong>threads</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; How many threads to use in the parallel computation. Default: 4</li>
-<li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75</li>
-<li><strong>run_w_first</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether or not to optimize W first (if false, M will be optimized first). Default: True</li>
-<li><strong>constrain_w</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; If True, then W is normalized after every iteration. Default: False</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">genes x clusters - state means
-W (array): clusters x cells - state mixing components for each cell
-ll (float): final log-likelihood</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">M (array)</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</div>
 <div class="section" id="module-uncurl">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-uncurl" title="Permalink to this headline">¶</a></h2>
 </div>
@@ -1339,6 +1449,11 @@ ll (float): final log-likelihood</p>
   <ul>
 <li><a class="reference internal" href="#">uncurl package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-uncurl.preprocessing">uncurl.preprocessing module</a></li>
+<li><a class="reference internal" href="#module-uncurl.run_se">uncurl.run_se module</a></li>
+<li><a class="reference internal" href="#module-uncurl.state_estimation">uncurl.state_estimation module</a></li>
+<li><a class="reference internal" href="#module-uncurl.nmf_wrapper">uncurl.nmf_wrapper module</a></li>
+<li><a class="reference internal" href="#module-uncurl.qual2quant">uncurl.qual2quant module</a></li>
 <li><a class="reference internal" href="#module-uncurl.clustering">uncurl.clustering module</a></li>
 <li><a class="reference internal" href="#uncurl-dimensionality-reduction-module">uncurl.dimensionality_reduction module</a></li>
 <li><a class="reference internal" href="#module-uncurl.evaluation">uncurl.evaluation module</a></li>
@@ -1347,18 +1462,15 @@ ll (float): final log-likelihood</p>
 <li><a class="reference internal" href="#uncurl-nb-cluster-module">uncurl.nb_cluster module</a></li>
 <li><a class="reference internal" href="#module-uncurl.nb_state_estimation">uncurl.nb_state_estimation module</a></li>
 <li><a class="reference internal" href="#module-uncurl.pois_ll">uncurl.pois_ll module</a></li>
-<li><a class="reference internal" href="#module-uncurl.preprocessing">uncurl.preprocessing module</a></li>
-<li><a class="reference internal" href="#module-uncurl.qual2quant">uncurl.qual2quant module</a></li>
 <li><a class="reference internal" href="#module-uncurl.simulation">uncurl.simulation module</a></li>
-<li><a class="reference internal" href="#module-uncurl.state_estimation">uncurl.state_estimation module</a></li>
 <li><a class="reference internal" href="#module-uncurl">Module contents</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="uncurl_pub.html"
-                        title="previous chapter">UNCURL public functions</a></p>
+  <p class="topless"><a href="unsupported_methods.html"
+                        title="previous chapter">Details on unsupported methods</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1390,7 +1502,7 @@ ll (float): final log-likelihood</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncurl_pub.html" title="UNCURL public functions"
+          <a href="unsupported_methods.html" title="Details on unsupported methods"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
       </ul>
