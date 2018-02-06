@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uncurl &#8212; UNCURL 0.2.3 documentation</title>
+    <title>UNCURL Best Practices &#8212; UNCURL 0.2.3 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -47,31 +47,35 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="uncurl">
-<h1>uncurl<a class="headerlink" href="#uncurl" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="uncurl.html">uncurl package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.preprocessing">uncurl.preprocessing module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.run_se">uncurl.run_se module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.state_estimation">uncurl.state_estimation module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.nmf_wrapper">uncurl.nmf_wrapper module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.qual2quant">uncurl.qual2quant module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.clustering">uncurl.clustering module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#uncurl-dimensionality-reduction-module">uncurl.dimensionality_reduction module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.evaluation">uncurl.evaluation module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#uncurl-experiment-runner-module">uncurl.experiment_runner module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.lineage">uncurl.lineage module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#uncurl-nb-cluster-module">uncurl.nb_cluster module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.nb_state_estimation">uncurl.nb_state_estimation module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.pois_ll">uncurl.pois_ll module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl.simulation">uncurl.simulation module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncurl.html#module-uncurl">Module contents</a></li>
-</ul>
-</li>
-</ul>
+  <div class="section" id="uncurl-best-practices">
+<h1>UNCURL Best Practices<a class="headerlink" href="#uncurl-best-practices" title="Permalink to this headline">¶</a></h1>
 </div>
+<div class="section" id="distribution-selection">
+<h1>Distribution Selection<a class="headerlink" href="#distribution-selection" title="Permalink to this headline">¶</a></h1>
+<p>In general, the best distribution to use for a given dataset is the one for which the most genes have the lowest error: see (cite figure here).</p>
+</div>
+<div class="section" id="state-estimation">
+<h1>State Estimation<a class="headerlink" href="#state-estimation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="gene-subset-selection">
+<h2>Gene subset selection<a class="headerlink" href="#gene-subset-selection" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">uncurl</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this headline">¶</a></h2>
+<p>The default initialization</p>
+</div>
+<div class="section" id="semi-supervision-using-bulk-or-qualitative-data">
+<h2>Semi-supervision, using bulk or qualitative data<a class="headerlink" href="#semi-supervision-using-bulk-or-qualitative-data" title="Permalink to this headline">¶</a></h2>
+<p>Semi-supervision is done using the</p>
+</div>
+</div>
+<div class="section" id="clustering">
+<h1>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="visualization">
+<h1>Visualization<a class="headerlink" href="#visualization" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -80,10 +84,24 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">UNCURL Best Practices</a></li>
+<li><a class="reference internal" href="#distribution-selection">Distribution Selection</a></li>
+<li><a class="reference internal" href="#state-estimation">State Estimation</a><ul>
+<li><a class="reference internal" href="#gene-subset-selection">Gene subset selection</a></li>
+<li><a class="reference internal" href="#initialization">Initialization</a></li>
+<li><a class="reference internal" href="#semi-supervision-using-bulk-or-qualitative-data">Semi-supervision, using bulk or qualitative data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#clustering">Clustering</a></li>
+<li><a class="reference internal" href="#visualization">Visualization</a></li>
+</ul>
+
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/modules.rst.txt"
+      <li><a href="_sources/best_practices.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>

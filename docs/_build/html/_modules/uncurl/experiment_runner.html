@@ -114,7 +114,7 @@
 <span class="kn">from</span> <span class="nn">.plda_utils</span> <span class="k">import</span> <span class="n">plda_estimate_state</span>
 <span class="kn">from</span> <span class="nn">.vis</span> <span class="k">import</span> <span class="n">visualize_dim_red</span>
 
-<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">symmetric_kld</span>
+<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">symmetric_kld</span><span class="p">,</span> <span class="n">jensen_shannon</span>
 
 
 <div class="viewcode-block" id="Preprocess"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Preprocess">[docs]</a><span class="k">class</span> <span class="nc">Preprocess</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -194,15 +194,22 @@
 <div class="viewcode-block" id="Tsne"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Tsne">[docs]</a><span class="k">class</span> <span class="nc">Tsne</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    2d tsne dimensionality reduction - tsne always uses 2d</span>
+
+<span class="sd">    metric is a string that could be any metric usable with tsne, or &#39;kld&#39;</span>
+<span class="sd">    or &#39;jensen-shannon&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        metric can be any metric usable with tsne.</span>
+<span class="sd">        metric (str) can be any metric usable with tsne.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TSNE&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">metric</span> <span class="o">!=</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TSNE_&#39;</span> <span class="o">+</span> <span class="n">metric</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">metric</span><span class="o">==</span><span class="s1">&#39;kld&#39;</span><span class="p">:</span>
             <span class="n">metric</span> <span class="o">=</span> <span class="n">symmetric_kld</span>
+        <span class="k">elif</span> <span class="n">metric</span> <span class="o">==</span> <span class="s1">&#39;jensen-shannon&#39;</span><span class="p">:</span>
+            <span class="n">metric</span> <span class="o">=</span> <span class="n">jensen_shannon</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Tsne</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
@@ -745,6 +752,18 @@
             <span class="n">scdata</span><span class="o">.</span><span class="n">magic</span><span class="o">.</span><span class="n">run_pca</span><span class="p">()</span>
             <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scdata</span><span class="o">.</span><span class="n">magic</span><span class="o">.</span><span class="n">pca</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="mi">0</span></div></div>
+
+<div class="viewcode-block" id="LoadPreproc"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LoadPreproc">[docs]</a><span class="k">class</span> <span class="nc">LoadPreproc</span><span class="p">(</span><span class="n">Preprocess</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    takes preprocessed data matrix, just return that when run is called</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="n">datasets</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LoadPreproc</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LoadPreproc.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.LoadPreproc.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span> <span class="mi">0</span></div></div>
+
 
 <div class="viewcode-block" id="Cluster"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.Cluster">[docs]</a><span class="k">class</span> <span class="nc">Cluster</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>

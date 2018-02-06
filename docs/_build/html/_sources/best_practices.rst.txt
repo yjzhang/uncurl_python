@@ -1,0 +1,40 @@
+UNCURL Best Practices
+======
+
+
+Distribution Selection
+======================
+
+In general, the best distribution to use for a given dataset is the one for which the most genes have the lowest error: see (cite figure here).
+
+State Estimation
+================
+
+Gene subset selection
+---------------------
+
+.. code-block:: python
+
+    import uncurl
+
+
+Initialization
+--------------
+
+The default initialization
+
+Semi-supervision, using bulk or qualitative data
+------------------------------------------------
+
+Semi-supervision is done using the 
+
+Clustering
+==========
+
+Visualization
+=============
+
+
+
+
+
