@@ -161,3 +161,21 @@ Lineage Estimation & Pseudotime
 The output MW of UNCURL can be used as input for other lineage estimation tools.
 
 We also have implemented our own lineage estimation tools but have not thoroughly validated them. See `docs for unsupported methods <https://yjzhang.github.io/uncurl_python/unsupported_methods.html#lineage-estimation>`_.
+
+
+Included datasets
+-----------------
+
+Real datasets:
+
+10x_pooled_400.mat: 50 cells each from 8 cell types: CD19+ b cells, CD14+ monocytes, CD34+, CD56+ NK, CD4+/CD45RO+ memory t, CD8+/CD45RA+ naive cytotoxic, CD4+/CD45RA+/CD25- naive t, and CD4+/CD25 regulatory t. Source: `10x genomics <https://support.10xgenomics.com/single-cell-gene-expression/datasets>`_.
+
+GSE60361_dat.mat: subset of data from `Zelsel et al. 2015 <http://linnarssonlab.org/cortex>`_.
+
+SCDE_test.mat: data from `Islam et al. 2011 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE29087>`_.
+
+Synthetic datasets:
+
+BranchedSynDat.mat: simulated lineage dataset with 3 branches
+
+SynMouseESprog_1000.mat: simulated lineage dataset showing linear differentiation

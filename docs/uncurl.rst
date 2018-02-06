@@ -4,6 +4,46 @@ uncurl package
 Submodules
 ----------
 
+uncurl.preprocessing module
+---------------------------
+
+.. automodule:: uncurl.preprocessing
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+uncurl.run_se module
+------------------------------
+
+.. automodule:: uncurl.run_se
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+uncurl.state_estimation module
+------------------------------
+
+.. automodule:: uncurl.state_estimation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+uncurl.nmf_wrapper module
+------------------------------
+
+.. automodule:: uncurl.nmf_wrapper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+uncurl.qual2quant module
+------------------------
+
+.. automodule:: uncurl.qual2quant
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 uncurl.clustering module
 ------------------------
 
@@ -68,34 +108,10 @@ uncurl.pois_ll module
     :undoc-members:
     :show-inheritance:
 
-uncurl.preprocessing module
----------------------------
-
-.. automodule:: uncurl.preprocessing
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-uncurl.qual2quant module
-------------------------
-
-.. automodule:: uncurl.qual2quant
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 uncurl.simulation module
 ------------------------
 
 .. automodule:: uncurl.simulation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-uncurl.state_estimation module
-------------------------------
-
-.. automodule:: uncurl.state_estimation
     :members:
     :undoc-members:
     :show-inheritance:
