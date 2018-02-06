@@ -1,0 +1,5 @@
+include data/10x_pooled_400.mat
+include data/GSE60361_dat.mat
+include data/SCDE_test.mat
+include tests/*.py
+include uncurl/*.pyx

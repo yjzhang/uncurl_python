@@ -26,8 +26,8 @@ except:
     print('Unable to compile parallel extensions.')
 
 
-setup(name='uncurl',
-      version='0.2.4',
+setup(name='uncurl_seq',
+      version='0.2.5',
       description='Tool for pre-processing single-cell RNASeq data',
       url='https://github.com/yjzhang/uncurl_python',
       author='Yue Zhang',
@@ -44,4 +44,11 @@ setup(name='uncurl',
       ],
       test_suite='nose.collector',
       tests_require=['nose', 'flaky'],
+      classifiers=[
+          'Development Status :: 3 - Alpha',
+          'Topic :: Scientific/Engineering :: Bio-Informatics',
+          'License :: OSI Approved :: MIT License',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.4',
+      ],
       zip_safe=False)
