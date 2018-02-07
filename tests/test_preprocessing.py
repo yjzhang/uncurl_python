@@ -22,7 +22,7 @@ class PreprocessingTest(TestCase):
         Test sparse variance
         """
         dense_var = np.var(self.data_dense, 1)
-        sp_var = sparse_var(self.data_sparse)
+        sp_var = sparse_var(self.data_sparse, np.array(self.data_sparse.mean(1)).flatten())
         se = np.sqrt(np.sum((sp_var - dense_var)**2))
         print(se)
         self.assertTrue(se < 1e-6)

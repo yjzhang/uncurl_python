@@ -13,8 +13,24 @@ from libc.math cimport log2
 from scipy import sparse
 from scipy.special import xlogy
 
-DTYPE = np.double
-ctypedef np.double_t DTYPE_t
+ctypedef fused int2:
+    short
+    int
+    long
+    long long
+
+ctypedef fused DTYPE_t:
+    float
+    double
+
+ctypedef fused numeric:
+    short
+    unsigned short
+    int
+    unsigned int
+    long
+    float
+    double
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -81,38 +97,30 @@ def sparse_create_plda_file(data, str filename):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sparse_cell_normalize(data):
+def sparse_cell_normalize(np.ndarray[DTYPE_t, ndim=1] data,
+        np.ndarray[int2, ndim=1] indices,
+        np.ndarray[int2, ndim=1] indptr,
+        Py_ssize_t cells,
+        Py_ssize_t genes):
     """
-    cell_normalize for sparse matrices
+    cell_normalize for sparse matrices.
+    does cell normalize in place.
     """
-    cdef int cells = data.shape[1]
-    cdef int genes = data.shape[0]
-    cdef int[:] indices, indptr
-    cdef double[:] data_
-    cdef int ind, g, c, start_ind, end_ind
-    #cdef int ind, g, c, start_ind, end_ind
-    cdef double i, s
-    csc = sparse.csc_matrix(data)
-    if csc.indptr.dtype == np.int64:
-        return sparse_cell_normalize_long(data)
-    csc_new = csc.copy().astype(np.double)
-    indices = csc_new.indices
-    indptr = csc_new.indptr
-    data_ = csc_new.data
+    cdef int2 c, start_ind, end_ind, i2
+    cdef double s
     cdef double[:] total_umis = np.empty(cells)
+    cdef DTYPE_t[:] data_ = data
     for c in range(cells):
         start_ind = indptr[c]
         end_ind = indptr[c+1]
         s = 0
         for i2 in range(start_ind, end_ind):
-            i = data_[i2]
-            s += i
+            s += data_[i2]
         for i2 in range(start_ind, end_ind):
             data_[i2] /= s
         total_umis[c] = s
-    med = np.median(np.asarray(total_umis))
-    csc_new *= med
-    return csc_new
+    cdef double med = np.median(np.asarray(total_umis))
+    data *= med
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -188,13 +196,29 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sparse_var(data):
+def sparse_var_csc(np.ndarray[numeric, ndim=1] data,
+        np.ndarray[int2, ndim=1] indices,
+        np.ndarray[int2, ndim=1] indptr,
+        Py_ssize_t cells,
+        Py_ssize_t genes,
+        np.ndarray[DTYPE_t, ndim=1] means):
     """
-    Calculates the variance along each row of a sparse matrix.
+    Calculates the variance along each row of a sparse csc matrix.
     """
-    # TODO: is this really necessary?
-    data_csr = sparse.csr_matrix(data)
-    cdef double[:] means = np.array(data.mean(1)).flatten()
+    cdef int2 c, start_ind, end_ind, i2, g
+    cdef double s
+    cdef double[:] sq_means = np.zeros(genes)
+    cdef double[:] var = np.zeros(genes)
+    # TODO: calculate means2 - squared mean
+    for c in range(cells):
+        start_ind = indptr[c]
+        end_ind = indptr[c+1]
+        for i2 in range(start_ind, end_ind):
+            g = indices[i2]
+            sq_means[g] += data[i2]**2
+    for g in range(genes):
+        var[g] = sq_means[g]/cells - means[g]**2
+    return np.asarray(var)
 
 def poisson_dist(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
     """

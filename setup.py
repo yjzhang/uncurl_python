@@ -19,13 +19,6 @@ parallel_extensions = [
             extra_link_args=['-fopenmp'])
         ]
 
-parallel = []
-try:
-    parallel = cythonize(parallel_extensions)
-except:
-    print('Unable to compile parallel extensions.')
-
-
 setup(name='uncurl_seq',
       version='0.2.5',
       description='Tool for pre-processing single-cell RNASeq data',
@@ -34,7 +27,7 @@ setup(name='uncurl_seq',
       author_email='yjzhang@cs.washington.edu',
       license='MIT',
       include_dirs=[numpy.get_include()],
-      ext_modules = cythonize(extensions) + parallel,
+      ext_modules = cythonize(extensions + parallel_extensions),
       packages=find_packages("."),
       install_requires=[
           'numpy',

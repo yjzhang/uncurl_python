@@ -5,20 +5,24 @@ Misc functions...
 import numpy as np
 from scipy import sparse
 
-from uncurl.sparse_utils import sparse_cell_normalize
+from uncurl.sparse_utils import sparse_cell_normalize, sparse_var_csc
 
-def sparse_var(data):
+def sparse_var(data, means):
     """
-    Calculates the variance for each row of a sparse matrix.
-
-    Timing; 4.170 s for 73233 cells, 32738 genes
+    Calculates the variance for each row of a sparse matrix,
+    using the relationship Var = E[x^2] - E[x]^2.
     """
-    # means for each gene
-    means = np.array(data.mean(1)).flatten()
-    sq = data.power(2)
-    means_2 = np.array(sq.mean(1)).flatten()
-    var = means_2 - means**2
-    return var
+    data = sparse.csc_matrix(data)
+    return sparse_var_csc(data.data,
+            data.indices,
+            data.indptr,
+            data.shape[1],
+            data.shape[0],
+            means)
+    #sq = data.power(2)
+    #means_2 = np.array(sq.mean(1)).flatten()
+    #var = means_2 - means**2
+    #return var
 
 def max_variance_genes(data, nbins=5, frac=0.2):
     """
@@ -45,8 +49,8 @@ def max_variance_genes(data, nbins=5, frac=0.2):
     indices = []
     means = data.mean(1)
     if sparse.issparse(data):
-        var = sparse_var(data)
         means = np.array(means).flatten()
+        var = sparse_var(data, means)
     else:
         var = data.var(1)
     mean_indices = means.argsort()
@@ -71,8 +75,15 @@ def cell_normalize(data):
     count per cell is equal.
     """
     if sparse.issparse(data):
-        return sparse_cell_normalize(data)
-    data_norm = data.copy().astype(float)
+        data = sparse.csc_matrix(data.astype(float))
+        # normalize in-place
+        sparse_cell_normalize(data.data,
+                data.indices,
+                data.indptr,
+                data.shape[1],
+                data.shape[0])
+        return data
+    data_norm = data.astype(float)
     total_umis = []
     for i in range(data.shape[1]):
         di = data_norm[:,i]
