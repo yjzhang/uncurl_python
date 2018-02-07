@@ -196,19 +196,21 @@ def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sparse_var_csc(np.ndarray[numeric, ndim=1] data,
+def sparse_means_var_csc(np.ndarray[numeric, ndim=1] data,
         np.ndarray[int2, ndim=1] indices,
         np.ndarray[int2, ndim=1] indptr,
         Py_ssize_t cells,
-        Py_ssize_t genes,
-        np.ndarray[DTYPE_t, ndim=1] means):
+        Py_ssize_t genes):
     """
-    Calculates the variance along each row of a sparse csc matrix.
+    Returns a pair of matrices: mean, variance of a sparse csc matrix.
+
+    Mean/variance is taken for each row.
     """
     cdef int2 c, start_ind, end_ind, i2, g
     cdef double s
     cdef double[:] sq_means = np.zeros(genes)
     cdef double[:] var = np.zeros(genes)
+    cdef double[:] means = np.zeros(genes)
     # TODO: calculate means2 - squared mean
     for c in range(cells):
         start_ind = indptr[c]
@@ -216,9 +218,11 @@ def sparse_var_csc(np.ndarray[numeric, ndim=1] data,
         for i2 in range(start_ind, end_ind):
             g = indices[i2]
             sq_means[g] += data[i2]**2
+            means[g] += data[i2]
     for g in range(genes):
+        means[g] = means[g]/cells
         var[g] = sq_means[g]/cells - means[g]**2
-    return np.asarray(var)
+    return np.asarray(means), np.asarray(var)
 
 def poisson_dist(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
     """

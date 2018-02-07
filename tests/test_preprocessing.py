@@ -5,7 +5,7 @@ from scipy.io import loadmat
 from scipy import sparse
 
 import uncurl
-from uncurl.preprocessing import sparse_var, cell_normalize
+from uncurl.preprocessing import sparse_mean_var, cell_normalize
 from uncurl.simulation import generate_poisson_data
 from uncurl.evaluation import purity
 
@@ -22,10 +22,10 @@ class PreprocessingTest(TestCase):
         Test sparse variance
         """
         dense_var = np.var(self.data_dense, 1)
-        sp_var = sparse_var(self.data_sparse, np.array(self.data_sparse.mean(1)).flatten())
+        mean, sp_var = sparse_mean_var(self.data_sparse)
         se = np.sqrt(np.sum((sp_var - dense_var)**2))
         print(se)
-        self.assertTrue(se < 1e-6)
+        self.assertTrue(se < 1e-5)
 
     def testMaxVarGenes(self):
         """

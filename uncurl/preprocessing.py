@@ -5,24 +5,22 @@ Misc functions...
 import numpy as np
 from scipy import sparse
 
-from uncurl.sparse_utils import sparse_cell_normalize, sparse_var_csc
+from uncurl.sparse_utils import sparse_cell_normalize, sparse_means_var_csc
 
-def sparse_var(data, means):
+def sparse_mean_var(data):
     """
     Calculates the variance for each row of a sparse matrix,
     using the relationship Var = E[x^2] - E[x]^2.
+
+    Returns:
+        pair of matrices mean, variance.
     """
     data = sparse.csc_matrix(data)
-    return sparse_var_csc(data.data,
+    return sparse_means_var_csc(data.data,
             data.indices,
             data.indptr,
             data.shape[1],
-            data.shape[0],
-            means)
-    #sq = data.power(2)
-    #means_2 = np.array(sq.mean(1)).flatten()
-    #var = means_2 - means**2
-    #return var
+            data.shape[0])
 
 def max_variance_genes(data, nbins=5, frac=0.2):
     """
@@ -47,11 +45,10 @@ def max_variance_genes(data, nbins=5, frac=0.2):
     # there is almost certainly something superlinear in this method
     # maybe it's to_csr?
     indices = []
-    means = data.mean(1)
     if sparse.issparse(data):
-        means = np.array(means).flatten()
-        var = sparse_var(data, means)
+        means, var = sparse_mean_var(data)
     else:
+        means = data.mean(1)
         var = data.var(1)
     mean_indices = means.argsort()
     n_elements = int(data.shape[0]/nbins)
