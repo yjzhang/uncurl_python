@@ -24,7 +24,7 @@ Features
 State Estimation
 ----------------
 
-The simplest way to use state estimation is to use the ``run_state_estimation`` function, which can be used to call any of the state estimation functions for different distributions. The possible distributions are 'Poiss', 'NB', 'ZIP', or 'LogNorm'. Generally, 'Poiss' is recommended for sparse or count-valued datasets. Currently the NB and ZIP options are unsupported.
+The simplest way to use state estimation is to use the ``run_state_estimation`` function, which can be used to call any of the state estimation functions for different distributions. The possible distributions are 'Poiss', 'LogNorm', 'Gaussian', 'NB' (negative binomial), or 'ZIP' (zero-inflated Poisson). Generally, 'Poiss' is recommended for sparse or count-valued datasets. Currently the NB and ZIP options are unsupported.
 
 Before running state estimation, it is often a good idea to subset the number of genes. This can be done using the function ``max_variance_genes``, which bins the genes by mean expression, and selects a top fraction of genes by variance from each bin. It also removes genes that have all zero expression counts.
 
@@ -51,6 +51,7 @@ Example:
 
 Details
 ^^^^^^^
+
 ``run_state_estimation`` is actually a wrapper around several other functions for state estimation.
 
 The ``poisson_estimate_state`` function is used to estimate cell types using the Poisson Convex Mixture Model. It can take in dense or sparse matrices of reals or integers as input, and can be accelerated by parallelization. The input is of shape (genes, cells). It has three outputs: two matrices ``M`` and ``W``, and ``ll``, the negative log-likelihood. M is a (genes, clusters) matrix, and W is a (clusters, cells) matrix where each column sums to 1. The outputs ``W`` and ``M*W`` can be used for further visualization or dimensionality reduction, as described latter.

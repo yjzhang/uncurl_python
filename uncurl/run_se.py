@@ -15,7 +15,7 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
     Args:
         data (array): genes x cells
         clusters (int): number of mixture components
-        dist (str, optional): Distribution used in state estimation. Options: 'Poiss', 'NB', 'ZIP', 'LogNorm'. Default: 'Poiss'
+        dist (str, optional): Distribution used in state estimation. Options: 'Poiss', 'NB', 'ZIP', 'LogNorm', 'Gaussian'. Default: 'Poiss'
         reps (int, optional): number of times to run the state estimation, taking the result with the highest log-likelihood.
         **kwargs: arguments to pass to the underlying state estimation function.
 
@@ -25,15 +25,16 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         ll (float): final log-likelihood
     """
     func = poisson_estimate_state
-    if dist=='Poiss' or dist=='Poisson':
+    dist = dist.lower()
+    if dist=='poiss' or dist=='poisson':
         pass
-    elif dist=='NB':
+    elif dist=='nb':
         func = nb_estimate_state
-    elif dist=='ZIP':
+    elif dist=='zip':
         func = zip_estimate_state
-    elif dist=='LogNorm':
+    elif dist=='lognorm':
         func = log_norm_nmf
-    elif dist=='Gaussian':
+    elif dist=='gaussian' or dist=='norm':
         func = norm_nmf
     else:
         print('dist should be one of Poiss, NB, ZIP, LogNorm, or Gaussian. Using Poiss.')

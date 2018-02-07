@@ -25,7 +25,7 @@ from sklearn.metrics.cluster import adjusted_rand_score as ari
 
 from sklearn.decomposition import NMF, TruncatedSVD, PCA
 from sklearn.manifold import TSNE
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
 from sklearn.cluster.bicluster import SpectralBiclustering, SpectralCoclustering
 
 try:
@@ -754,6 +754,19 @@ class KM(Cluster):
 
     def run(self, data):
         return self.km.fit_predict(data.T)
+
+class DBScan(Cluster):
+    """
+    dbscan clustering
+    """
+
+    def __init__(self, n_classes, **params):
+        super(DBScan, self).__init__(n_classes, **params)
+        self.name = 'dbscan'
+        self.dbscan = DBSCAN()
+
+    def run(self, data):
+        return self.dbscan.fit_predict(data.T)
 
 class PoissonCluster(Cluster):
     """
