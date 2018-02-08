@@ -125,72 +125,37 @@ def sparse_cell_normalize(np.ndarray[DTYPE_t, ndim=1] data,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sparse_cell_normalize_long(data):
+def sparse_poisson_ll_csc(np.ndarray[numeric, ndim=1] data,
+        np.ndarray[int2, ndim=1] indices,
+        np.ndarray[int2, ndim=1] indptr,
+        int2 genes,
+        int2 cells,
+        np.ndarray[DTYPE_t, ndim=2] means,
+        double eps=1e-10):
     """
-    cell_normalize for sparse matrices
-    """
-    cdef Py_ssize_t cells = data.shape[1]
-    cdef Py_ssize_t genes = data.shape[0]
-    cdef long[:] indices, indptr
-    cdef double[:] data_
-    cdef Py_ssize_t ind, g, c, start_ind, end_ind
-    cdef long i2
-    #cdef int ind, g, c, start_ind, end_ind
-    cdef double i, s
-    csc = sparse.csc_matrix(data)
-    csc_new = csc.copy().astype(np.double)
-    indices = csc_new.indices.astype(np.int64)
-    indptr = csc_new.indptr.astype(np.int64)
-    data_ = csc_new.data
-    cdef double[:] total_umis = np.empty(cells)
-    for c in range(cells):
-        start_ind = indptr[c]
-        end_ind = indptr[c+1]
-        s = 0
-        for i2 in range(start_ind, end_ind):
-            i = data_[i2]
-            s += i
-        for i2 in range(start_ind, end_ind):
-            data_[i2] /= s
-        total_umis[c] = s
-    med = np.median(np.asarray(total_umis))
-    csc_new *= med
-    return csc_new
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-def sparse_poisson_ll(data, np.ndarray[DTYPE_t, ndim=2] means, eps=1e-10):
-    """
-    calculates the Poisson log-likelihood for a sparse matrix data (genes x cells)
+    calculates the Poisson log-likelihood for a sparse csc matrix
     and dense array means (genes x k).
 
     returns a dense matrix of dimension cells x k
     """
-    # TODO: this does not deal with longs. maybe we need a more efficient way?
-    cdef int genes, cells, clusters
+    cdef int clusters
     cdef double i, val, v2
+    cdef numeric[:] data_ = data
+    cdef int2[:] indices_ = indices
+    cdef int2[:] indptr_ = indptr
     cdef Py_ssize_t j, c, g, k, ind
-    genes = data.shape[0]
-    cells = data.shape[1]
+    cdef int2 i2
     clusters = means.shape[1]
     cdef double[:,:] ll = np.zeros((cells, clusters), dtype=np.double) - means.sum(0)
-    cdef double[:,:] mv = means
-    cdef int[:] row, col
-    cdef double[:] data_
     cdef double[:,:] logm = np.log(means+eps)
-    # convert to coo format for quicker lookup...
-    coo = sparse.coo_matrix(data)
-    row = coo.row
-    col = coo.col
-    data_ = coo.data.astype(np.float64)
-    for ind in range(len(data_)):
-        i = data_[ind]
-        g = row[ind]
-        c = col[ind]
-        for k in range(clusters):
-            ll[c,k] += i*logm[g, k]
+    for c in range(cells):
+        start_ind = indptr_[c]
+        end_ind = indptr_[c+1]
+        for i2 in range(start_ind, end_ind):
+            g = indices_[i2]
+            i = data_[i2]
+            for k in range(clusters):
+                ll[c,k] += i*logm[g, k]
     return np.asarray(ll)
 
 @cython.boundscheck(False)
@@ -211,7 +176,6 @@ def sparse_means_var_csc(np.ndarray[numeric, ndim=1] data,
     cdef double[:] sq_means = np.zeros(genes)
     cdef double[:] var = np.zeros(genes)
     cdef double[:] means = np.zeros(genes)
-    # TODO: calculate means2 - squared mean
     for c in range(cells):
         start_ind = indptr[c]
         end_ind = indptr[c+1]

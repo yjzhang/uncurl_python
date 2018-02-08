@@ -135,9 +135,11 @@ def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True,
     clusters, cells = w_init.shape
     if method=='NoLips':
         nolips_iters = inner_max_iters
+        m_sum = means.sum(0)
+        lams = 1/(2*Xsum)
         for j in range(nolips_iters):
             if is_sparse and parallel:
-                w_new = update_fn(X.data, X.indices, X.indptr, X.shape[1], X.shape[0], means, w_init, Xsum, n_threads=threads)
+                w_new = update_fn(X.data, X.indices, X.indptr, X.shape[1], X.shape[0], means, w_init, lams, m_sum, n_threads=threads)
             else:
                 w_new = update_fn(X, means, w_init, Xsum)
             #w_new = w_res.x.reshape((clusters, cells))

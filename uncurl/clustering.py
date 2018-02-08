@@ -23,6 +23,8 @@ def kmeans_pp(data, k, centers=None):
     # TODO: what if there is missing data for a given gene?
     # missing data could be if all the entires are -1.
     genes, cells = data.shape
+    if sparse.issparse(data) and not sparse.isspmatrix_csc(data):
+        data = sparse.csc_matrix(data)
     num_known_centers = 0
     if centers is None:
         centers = np.zeros((genes, k))

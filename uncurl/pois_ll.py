@@ -4,9 +4,20 @@ import numpy as np
 from scipy import sparse
 from scipy.special import xlogy, gammaln
 
-from uncurl.sparse_utils import sparse_poisson_ll
+from uncurl.sparse_utils import sparse_poisson_ll_csc
 
 eps = 1e-10
+
+def sparse_poisson_ll(data, means):
+    data = sparse.csc_matrix(data)
+    return sparse_poisson_ll_csc(
+            data.data,
+            data.indices,
+            data.indptr,
+            data.shape[0],
+            data.shape[1],
+            means,
+            eps)
 
 def poisson_ll(data, means):
     """

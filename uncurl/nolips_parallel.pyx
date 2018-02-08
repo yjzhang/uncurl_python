@@ -56,7 +56,8 @@ def sparse_nolips_update_w(np.ndarray[DTYPE_t, ndim=1] X_data,
         int2 genes,
         np.ndarray[DTYPE_t, ndim=2] M,
         np.ndarray[DTYPE_t, ndim=2] W,
-        np.ndarray[DTYPE_t, ndim=1] Xsum, int2 n_threads = 4, disp=False):
+        np.ndarray[DTYPE_t, ndim=1] lams,
+        np.ndarray[DTYPE_t, ndim=1] m_sum, int2 n_threads=4, disp=False):
     """
     Parallel nolips...
 
@@ -64,7 +65,8 @@ def sparse_nolips_update_w(np.ndarray[DTYPE_t, ndim=1] X_data,
         X (csc sparse array): data with shape genes x cells
         M (array): genes x k
         W (array): k x cells
-        Xsum (array): X.sum(0) - sum each column of X - has length cells
+        lams (array): 1/(2*X.sum(0)) - sum each column of X - has length cells
+        m_sum (array): M.sum(0)
         n_threads (int2): number of threads
         disp (bool): currently unused
 
@@ -73,12 +75,12 @@ def sparse_nolips_update_w(np.ndarray[DTYPE_t, ndim=1] X_data,
     """
     cdef int2 k = W.shape[0]
     cdef double[:,:] M_view = M
-    cdef np.ndarray[DTYPE_t, ndim=1] R = M.sum(0)
+    #cdef np.ndarray[DTYPE_t, ndim=1] R = M.sum(0)
     cdef double[:] mw_view
-    cdef double[:] R_view = R
+    cdef double[:] R_view = m_sum
     cdef np.ndarray[DTYPE_t, ndim=1] z = np.zeros(k)
     cdef double lam, mw, xig
-    cdef np.ndarray[DTYPE_t, ndim=1] lams = 1/(2*Xsum)
+    #cdef np.ndarray[DTYPE_t, ndim=1] lams = 1/(2*Xsum)
     cdef double[:] lams_view = lams
     cdef double[:,:] Wnew_view = np.empty((k, cells), dtype=np.double)
     cdef double[:,:] W_view = W

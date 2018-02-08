@@ -7,6 +7,8 @@
 #import cython
 cimport cython
 
+from libc.math cimport log
+
 from scipy import sparse
 
 import numpy as np
@@ -112,44 +114,36 @@ def sparse_objective(np.ndarray[DTYPE_t, ndim=1] X_data,
         np.ndarray[DTYPE_t, ndim=2] W):
     """
     Calculates the Convex Poisson Mixture objective value for a CSC matrix x.
+
+    objective = sum(MW - X.*log(MW))/genes
     """
     cdef Py_ssize_t clusters = W.shape[0]
     cdef DTYPE_t[:] data_ = X_data
     cdef int2[:] indices = X_indices
     cdef int2[:] indptr = X_indptr
     cdef int2 i, ind, g, c, start_ind, end_ind
-    cdef double[:] mw = np.zeros(len(data_))
-    cdef double[:,:] m_view = M
-    cdef double[:,:] w_view = W
+    #cdef double[:] mw = np.zeros(len(data_))
+    cdef DTYPE_t[:,:] m_view = M
+    cdef DTYPE_t[:,:] w_view = W
     cdef double d
     cdef double obj = 0
-    with nogil:
-        for i in range(cells):
-            c = i
-            start_ind = indptr[i]
-            end_ind = indptr[i+1]
-            for ind in range(start_ind, end_ind):
-                g = indices[ind]
-                d = 0
-                for k in range(clusters):
-                    d += M[g,k]*W[k,c]
-                mw[ind] = d
-    cdef np.ndarray[DTYPE_t, ndim=1] D = np.asarray(mw)
-    cdef np.ndarray[DTYPE_t, ndim=1] data = np.asarray(data_)
-    obj = np.sum(-data*np.log(D))
+    # calculates X.*log(MW)
+    for i in range(cells):
+        c = i
+        start_ind = indptr[i]
+        end_ind = indptr[i+1]
+        for ind in range(start_ind, end_ind):
+            g = indices[ind]
+            d = 0
+            for k in range(clusters):
+                d += m_view[g,k]*w_view[k,c]
+            obj -= data_[ind]*log(d)
+    # calculates MW
     for c in range(cells):
         for g in range(genes):
             for k in range(clusters):
                 obj += m_view[g,k]*w_view[k,c]
     return obj/genes
-
-
-def cost(X, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] W, disp=False):
-    """
-    Calculates the log likelihood of X | M, W, where X is sparse
-    """
-    cdef double ll0 = sparse_objective(X, M, W)
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
