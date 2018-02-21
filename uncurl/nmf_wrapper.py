@@ -48,31 +48,31 @@ def nmf_init(data, clusters, k, init='enhanced'):
     return init_m, init_w
 
 # TODO: initialization if init_w is a cluster list?
-def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_w=None, init_m=None, **kwargs):
+def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_weights=None, init_means=None, **kwargs):
     """
     Args:
         data (array): dense or sparse array with shape (genes, cells)
         k (int): number of cell types
         normalize_w (bool, optional): True if W should be normalized (so that each column sums to 1). Default: True
         return_cost (bool, optional): True if the NMF objective value (squared error) should be returned. Default: True
-        init_w (array, optional): Initial value for W. Default: None
-        init_m (array, optional): Initial value for M. Default: None
+        init_weights (array, optional): Initial value for W. Default: None
+        init_means (array, optional): Initial value for M. Default: None
         **kwargs: misc arguments to NMF
 
     Returns:
         Two matrices M of shape (genes, k) and W of shape (k, cells). They correspond to M and M in Poisson state estimation. If return_cost is True (which it is by default), then the cost will also be returned. This might be prohibitably costly
     """
     init = None
-    if init_w is not None or init_m is not None:
+    if init_weights is not None or init_means is not None:
         init = 'custom'
-        if init_w is None:
-            init_w_, _, n_iter = non_negative_factorization(data.T, n_components=k, init='custom', update_W=False, W=init_m.T)
-            init_w = init_w_.T
-        elif init_m is None:
-            init_m, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_w)
+        if init_weights is None:
+            init_weights_, _, n_iter = non_negative_factorization(data.T, n_components=k, init='custom', update_W=False, W=init_means.T)
+            init_weights = init_weights_.T
+        elif init_means is None:
+            init_means, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_weights)
     nmf = NMF(k, init=init, **kwargs)
     data = log1p(cell_normalize(data))
-    M = nmf.fit_transform(data, W=init_m, H=init_w)
+    M = nmf.fit_transform(data, W=init_means, H=init_weights)
     W = nmf.components_
     if normalize_w:
         W = W/W.sum(0)
@@ -89,30 +89,30 @@ def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_w=None, init_
         return M, W
 
 # TODO: initialization
-def norm_nmf(data, k, init_w=None, init_m=None, normalize_w=True, **kwargs):
+def norm_nmf(data, k, init_weights=None, init_means=None, normalize_w=True, **kwargs):
     """
     Args:
         data (array): dense or sparse array with shape (genes, cells)
         k (int): number of cell types
         normalize_w (bool): True if W should be normalized (so that each column sums to 1)
-        init_w (array, optional): Initial value for W. Default: None
-        init_m (array, optional): Initial value for M. Default: None
+        init_weights (array, optional): Initial value for W. Default: None
+        init_means (array, optional): Initial value for M. Default: None
         **kwargs: misc arguments to NMF
 
     Returns:
         Two matrices M of shape (genes, k) and W of shape (k, cells)
     """
     init = None
-    if init_w is not None or init_m is not None:
+    if init_weights is not None or init_means is not None:
         init = 'custom'
-        if init_w is None:
-            init_w_, _, n_iter = non_negative_factorization(data.T, n_components=k, init='custom', update_W=False, W=init_m.T)
-            init_w = init_w_.T
-        elif init_m is None:
-            init_m, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_w)
+        if init_weights is None:
+            init_weights_, _, n_iter = non_negative_factorization(data.T, n_components=k, init='custom', update_W=False, W=init_means.T)
+            init_weights = init_weights_.T
+        elif init_means is None:
+            init_means, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_weights)
     nmf = NMF(k, init=init, **kwargs)
     data = log1p(cell_normalize(data))
-    M = nmf.fit_transform(data, W=init_m, H=init_w)
+    M = nmf.fit_transform(data, W=init_means, H=init_weights)
     W = nmf.components_
     if normalize_w:
         W = W/W.sum(0)
