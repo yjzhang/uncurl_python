@@ -4,6 +4,11 @@ UNCURL
 .. image:: https://travis-ci.org/yjzhang/uncurl_python.svg
     :target: https://travis-ci.org/yjzhang/uncurl_python
 
+Installation
+------------
+
+Uncurl can be installed from PyPI: ``pip install uncurl-seq``.
+
 After cloning the repository, first run ``pip install -r requirements.txt`` to install the required libraries. Then, run ``pip install .``
 
 Requirements: numpy, scipy, cython, scikit-learn
