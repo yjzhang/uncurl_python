@@ -9,11 +9,11 @@ Installation
 
 Uncurl can be installed from PyPI: ``pip install uncurl-seq``.
 
-After cloning the repository, first run ``pip install -r requirements.txt`` to install the required libraries. Then, run ``pip install .``
+Alternatively, uncurl can be installed from source: After cloning the repository, first run ``pip install -r requirements.txt`` to install the required libraries. Then, run ``pip install .``
 
 Requirements: numpy, scipy, cython, scikit-learn
 
-Tested on python 2.7, 3.4
+Tested on python 2.7, 3.4 on Linux.
 
 For parallel state estimation, OpenMP is required.
 
