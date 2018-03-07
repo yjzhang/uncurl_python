@@ -4,6 +4,7 @@ UNCURL
 .. image:: https://travis-ci.org/yjzhang/uncurl_python.svg
     :target: https://travis-ci.org/yjzhang/uncurl_python
 
+
 Installation
 ------------
 
@@ -22,6 +23,13 @@ To run tests: ``python setup.py test``
 Examples: see the examples folder.
 
 `Full documentation <https://yjzhang.github.io/uncurl_python/>`_
+
+Publications
+------------
+
+Accepted for ISMB 2018.
+
+`Preprint <https://www.biorxiv.org/content/early/2018/03/01/142398>`_
 
 Features
 ========
