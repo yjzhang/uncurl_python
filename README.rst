@@ -1,8 +1,10 @@
 UNCURL
 ======
 
-.. image:: https://travis-ci.org/yjzhang/uncurl_python.svg
+.. image:: https://travis-ci.org/yjzhang/uncurl_python.svg :alt: TravisCI
     :target: https://travis-ci.org/yjzhang/uncurl_python
+.. image:: https://img.shields.io/pypi/v/uncurl-seq.svg :alt: PyPI
+    :target: https://pypi.python.org/pypi/uncurl-seq
 
 
 Installation
