@@ -29,7 +29,7 @@ Examples: see the examples folder.
 Publications
 ------------
 
-Accepted for ISMB 2018.
+Accepted for ISMB 2018 (To appear in Bioinformatics).
 
 `Preprint <https://www.biorxiv.org/content/early/2018/03/01/142398>`_
 
