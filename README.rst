@@ -1,9 +1,9 @@
 UNCURL
 ======
 
-.. image:: https://travis-ci.org/yjzhang/uncurl_python.svg :alt: TravisCI
+.. image:: https://travis-ci.org/yjzhang/uncurl_python.svg
     :target: https://travis-ci.org/yjzhang/uncurl_python
-.. image:: https://img.shields.io/pypi/v/uncurl-seq.svg :alt: PyPI
+.. image:: https://img.shields.io/pypi/v/uncurl-seq.svg
     :target: https://pypi.python.org/pypi/uncurl-seq
 
 
