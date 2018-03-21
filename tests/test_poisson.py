@@ -20,6 +20,17 @@ class PoissonTest(TestCase):
         self.assertEqual(uncurl.poisson_dist(self.p1, self.p1), 0.0)
         self.assertEqual(uncurl.poisson_dist(self.p2, self.p2), 0.0)
         self.assertTrue(uncurl.poisson_dist(self.p1, self.p2) > 0.0)
+        self.assertTrue(
+                np.abs(uncurl.sparse_utils.poisson_dist(self.p1, self.p2) -
+                    uncurl.poisson_dist(self.p1, self.p2)) < 1e-4)
+
+    def test_sparse_poisson_dist(self):
+        sp1 = sparse.csc_matrix(self.p1)
+        sp2 = sparse.csc_matrix(self.p2)
+        self.assertTrue(
+                np.abs(uncurl.sparse_utils.poisson_dist(self.p1, self.p2) -
+                    uncurl.poisson_dist(self.p1, self.p2)) < 1e-4)
+
 
     def test_poisson_ll(self):
         """

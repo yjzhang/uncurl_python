@@ -108,14 +108,14 @@ def initialize_means(data, clusters, k):
                 init_w[:,i] = data[:,point].toarray().flatten()
             else:
                 # memory usage might be a problem here?
-                init_w[:,i] = np.array(data[:,clusters==i].mean(1)).flatten()
+                init_w[:,i] = np.array(data[:,clusters==i].mean(1)).flatten() + eps
     else:
         for i in range(k):
             if data[:,clusters==i].shape[1]==0:
                 point = np.random.randint(0, data.shape[1])
                 init_w[:,i] = data[:,point].flatten()
             else:
-                init_w[:,i] = data[:,clusters==i].mean(1)
+                init_w[:,i] = data[:,clusters==i].mean(1) + eps
     return init_w
 
 def initialize_weights_nn(data, means, lognorm=True):
@@ -131,7 +131,7 @@ def initialize_weights_nn(data, means, lognorm=True):
         for j in range(k):
             pass
 
-def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True, parallel=True, threads=4, method='NoLips', tol=1e-10, disp=True, inner_max_iters=100, output_name='W'):
+def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True, parallel=True, threads=4, method='NoLips', tol=1e-10, disp=False, inner_max_iters=100, output_name='W', regularization=0.0):
     clusters, cells = w_init.shape
     if method=='NoLips':
         nolips_iters = inner_max_iters
@@ -139,13 +139,15 @@ def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True,
         lams = 1/(2*Xsum)
         for j in range(nolips_iters):
             if is_sparse and parallel:
-                w_new = update_fn(X.data, X.indices, X.indptr, X.shape[1], X.shape[0], means, w_init, lams, m_sum, n_threads=threads)
+                w_new = update_fn(X.data, X.indices, X.indptr, X.shape[1], X.shape[0], means, w_init, lams, m_sum, n_threads=threads, regularization=regularization)
             else:
                 w_new = update_fn(X, means, w_init, Xsum)
             #w_new = w_res.x.reshape((clusters, cells))
             #w_new = w_new/w_new.sum(0)
             if tol > 0:
                 w_diff = np.sqrt(np.sum((w_new - w_init)**2)/(clusters*cells))
+                if disp:
+                    print('inner iter {0}: w_diff={1}'.format(j, w_diff))
                 w_init = w_new
                 if w_diff < tol:
                     break
@@ -165,36 +167,9 @@ def _call_sparse_obj(X, M, W):
     return sparse_objective(X.data, X.indices, X.indptr, X.shape[1], X.shape[0],
             M, W)
 
-
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False):
+def initialize_means_weights(data, clusters, init_means=None, init_weights=None, initialization='tsvd', max_assign_weight=0.75):
     """
-    Uses a Poisson Covex Mixture model to estimate cell states and
-    cell state mixing weights.
-
-    To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.
-
-    Args:
-        data (array): genes x cells array or sparse matrix.
-        clusters (int): number of mixture components
-        init_means (array, optional): initial centers - genes x clusters. Default: from Poisson kmeans
-        init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans
-        method (str, optional): optimization method. Current options are 'NoLips' and 'L-BFGS-B'. Default: 'NoLips'.
-        max_iters (int, optional): maximum number of iterations. Default: 30
-        tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10
-        disp (bool, optional): whether or not to display optimization progress. Default: False
-        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
-        normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
-        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means). Default: tsvd.
-        parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
-        threads (int, optional): How many threads to use in the parallel computation. Default: 4
-        max_assign_weight (float, optional): If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75
-        run_w_first (bool, optional): Whether or not to optimize W first (if false, M will be optimized first). Default: True
-        constrain_w (bool, optional): If True, then W is normalized after every iteration. Default: False
-
-    Returns:
-        M (array): genes x clusters - state means
-        W (array): clusters x cells - state mixing components for each cell
-        ll (float): final log-likelihood
+    Generates initial means and weights for state estimation.
     """
     genes, cells = data.shape
     if init_means is None:
@@ -221,7 +196,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             n_components = min(50, genes-1)
             #tsvd = TruncatedSVD(min(50, genes-1))
             km = KMeans(clusters)
-            # TODO: remove dependence on sklearn tsvd b/c it has a bug that
+            # remove dependence on sklearn tsvd b/c it has a bug that
             # prevents it from working properly on long inputs 
             # if num elements > 2**31
             #data_reduced = tsvd.fit_transform(log1p(cell_normalize(data)).T)
@@ -258,6 +233,41 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             init_weights = initialize_from_assignments(init_weights, clusters,
                     max_assign_weight)
         w_init = init_weights.copy()
+    return means, w_init
+
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False, regularization=0.0):
+    """
+    Uses a Poisson Covex Mixture model to estimate cell states and
+    cell state mixing weights.
+
+    To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.
+
+    Args:
+        data (array): genes x cells array or sparse matrix.
+        clusters (int): number of mixture components
+        init_means (array, optional): initial centers - genes x clusters. Default: from Poisson kmeans
+        init_weights (array, optional): initial weights - clusters x cells, or assignments as produced by clustering. Default: from Poisson kmeans
+        method (str, optional): optimization method. Current options are 'NoLips' and 'L-BFGS-B'. Default: 'NoLips'.
+        max_iters (int, optional): maximum number of iterations. Default: 30
+        tol (float, optional): if both M and W change by less than tol (RMSE), then the iteration is stopped. Default: 1e-10
+        disp (bool, optional): whether or not to display optimization progress. Default: False
+        inner_max_iters (int, optional): Number of iterations to run in the optimization subroutine for M and W. Default: 100
+        normalize (bool, optional): True if the resulting W should sum to 1 for each cell. Default: True.
+        initialization (str, optional): If initial means and weights are not provided, this describes how they are initialized. Options: 'cluster' (poisson cluster for means and weights), 'kmpp' (kmeans++ for means, random weights), 'km' (regular k-means), 'tsvd' (tsvd(50) + k-means). Default: tsvd.
+        parallel (bool, optional): Whether to use parallel updates (sparse NoLips only). Default: True
+        threads (int, optional): How many threads to use in the parallel computation. Default: 4
+        max_assign_weight (float, optional): If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75
+        run_w_first (bool, optional): Whether or not to optimize W first (if false, M will be optimized first). Default: True
+        constrain_w (bool, optional): If True, then W is normalized after every iteration. Default: False
+        regularization (float, optional): Regularization coefficient for M and W. Default: 0 (no regularization).
+
+    Returns:
+        M (array): genes x clusters - state means
+        W (array): clusters x cells - state mixing components for each cell
+        ll (float): final log-likelihood
+    """
+    genes, cells = data.shape
+    means, w_init = initialize_means_weights(data, clusters, init_means, init_weights, initialization, max_assign_weight)
     X = data.astype(float)
     XT = X.T
     is_sparse = False
@@ -298,27 +308,27 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             print('iter: {0}'.format(i))
         if run_w_first:
             # step 1: given M, estimate W
-            w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
+            w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W', regularization)
             if constrain_w:
                 w_new = w_new/w_new.sum(0)
             if disp:
                 w_ll = objective_fn(X, means, w_new)
                 print('Finished updating W. Objective value: {0}'.format(w_ll))
             # step 2: given W, update M
-            means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M')
+            means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M', regularization)
             means = means.T
             if disp:
                 w_ll = objective_fn(X, means, w_new)
                 print('Finished updating M. Objective value: {0}'.format(w_ll))
         else:
             # step 1: given W, update M
-            means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M')
+            means = _estimate_w(XT, means.T, w_new.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M', regularization)
             means = means.T
             if disp:
                 w_ll = objective_fn(X, means, w_new)
                 print('Finished updating M. Objective value: {0}'.format(w_ll))
             # step 2: given M, estimate W
-            w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W')
+            w_new = _estimate_w(X, w_new, means, Xsum, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'W', regularization)
             if constrain_w:
                 w_new = w_new/w_new.sum(0)
             if disp:

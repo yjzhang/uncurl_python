@@ -8,7 +8,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-from libc.math cimport log2
+from libc.math cimport log2, log
 
 from scipy import sparse
 from scipy.special import xlogy
@@ -188,10 +188,40 @@ def sparse_means_var_csc(np.ndarray[numeric, ndim=1] data,
         var[g] = sq_means[g]/cells - means[g]**2
     return np.asarray(means), np.asarray(var)
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def sparse_mean_1_csc(np.ndarray[numeric, ndim=1] data,
+        np.ndarray[int2, ndim=1] indices,
+        np.ndarray[int2, ndim=1] indptr,
+        Py_ssize_t ncols,
+        Py_ssize_t nrows):
+    """
+    returns data.mean(1) for a csc matrix.
+
+    """
+    cdef int2 c, start_ind, end_ind, i2, g
+    cdef double s
+    cdef double[:] means = np.zeros(nrows)
+    for c in range(ncols):
+        start_ind = indptr[c]
+        end_ind = indptr[c+1]
+        for i2 in range(start_ind, end_ind):
+            g = indices[i2]
+            means[g] += data[i2]
+    for g in range(nrows):
+        means[g] = means[g]/ncols
+    return np.asarray(means)
+
 def poisson_dist(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
     """
-    Returns the poisson distance between the two arrays.
+    Returns the poisson distance between the two 1d arrays.
     """
+    cdef double distance = 0
+    cdef Py_ssize_t shape = p1.shape[0]
+    for i in range(shape):
+        distance += (p1[i] - p2[i])*(log(p1[i]+eps) - log(p2[i]+eps))
+    return distance
 
 def sparse_poisson_dist(p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
     """
@@ -200,6 +230,8 @@ def sparse_poisson_dist(p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
     Args:
         p1: 1d sparse column matrix (shape genes x 1),
         p2: 1d ndarray (genes)
+
+    TODO: have not tested this.
     """
     coo = p1
     if not sparse.isspmatrix_coo(coo):
@@ -222,6 +254,7 @@ def sparse_poisson_dist(p1, np.ndarray[DTYPE_t, ndim=1] p2, eps=1e-10):
             pass
         else:
             dist += (val - p2[g])*(logdata[i] - logp2[i])
+    return dist
 
 def poisson_dist_mat(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, ndim=2] centers, eps=1e-10):
     """

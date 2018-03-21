@@ -28,7 +28,7 @@ cdef double eps = 1e-10
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cdef inline void _update(int2 i, DTYPE_t[:] data_, int2[:] indices, int2[:] indptr, DTYPE_t[:,:] cij, double[:] R_view, double[:,:] M_view, double[:,:] W_view, double[:,:] Wnew_view, double lam, double eps, int2 k) nogil:
+cdef inline void _update(int2 i, DTYPE_t[:] data_, int2[:] indices, int2[:] indptr, DTYPE_t[:,:] cij, double[:] R_view, double[:,:] M_view, double[:,:] W_view, double[:,:] Wnew_view, double lam, double eps, int2 k, double regularization) nogil:
     # NoLips in-place update for a single cell/column of w.
     # all these updates can run in parallel.
     cdef int2 start_ind = indptr[i]
@@ -44,7 +44,7 @@ cdef inline void _update(int2 i, DTYPE_t[:] data_, int2[:] indices, int2[:] indp
         for j in range(k):
             cij[i,j] += M_view[g,j]*mw
     for j in range(k):
-        Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(R_view[j]-cij[i,j])))
+        Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(regularization + R_view[j]-cij[i,j])))
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -57,7 +57,8 @@ def sparse_nolips_update_w(np.ndarray[DTYPE_t, ndim=1] X_data,
         np.ndarray[DTYPE_t, ndim=2] M,
         np.ndarray[DTYPE_t, ndim=2] W,
         np.ndarray[DTYPE_t, ndim=1] lams,
-        np.ndarray[DTYPE_t, ndim=1] m_sum, int2 n_threads=4, disp=False):
+        np.ndarray[DTYPE_t, ndim=1] m_sum, int2 n_threads=4, disp=False,
+        double regularization=0.0):
     """
     Parallel nolips...
 
@@ -69,6 +70,7 @@ def sparse_nolips_update_w(np.ndarray[DTYPE_t, ndim=1] X_data,
         m_sum (array): M.sum(0)
         n_threads (int2): number of threads
         disp (bool): currently unused
+        regularization (double): regularization factor for L1 regularization
 
     Returns:
         Updated copy of W
@@ -96,6 +98,6 @@ def sparse_nolips_update_w(np.ndarray[DTYPE_t, ndim=1] X_data,
     cdef DTYPE_t[:,:] cij = np.zeros((cells, k))
     # schedules: guided, 
     for i in prange(cells, schedule="guided", nogil=True, num_threads=n_threads):
-        _update(i, data_, indices, indptr, cij, R_view, M_view, W_view, Wnew_view, lams_view[i], eps, k)
+        _update(i, data_, indices, indptr, cij, R_view, M_view, W_view, Wnew_view, lams_view[i], eps, k, regularization)
     return np.asarray(Wnew_view)
 
