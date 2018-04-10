@@ -106,7 +106,7 @@ Example:
 Distribution Selection
 ----------------------
 
-The ``DistFitDataset`` function is used to determine the distribution of each gene in a dataset by calculating the fit error for the Poisson, Normal, and Log-Normal distributions. It currently only works for dense matrices.
+The ``DistFitDataset`` function is used to determine the distribution of each gene in a dataset by calculating the fit error for the Poisson, Normal, and Log-Normal distributions. It currently only works for dense matrices. For large datasets, we recommend taking a small random subset of less than 1000 cells.
 
 Example:
 
