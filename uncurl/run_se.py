@@ -32,9 +32,9 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         func = nb_estimate_state
     elif dist=='zip':
         func = zip_estimate_state
-    elif dist=='lognorm':
+    elif dist=='lognorm' or dist=='log-normal' or dist=='lognormal':
         func = log_norm_nmf
-    elif dist=='gaussian' or dist=='norm':
+    elif dist=='gaussian' or dist=='norm' or dist=='normal':
         func = norm_nmf
     else:
         print('dist should be one of Poiss, NB, ZIP, LogNorm, or Gaussian. Using Poiss.')
