@@ -184,7 +184,7 @@ Miscellaneous
 
 Unsupported methods included in the package: https://yjzhang.github.io/uncurl_python/unsupported_methods.html
 
-Miscellaneous uncurl parameters (non-default parameters and things we tried):
+Miscellaneous uncurl parameters (non-default parameters and things we tried): https://yjzhang.github.io/uncurl_python/things_we_tried.html
 
 
 Included datasets
