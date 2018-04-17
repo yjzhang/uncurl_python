@@ -13,6 +13,7 @@ Welcome to UNCURL's documentation!
 
    readme_link
    unsupported_methods
+   things_we_tried
    uncurl
 
  
