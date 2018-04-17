@@ -55,9 +55,20 @@
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
 <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">xlogy</span><span class="p">,</span> <span class="n">gammaln</span>
 
-<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">sparse_poisson_ll</span>
+<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">sparse_poisson_ll_csc</span>
 
 <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-10</span>
+
+<div class="viewcode-block" id="sparse_poisson_ll"><a class="viewcode-back" href="../../uncurl.html#uncurl.pois_ll.sparse_poisson_ll">[docs]</a><span class="k">def</span> <span class="nf">sparse_poisson_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">means</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csc_matrix</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sparse_poisson_ll_csc</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">indices</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">indptr</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">means</span><span class="p">,</span>
+            <span class="n">eps</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="poisson_ll"><a class="viewcode-back" href="../../uncurl.html#uncurl.pois_ll.poisson_ll">[docs]</a><span class="k">def</span> <span class="nf">poisson_ll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">means</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>

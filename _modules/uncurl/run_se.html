@@ -66,7 +66,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        data (array): genes x cells</span>
 <span class="sd">        clusters (int): number of mixture components</span>
-<span class="sd">        dist (str, optional): Distribution used in state estimation. Options: &#39;Poiss&#39;, &#39;NB&#39;, &#39;ZIP&#39;, &#39;LogNorm&#39;. Default: &#39;Poiss&#39;</span>
+<span class="sd">        dist (str, optional): Distribution used in state estimation. Options: &#39;Poiss&#39;, &#39;NB&#39;, &#39;ZIP&#39;, &#39;LogNorm&#39;, &#39;Gaussian&#39;. Default: &#39;Poiss&#39;</span>
 <span class="sd">        reps (int, optional): number of times to run the state estimation, taking the result with the highest log-likelihood.</span>
 <span class="sd">        **kwargs: arguments to pass to the underlying state estimation function.</span>
 
@@ -76,15 +76,16 @@
 <span class="sd">        ll (float): final log-likelihood</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">func</span> <span class="o">=</span> <span class="n">poisson_estimate_state</span>
-    <span class="k">if</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;Poiss&#39;</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;Poisson&#39;</span><span class="p">:</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;poiss&#39;</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;poisson&#39;</span><span class="p">:</span>
         <span class="k">pass</span>
-    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;NB&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;nb&#39;</span><span class="p">:</span>
         <span class="n">func</span> <span class="o">=</span> <span class="n">nb_estimate_state</span>
-    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;ZIP&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;zip&#39;</span><span class="p">:</span>
         <span class="n">func</span> <span class="o">=</span> <span class="n">zip_estimate_state</span>
-    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;LogNorm&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;lognorm&#39;</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;log-normal&#39;</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;lognormal&#39;</span><span class="p">:</span>
         <span class="n">func</span> <span class="o">=</span> <span class="n">log_norm_nmf</span>
-    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;gaussian&#39;</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;norm&#39;</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">==</span><span class="s1">&#39;normal&#39;</span><span class="p">:</span>
         <span class="n">func</span> <span class="o">=</span> <span class="n">norm_nmf</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;dist should be one of Poiss, NB, ZIP, LogNorm, or Gaussian. Using Poiss.&#39;</span><span class="p">)</span>

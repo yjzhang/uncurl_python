@@ -56,20 +56,22 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">sparse</span>
 
-<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">sparse_cell_normalize</span>
+<span class="kn">from</span> <span class="nn">uncurl.sparse_utils</span> <span class="k">import</span> <span class="n">sparse_cell_normalize</span><span class="p">,</span> <span class="n">sparse_means_var_csc</span>
 
-<div class="viewcode-block" id="sparse_var"><a class="viewcode-back" href="../../uncurl.html#uncurl.preprocessing.sparse_var">[docs]</a><span class="k">def</span> <span class="nf">sparse_var</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="sparse_mean_var"><a class="viewcode-back" href="../../uncurl.html#uncurl.preprocessing.sparse_mean_var">[docs]</a><span class="k">def</span> <span class="nf">sparse_mean_var</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Calculates the variance for each row of a sparse matrix.</span>
+<span class="sd">    Calculates the variance for each row of a sparse matrix,</span>
+<span class="sd">    using the relationship Var = E[x^2] - E[x]^2.</span>
 
-<span class="sd">    Timing; 4.170 s for 73233 cells, 32738 genes</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        pair of matrices mean, variance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># means for each gene</span>
-    <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-    <span class="n">sq</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">means_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sq</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-    <span class="n">var</span> <span class="o">=</span> <span class="n">means_2</span> <span class="o">-</span> <span class="n">means</span><span class="o">**</span><span class="mi">2</span>
-    <span class="k">return</span> <span class="n">var</span></div>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csc_matrix</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sparse_means_var_csc</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">indices</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">indptr</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="max_variance_genes"><a class="viewcode-back" href="../../uncurl_pub.html#uncurl.preprocessing.max_variance_genes">[docs]</a><span class="k">def</span> <span class="nf">max_variance_genes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -94,11 +96,10 @@
     <span class="c1"># there is almost certainly something superlinear in this method</span>
     <span class="c1"># maybe it&#39;s to_csr?</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-        <span class="n">var</span> <span class="o">=</span> <span class="n">sparse_var</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">means</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">means</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">sparse_mean_var</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">var</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">mean_indices</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
     <span class="n">n_elements</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">nbins</span><span class="p">)</span>
@@ -122,8 +123,15 @@
 <span class="sd">    count per cell is equal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">sparse_cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csc_matrix</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+        <span class="c1"># normalize in-place</span>
+        <span class="n">sparse_cell_normalize</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">indices</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">indptr</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">data</span>
+    <span class="n">data_norm</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">total_umis</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
         <span class="n">di</span> <span class="o">=</span> <span class="n">data_norm</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>

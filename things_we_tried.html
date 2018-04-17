@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Non-default parameters: things we tried and their results &#8212; UNCURL 0.2.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="non-default-parameters-things-we-tried-and-their-results">
+<h1>Non-default parameters: things we tried and their results<a class="headerlink" href="#non-default-parameters-things-we-tried-and-their-results" title="Permalink to this headline">¶</a></h1>
+<p>There are a number of uncurl parameters (well, not necessarily parameters, more like... run configurations?) that we experimented with. Here&#8217;s some results.</p>
+<div class="section" id="cell-normalization">
+<h2>Cell normalization<a class="headerlink" href="#cell-normalization" title="Permalink to this headline">¶</a></h2>
+<p>This option involves normalizing the cells by their read counts. First, we calculate the total read count of each cell, and divide all counts for cell i by its total read count. Then, we find the median total read count over all cells, and multiply the entire matrix by that value.</p>
+<p>The clustering performance after cell normalization were substantially better on count-valued datasets, and either had no effect or were marginally worse on RPKM-normalized and other forms of data that have already been normalized in some other way. So we would suggest using this option for unnormalized count-valued datasets. The downside is that it might lose some information (if certain cell types were correlated to larger read counts?), but I&#8217;m not sure if that happens in practice.</p>
+<p>[TODO: include graphs]</p>
+<p>To use this option, run <code class="docutils literal"><span class="pre">data_normalized</span> <span class="pre">=</span> <span class="pre">uncurl.preprocessing.cell_normalize(data)</span></code> and run uncurl on <code class="docutils literal"><span class="pre">data_normalized</span></code>.</p>
+</div>
+<div class="section" id="constrained-w">
+<h2>Constrained W<a class="headerlink" href="#constrained-w" title="Permalink to this headline">¶</a></h2>
+<p>When this option is activated, the <code class="docutils literal"><span class="pre">W</span></code> matrix is normalized so that its columns sum to 1 after each round of alternating minimization. Without this option, <code class="docutils literal"><span class="pre">W</span></code> is only constrained to be nonnegative during the optimization process, and normalized after the end of the optimization.</p>
+<p>In clustering experiments, this option had mixed results. It performed marginally better on some datasets and marginally worse on others. On the 10X datasets, constrained W performed slightly better when combined with cell normalization, and worse without cell normalization.</p>
+<p>[TODO: include graphs]</p>
+<p>To use this option, add the argument <code class="docutils literal"><span class="pre">constrain_w=True</span></code> to <code class="docutils literal"><span class="pre">run_state_estimation</span></code> or <code class="docutils literal"><span class="pre">poisson_estimate_state</span></code>. This does not work for the NMF-based methods.</p>
+</div>
+<div class="section" id="uncurl-initialization-options">
+<h2>Uncurl initialization options<a class="headerlink" href="#uncurl-initialization-options" title="Permalink to this headline">¶</a></h2>
+<p>We provide a variety of initialization options for uncurl. Most initialization methods first perform a clustering, initialize M based on the cluster means, and W based on the cluster assignments. The default initialization is based on truncated SVD followed by K-means. We also provide initializations based on Poisson clustering, and Poisson k-means++ with randomized W.</p>
+<p>In clustering experiments, truncated SVD initialization usually performed the best, but there were some datasets under which Poisson clustering initialization performed better. For example, on randomly downsampled data, Poisson clustering initialization seems to perform better.</p>
+<p>To use different initializations, use the argument <code class="docutils literal"><span class="pre">initialization=&lt;method&gt;</span></code>, where <code class="docutils literal"><span class="pre">&lt;method&gt;</span></code> can be one of <code class="docutils literal"><span class="pre">tsvd</span></code> (truncated SVD + K-means), <code class="docutils literal"><span class="pre">cluster</span></code> (Poisson clustering), <code class="docutils literal"><span class="pre">kmpp</span></code> (Poisson k-means++), or <code class="docutils literal"><span class="pre">km</span></code> (k-means on the full data).</p>
+</div>
+<div class="section" id="alternative-to-qualnorm-mean-normalized-initialization">
+<h2>Alternative to QualNorm: mean-normalized initialization<a class="headerlink" href="#alternative-to-qualnorm-mean-normalized-initialization" title="Permalink to this headline">¶</a></h2>
+<p>Given prior gene expression data, there are a variety of methods for initializing uncurl. <code class="docutils literal"><span class="pre">QualNorm</span></code> is one way of doing this initialization. Another way, when we have real-valued prior data, we could normalize the prior data so that each cell type sums to 1, and then multiply that by the mean per-cell read count of the actual data.</p>
+<p>This performed better than QualNorm on sparse datasets such as the 10X datasets.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Non-default parameters: things we tried and their results</a><ul>
+<li><a class="reference internal" href="#cell-normalization">Cell normalization</a></li>
+<li><a class="reference internal" href="#constrained-w">Constrained W</a></li>
+<li><a class="reference internal" href="#uncurl-initialization-options">Uncurl initialization options</a></li>
+<li><a class="reference internal" href="#alternative-to-qualnorm-mean-normalized-initialization">Alternative to QualNorm: mean-normalized initialization</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/things_we_tried.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Sumit Mukherjee, Yue Zhang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

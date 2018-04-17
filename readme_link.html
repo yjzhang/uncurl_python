@@ -58,19 +58,29 @@
   <div class="section" id="uncurl">
 <h1>UNCURL<a class="headerlink" href="#uncurl" title="Permalink to this headline">¶</a></h1>
 <a class="reference external image-reference" href="https://travis-ci.org/yjzhang/uncurl_python"><img alt="https://travis-ci.org/yjzhang/uncurl_python.svg" src="https://travis-ci.org/yjzhang/uncurl_python.svg" /></a>
-<p>After cloning the repository, first run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code> to install the required libraries. Then, run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/uncurl-seq"><img alt="https://img.shields.io/pypi/v/uncurl-seq.svg" src="https://img.shields.io/pypi/v/uncurl-seq.svg" /></a>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Uncurl can be installed from PyPI: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">uncurl-seq</span></code>.</p>
+<p>Alternatively, uncurl can be installed from source: After cloning the repository, first run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code> to install the required libraries. Then, run <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code></p>
 <p>Requirements: numpy, scipy, cython, scikit-learn</p>
-<p>Tested on python 2.7, 3.4</p>
+<p>Tested on python 2.7, 3.4 on Linux.</p>
 <p>For parallel state estimation, OpenMP is required.</p>
 <p>To run tests: <code class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">test</span></code></p>
 <p>Examples: see the examples folder.</p>
 <p><a class="reference external" href="https://yjzhang.github.io/uncurl_python/">Full documentation</a></p>
 </div>
+<div class="section" id="publications">
+<h2>Publications<a class="headerlink" href="#publications" title="Permalink to this headline">¶</a></h2>
+<p>Accepted for ISMB 2018 (To appear in Bioinformatics).</p>
+<p><a class="reference external" href="https://www.biorxiv.org/content/early/2018/03/01/142398">Preprint</a></p>
+</div>
+</div>
 <div class="section" id="features">
 <h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="state-estimation">
 <h2>State Estimation<a class="headerlink" href="#state-estimation" title="Permalink to this headline">¶</a></h2>
-<p>The simplest way to use state estimation is to use the <code class="docutils literal"><span class="pre">run_state_estimation</span></code> function, which can be used to call any of the state estimation functions for different distributions. The possible distributions are &#8216;Poiss&#8217;, &#8216;NB&#8217;, &#8216;ZIP&#8217;, or &#8216;LogNorm&#8217;. Generally, &#8216;Poiss&#8217; is recommended for sparse or count-valued datasets. Currently the NB and ZIP options are unsupported.</p>
+<p>The simplest way to use state estimation is to use the <code class="docutils literal"><span class="pre">run_state_estimation</span></code> function, which can be used to call any of the state estimation functions for different distributions. The possible distributions are &#8216;Poiss&#8217;, &#8216;LogNorm&#8217;, &#8216;Gaussian&#8217;, &#8216;NB&#8217; (negative binomial), or &#8216;ZIP&#8217; (zero-inflated Poisson). Generally, &#8216;Poiss&#8217; is recommended for sparse or count-valued datasets. Currently the NB and ZIP options are unsupported.</p>
 <p>Before running state estimation, it is often a good idea to subset the number of genes. This can be done using the function <code class="docutils literal"><span class="pre">max_variance_genes</span></code>, which bins the genes by mean expression, and selects a top fraction of genes by variance from each bin. It also removes genes that have all zero expression counts.</p>
 <p>Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
@@ -124,7 +134,7 @@
 </div>
 <div class="section" id="distribution-selection">
 <h2>Distribution Selection<a class="headerlink" href="#distribution-selection" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">DistFitDataset</span></code> function is used to determine the distribution of each gene in a dataset by calculating the fit error for the Poisson, Normal, and Log-Normal distributions. It currently only works for dense matrices.</p>
+<p>The <code class="docutils literal"><span class="pre">DistFitDataset</span></code> function is used to determine the distribution of each gene in a dataset by calculating the fit error for the Poisson, Normal, and Log-Normal distributions. It currently only works for dense matrices. For large datasets, we recommend taking a small random subset of less than 1000 cells.</p>
 <p>Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">uncurl</span> <span class="kn">import</span> <span class="n">DistFitDataset</span>
@@ -177,6 +187,11 @@
 <p>The output MW of UNCURL can be used as input for other lineage estimation tools.</p>
 <p>We also have implemented our own lineage estimation tools but have not thoroughly validated them. See <a class="reference external" href="https://yjzhang.github.io/uncurl_python/unsupported_methods.html#lineage-estimation">docs for unsupported methods</a>.</p>
 </div>
+<div class="section" id="miscellaneous">
+<h2>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h2>
+<p>Unsupported methods included in the package: <a class="reference external" href="https://yjzhang.github.io/uncurl_python/unsupported_methods.html">https://yjzhang.github.io/uncurl_python/unsupported_methods.html</a></p>
+<p>Miscellaneous uncurl parameters (non-default parameters and things we tried):</p>
+</div>
 <div class="section" id="included-datasets">
 <h2>Included datasets<a class="headerlink" href="#included-datasets" title="Permalink to this headline">¶</a></h2>
 <p>Real datasets:</p>
@@ -197,7 +212,11 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">UNCURL</a></li>
+<li><a class="reference internal" href="#">UNCURL</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#publications">Publications</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#features">Features</a><ul>
 <li><a class="reference internal" href="#state-estimation">State Estimation</a><ul>
 <li><a class="reference internal" href="#details">Details</a></li>
@@ -208,6 +227,7 @@
 <li><a class="reference internal" href="#clustering">Clustering</a></li>
 <li><a class="reference internal" href="#dimensionality-reduction">Dimensionality Reduction</a></li>
 <li><a class="reference internal" href="#lineage-estimation-pseudotime">Lineage Estimation &amp; Pseudotime</a></li>
+<li><a class="reference internal" href="#miscellaneous">Miscellaneous</a></li>
 <li><a class="reference internal" href="#included-datasets">Included datasets</a></li>
 </ul>
 </li>

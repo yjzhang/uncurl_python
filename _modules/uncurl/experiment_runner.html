@@ -76,7 +76,7 @@
 
 <span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">NMF</span><span class="p">,</span> <span class="n">TruncatedSVD</span><span class="p">,</span> <span class="n">PCA</span>
 <span class="kn">from</span> <span class="nn">sklearn.manifold</span> <span class="k">import</span> <span class="n">TSNE</span>
-<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span><span class="p">,</span> <span class="n">DBSCAN</span>
 <span class="kn">from</span> <span class="nn">sklearn.cluster.bicluster</span> <span class="k">import</span> <span class="n">SpectralBiclustering</span><span class="p">,</span> <span class="n">SpectralCoclustering</span>
 
 <span class="k">try</span><span class="p">:</span>
@@ -805,6 +805,19 @@
 
 <div class="viewcode-block" id="KM.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.KM.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">km</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="DBScan"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.DBScan">[docs]</a><span class="k">class</span> <span class="nc">DBScan</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    dbscan clustering</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DBScan</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;dbscan&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbscan</span> <span class="o">=</span> <span class="n">DBSCAN</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DBScan.run"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.DBScan.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dbscan</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span></div></div>
 
 <div class="viewcode-block" id="PoissonCluster"><a class="viewcode-back" href="../../uncurl.html#uncurl.experiment_runner.PoissonCluster">[docs]</a><span class="k">class</span> <span class="nc">PoissonCluster</span><span class="p">(</span><span class="n">Cluster</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
