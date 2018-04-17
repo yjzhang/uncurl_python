@@ -179,6 +179,14 @@ The output MW of UNCURL can be used as input for other lineage estimation tools.
 We also have implemented our own lineage estimation tools but have not thoroughly validated them. See `docs for unsupported methods <https://yjzhang.github.io/uncurl_python/unsupported_methods.html#lineage-estimation>`_.
 
 
+Miscellaneous
+-------------
+
+Unsupported methods included in the package: https://yjzhang.github.io/uncurl_python/unsupported_methods.html
+
+Miscellaneous uncurl parameters (non-default parameters and things we tried):
+
+
 Included datasets
 -----------------
 

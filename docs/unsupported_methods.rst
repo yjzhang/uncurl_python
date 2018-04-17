@@ -6,18 +6,12 @@ There are a number of unsupported or experimental methods part of the UNCURL pac
 Alternative state estimation methods
 ------------------------------------
 
-We provide implementations of the convex mixture model for the negative binomial (NB) and zero-inflated Poisson (ZIP) distributions. In our experiments they did not work as well as the Poisson model on most datasets.
+We provide implementations of the convex mixture model for the negative binomial (NB) and zero-inflated Poisson (ZIP) distributions. In our experiments they did not work as well as the Poisson model on most datasets, and are substantially less efficient.
 
 Alternative clustering methods
 ------------------------------
 
-As with state estimation, we provide NB and ZIP versions of k-means.
-
-Ensemble Methods
-----------------
-
-Consensus clustering, etc. 
-
+As with state estimation, we provide NB and ZIP versions of k-means. The same efficiency considerations apply.
 
 Dimensionality reduction
 ------------------------
@@ -68,7 +62,7 @@ Example (including visualization):
     # visualizing the lineage
     proj = mds(M, W, 2)
 
-    plt.scatter(proj[0,:], proj[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)
+    plt.scatter(proj[0,:], proj[1,:], s=10, c=cell_assignments, edgecolors='none', alpha=0.7)
     plt.scatter(smoothed_points[0,:], smoothed_points[1,:], s=30, c=cell_assignments, edgecolors='none', alpha=0.7)
     # connect the lines
     for edge in edges:
@@ -76,6 +70,12 @@ Example (including visualization):
                  (smoothed_points[1, edge[0]], smoothed_points[1, edge[1]]), 'black', linewidth=2)
     plt.xlabel('dim 1')
     plt.ylabel('dim 2')
+
+
+Ensemble Methods
+----------------
+
+Consensus clustering, consensus clustering-based initialization for uncurl, etc. This requires the `Cluster_Ensembles package <https://github.com/GGiecold/Cluster_Ensembles>`_.
 
 
 Visualization
