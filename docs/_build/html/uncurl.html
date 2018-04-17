@@ -96,10 +96,18 @@ across a number of bins sorted by mean.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="uncurl.preprocessing.sparse_var">
-<code class="descclassname">uncurl.preprocessing.</code><code class="descname">sparse_var</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#sparse_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.sparse_var" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the variance for each row of a sparse matrix.</p>
-<p>Timing; 4.170 s for 73233 cells, 32738 genes</p>
+<dt id="uncurl.preprocessing.sparse_mean_var">
+<code class="descclassname">uncurl.preprocessing.</code><code class="descname">sparse_mean_var</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/preprocessing.html#sparse_mean_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.preprocessing.sparse_mean_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the variance for each row of a sparse matrix,
+using the relationship Var = E[x^2] - E[x]^2.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">pair of matrices mean, variance.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -116,7 +124,7 @@ across a number of bins sorted by mean.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<em>array</em>) &#8211; genes x cells</li>
 <li><strong>clusters</strong> (<em>int</em>) &#8211; number of mixture components</li>
-<li><strong>dist</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; Distribution used in state estimation. Options: &#8216;Poiss&#8217;, &#8216;NB&#8217;, &#8216;ZIP&#8217;, &#8216;LogNorm&#8217;. Default: &#8216;Poiss&#8217;</li>
+<li><strong>dist</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; Distribution used in state estimation. Options: &#8216;Poiss&#8217;, &#8216;NB&#8217;, &#8216;ZIP&#8217;, &#8216;LogNorm&#8217;, &#8216;Gaussian&#8217;. Default: &#8216;Poiss&#8217;</li>
 <li><strong>reps</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; number of times to run the state estimation, taking the result with the highest log-likelihood.</li>
 <li><strong>**kwargs</strong> &#8211; arguments to pass to the underlying state estimation function.</li>
 </ul>
@@ -183,6 +191,12 @@ Cluster centers are set to the mean of each cluster.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="uncurl.state_estimation.initialize_means_weights">
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_means_weights</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>initialization='tsvd'</em>, <em>max_assign_weight=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_means_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_means_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates initial means and weights for state estimation.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="uncurl.state_estimation.initialize_weights_nn">
 <code class="descclassname">uncurl.state_estimation.</code><code class="descname">initialize_weights_nn</code><span class="sig-paren">(</span><em>data</em>, <em>means</em>, <em>lognorm=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#initialize_weights_nn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.initialize_weights_nn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initializes the weights with a nearest-neighbor approach using the means.</p>
@@ -190,7 +204,7 @@ Cluster centers are set to the mean of each cluster.</p>
 
 <dl class="function">
 <dt id="uncurl.state_estimation.poisson_estimate_state">
-<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=False</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em>, <em>run_w_first=True</em>, <em>constrain_w=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.state_estimation.</code><code class="descname">poisson_estimate_state</code><span class="sig-paren">(</span><em>data</em>, <em>clusters</em>, <em>init_means=None</em>, <em>init_weights=None</em>, <em>method='NoLips'</em>, <em>max_iters=30</em>, <em>tol=1e-10</em>, <em>disp=False</em>, <em>inner_max_iters=100</em>, <em>normalize=True</em>, <em>initialization='tsvd'</em>, <em>parallel=True</em>, <em>threads=4</em>, <em>max_assign_weight=0.75</em>, <em>run_w_first=True</em>, <em>constrain_w=False</em>, <em>regularization=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/state_estimation.html#poisson_estimate_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.state_estimation.poisson_estimate_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a Poisson Covex Mixture model to estimate cell states and
 cell state mixing weights.</p>
 <p>To lower computational costs, use a sparse matrix, set disp to False, and set tol to 0.</p>
@@ -215,6 +229,7 @@ cell state mixing weights.</p>
 <li><strong>max_assign_weight</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; If using a clustering-based initialization, how much weight to assign to the max weight cluster. Default: 0.75</li>
 <li><strong>run_w_first</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Whether or not to optimize W first (if false, M will be optimized first). Default: True</li>
 <li><strong>constrain_w</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; If True, then W is normalized after every iteration. Default: False</li>
+<li><strong>regularization</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Regularization coefficient for M and W. Default: 0 (no regularization).</li>
 </ul>
 </td>
 </tr>
@@ -235,7 +250,7 @@ ll (float): final log-likelihood</p>
 <span id="uncurl-nmf-wrapper-module"></span><h2>uncurl.nmf_wrapper module<a class="headerlink" href="#module-uncurl.nmf_wrapper" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="uncurl.nmf_wrapper.log_norm_nmf">
-<code class="descclassname">uncurl.nmf_wrapper.</code><code class="descname">log_norm_nmf</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>normalize_w=True</em>, <em>return_cost=True</em>, <em>init_w=None</em>, <em>init_m=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nmf_wrapper.html#log_norm_nmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nmf_wrapper.log_norm_nmf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.nmf_wrapper.</code><code class="descname">log_norm_nmf</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>normalize_w=True</em>, <em>return_cost=True</em>, <em>init_weights=None</em>, <em>init_means=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nmf_wrapper.html#log_norm_nmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nmf_wrapper.log_norm_nmf" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -245,8 +260,8 @@ ll (float): final log-likelihood</p>
 <li><strong>k</strong> (<em>int</em>) &#8211; number of cell types</li>
 <li><strong>normalize_w</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if W should be normalized (so that each column sums to 1). Default: True</li>
 <li><strong>return_cost</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; True if the NMF objective value (squared error) should be returned. Default: True</li>
-<li><strong>init_w</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for W. Default: None</li>
-<li><strong>init_m</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for M. Default: None</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for W. Default: None</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for M. Default: None</li>
 <li><strong>**kwargs</strong> &#8211; misc arguments to NMF</li>
 </ul>
 </td>
@@ -272,7 +287,7 @@ nmf - uses means for M, and assigns W using the NMF objective while holding M co
 
 <dl class="function">
 <dt id="uncurl.nmf_wrapper.norm_nmf">
-<code class="descclassname">uncurl.nmf_wrapper.</code><code class="descname">norm_nmf</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>init_w=None</em>, <em>init_m=None</em>, <em>normalize_w=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nmf_wrapper.html#norm_nmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nmf_wrapper.norm_nmf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncurl.nmf_wrapper.</code><code class="descname">norm_nmf</code><span class="sig-paren">(</span><em>data</em>, <em>k</em>, <em>init_weights=None</em>, <em>init_means=None</em>, <em>normalize_w=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/nmf_wrapper.html#norm_nmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.nmf_wrapper.norm_nmf" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -281,8 +296,8 @@ nmf - uses means for M, and assigns W using the NMF objective while holding M co
 <li><strong>data</strong> (<em>array</em>) &#8211; dense or sparse array with shape (genes, cells)</li>
 <li><strong>k</strong> (<em>int</em>) &#8211; number of cell types</li>
 <li><strong>normalize_w</strong> (<em>bool</em>) &#8211; True if W should be normalized (so that each column sums to 1)</li>
-<li><strong>init_w</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for W. Default: None</li>
-<li><strong>init_m</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for M. Default: None</li>
+<li><strong>init_weights</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for W. Default: None</li>
+<li><strong>init_means</strong> (<em>array</em><em>, </em><em>optional</em>) &#8211; Initial value for M. Default: None</li>
 <li><strong>**kwargs</strong> &#8211; misc arguments to NMF</li>
 </ul>
 </td>
@@ -642,6 +657,18 @@ return an array of integers in (0, n_classes-1).</p>
 <dl class="method">
 <dt id="uncurl.experiment_runner.Cocluster.run">
 <code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#Cocluster.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.Cocluster.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncurl.experiment_runner.DBScan">
+<em class="property">class </em><code class="descclassname">uncurl.experiment_runner.</code><code class="descname">DBScan</code><span class="sig-paren">(</span><em>n_classes</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#DBScan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.DBScan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncurl.experiment_runner.Cluster" title="uncurl.experiment_runner.Cluster"><code class="xref py py-class docutils literal"><span class="pre">uncurl.experiment_runner.Cluster</span></code></a></p>
+<p>dbscan clustering</p>
+<dl class="method">
+<dt id="uncurl.experiment_runner.DBScan.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/experiment_runner.html#DBScan.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.experiment_runner.DBScan.run" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1223,6 +1250,11 @@ ll (float): Log-likelihood of final iteration</p>
 <code class="descclassname">uncurl.pois_ll.</code><code class="descname">poisson_ll_2</code><span class="sig-paren">(</span><em>p1</em>, <em>p2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#poisson_ll_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.poisson_ll_2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates Poisson LL(p1|p2).</p>
 </dd></dl>
+
+<dl class="function">
+<dt id="uncurl.pois_ll.sparse_poisson_ll">
+<code class="descclassname">uncurl.pois_ll.</code><code class="descname">sparse_poisson_ll</code><span class="sig-paren">(</span><em>data</em>, <em>means</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uncurl/pois_ll.html#sparse_poisson_ll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uncurl.pois_ll.sparse_poisson_ll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="module-uncurl.simulation">
