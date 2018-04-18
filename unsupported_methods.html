@@ -27,7 +27,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="uncurl package" href="uncurl.html" />
+    <link rel="next" title="Non-default parameters: things we tried and their results" href="things_we_tried.html" />
     <link rel="prev" title="UNCURL" href="readme_link.html" /> 
   </head>
   <body role="document">
@@ -41,7 +41,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncurl.html" title="uncurl package"
+          <a href="things_we_tried.html" title="Non-default parameters: things we tried and their results"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="readme_link.html" title="UNCURL"
@@ -61,6 +61,7 @@
 <div class="section" id="alternative-state-estimation-methods">
 <h2>Alternative state estimation methods<a class="headerlink" href="#alternative-state-estimation-methods" title="Permalink to this headline">¶</a></h2>
 <p>We provide implementations of the convex mixture model for the negative binomial (NB) and zero-inflated Poisson (ZIP) distributions. In our experiments they did not work as well as the Poisson model on most datasets, and are substantially less efficient.</p>
+<p>We also provide methods based on LDA (latent Dirichlet allocation), using the LightLDA implementation. The outputs of these methods can be interpreted as state estimation with a binomial sampling distribution. See <code class="docutils literal"><span class="pre">lightlda_utils.py</span></code>. In practice, they had worse performance than Poisson state estimation in accuracy, runtime, and memory usage, especially on larger datasets.</p>
 </div>
 <div class="section" id="alternative-clustering-methods">
 <h2>Alternative clustering methods<a class="headerlink" href="#alternative-clustering-methods" title="Permalink to this headline">¶</a></h2>
@@ -149,8 +150,8 @@
   <p class="topless"><a href="readme_link.html"
                         title="previous chapter">UNCURL</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="uncurl.html"
-                        title="next chapter">uncurl package</a></p>
+  <p class="topless"><a href="things_we_tried.html"
+                        title="next chapter">Non-default parameters: things we tried and their results</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -182,7 +183,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncurl.html" title="uncurl package"
+          <a href="things_we_tried.html" title="Non-default parameters: things we tried and their results"
              >next</a> |</li>
         <li class="right" >
           <a href="readme_link.html" title="UNCURL"
