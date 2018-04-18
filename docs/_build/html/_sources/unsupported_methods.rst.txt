@@ -8,6 +8,8 @@ Alternative state estimation methods
 
 We provide implementations of the convex mixture model for the negative binomial (NB) and zero-inflated Poisson (ZIP) distributions. In our experiments they did not work as well as the Poisson model on most datasets, and are substantially less efficient.
 
+We also provide methods based on LDA (latent Dirichlet allocation), using the LightLDA implementation. The outputs of these methods can be interpreted as state estimation with a binomial sampling distribution. See ``lightlda_utils.py``. In practice, they had worse performance than Poisson state estimation in accuracy, runtime, and memory usage, especially on larger datasets.
+
 Alternative clustering methods
 ------------------------------
 

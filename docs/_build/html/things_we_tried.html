@@ -26,7 +26,9 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="uncurl package" href="uncurl.html" />
+    <link rel="prev" title="Details on unsupported methods" href="unsupported_methods.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -38,6 +40,12 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl.html" title="uncurl package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="unsupported_methods.html" title="Details on unsupported methods"
+             accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
       </ul>
     </div>  
@@ -49,13 +57,13 @@
             
   <div class="section" id="non-default-parameters-things-we-tried-and-their-results">
 <h1>Non-default parameters: things we tried and their results<a class="headerlink" href="#non-default-parameters-things-we-tried-and-their-results" title="Permalink to this headline">¶</a></h1>
-<p>There are a number of uncurl parameters (well, not necessarily parameters, more like... run configurations?) that we experimented with. Here&#8217;s some results.</p>
+<p>There are a number of uncurl parameters (well, not necessarily parameters, more like... run configurations?) that we experimented with. Here are some results.</p>
 <div class="section" id="cell-normalization">
 <h2>Cell normalization<a class="headerlink" href="#cell-normalization" title="Permalink to this headline">¶</a></h2>
-<p>This option involves normalizing the cells by their read counts. First, we calculate the total read count of each cell, and divide all counts for cell i by its total read count. Then, we find the median total read count over all cells, and multiply the entire matrix by that value.</p>
+<p>This option involves normalizing the cells by their read counts. First, we calculate the total read count of each cell, and divide all counts for cell i by its total read count. Then, we find the median total read count over all cells, and multiply the entire matrix by that value. This method has been used previously for scRNA-seq datasets [see paper for reference].</p>
 <p>The clustering performance after cell normalization were substantially better on count-valued datasets, and either had no effect or were marginally worse on RPKM-normalized and other forms of data that have already been normalized in some other way. So we would suggest using this option for unnormalized count-valued datasets. The downside is that it might lose some information (if certain cell types were correlated to larger read counts?), but I&#8217;m not sure if that happens in practice.</p>
 <p>[TODO: include graphs]</p>
-<p>To use this option, run <code class="docutils literal"><span class="pre">data_normalized</span> <span class="pre">=</span> <span class="pre">uncurl.preprocessing.cell_normalize(data)</span></code> and run uncurl on <code class="docutils literal"><span class="pre">data_normalized</span></code>.</p>
+<p>To use this option, run <code class="docutils literal"><span class="pre">data_normalized</span> <span class="pre">=</span> <span class="pre">uncurl.preprocessing.cell_normalize(data)</span></code>, and run uncurl on <code class="docutils literal"><span class="pre">data_normalized</span></code>.</p>
 </div>
 <div class="section" id="constrained-w">
 <h2>Constrained W<a class="headerlink" href="#constrained-w" title="Permalink to this headline">¶</a></h2>
@@ -75,6 +83,12 @@
 <p>Given prior gene expression data, there are a variety of methods for initializing uncurl. <code class="docutils literal"><span class="pre">QualNorm</span></code> is one way of doing this initialization. Another way, when we have real-valued prior data, we could normalize the prior data so that each cell type sums to 1, and then multiply that by the mean per-cell read count of the actual data.</p>
 <p>This performed better than QualNorm on sparse datasets such as the 10X datasets.</p>
 </div>
+<div class="section" id="optimization-methods">
+<h2>Optimization methods<a class="headerlink" href="#optimization-methods" title="Permalink to this headline">¶</a></h2>
+<p>The default optimization method for Poisson state estimation is NoLips [see paper for reference].</p>
+<p>Before settling on NoLips as a default, we also tried a variety of different optimization methods. The first was L-BFGS, as implemented in scipy. We also tried gradient descent, stochastic gradient descent, and a custom method based on alternating iteratively reweighted least squares on a Poisson regression model. These methods are not included in the uncurl package because they had poor performance characteristics compared to NoLips. We settled on NoLips because it was easy to port to sparse matrices and was easily parallelizable. L-BFGS tends to converge in fewer iterations, but the per-iteration time for NoLips is much less: it has closed-form updates that don&#8217;t require gradient or objective value calculations, and the updates take advantage of data sparsity.</p>
+<p>To use different optimization methods, use the argument <code class="docutils literal"><span class="pre">method=&lt;method&gt;</span></code>, where <code class="docutils literal"><span class="pre">&lt;method&gt;</span></code> can be either <code class="docutils literal"><span class="pre">NoLips</span></code> (default) or <code class="docutils literal"><span class="pre">L-BFGS-B</span></code>.</p>
+</div>
 </div>
 
 
@@ -90,10 +104,17 @@
 <li><a class="reference internal" href="#constrained-w">Constrained W</a></li>
 <li><a class="reference internal" href="#uncurl-initialization-options">Uncurl initialization options</a></li>
 <li><a class="reference internal" href="#alternative-to-qualnorm-mean-normalized-initialization">Alternative to QualNorm: mean-normalized initialization</a></li>
+<li><a class="reference internal" href="#optimization-methods">Optimization methods</a></li>
 </ul>
 </li>
 </ul>
 
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="unsupported_methods.html"
+                        title="previous chapter">Details on unsupported methods</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="uncurl.html"
+                        title="next chapter">uncurl package</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -124,6 +145,12 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="uncurl.html" title="uncurl package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="unsupported_methods.html" title="Details on unsupported methods"
+             >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">UNCURL 0.2.3 documentation</a> &#187;</li> 
       </ul>
     </div>

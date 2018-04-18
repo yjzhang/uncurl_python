@@ -1,18 +1,19 @@
 Non-default parameters: things we tried and their results
 ================================================
 
-There are a number of uncurl parameters (well, not necessarily parameters, more like... run configurations?) that we experimented with. Here's some results.
+There are a number of uncurl parameters (well, not necessarily parameters, more like... run configurations?) that we experimented with. Here are some results.
+
 
 Cell normalization
 ------------------
 
-This option involves normalizing the cells by their read counts. First, we calculate the total read count of each cell, and divide all counts for cell i by its total read count. Then, we find the median total read count over all cells, and multiply the entire matrix by that value.
+This option involves normalizing the cells by their read counts. First, we calculate the total read count of each cell, and divide all counts for cell i by its total read count. Then, we find the median total read count over all cells, and multiply the entire matrix by that value. This method has been used previously for scRNA-seq datasets [see paper for reference].
 
 The clustering performance after cell normalization were substantially better on count-valued datasets, and either had no effect or were marginally worse on RPKM-normalized and other forms of data that have already been normalized in some other way. So we would suggest using this option for unnormalized count-valued datasets. The downside is that it might lose some information (if certain cell types were correlated to larger read counts?), but I'm not sure if that happens in practice.
 
 [TODO: include graphs]
 
-To use this option, run ``data_normalized = uncurl.preprocessing.cell_normalize(data)`` and run uncurl on ``data_normalized``.
+To use this option, run ``data_normalized = uncurl.preprocessing.cell_normalize(data)``, and run uncurl on ``data_normalized``.
 
 
 Constrained W
@@ -43,3 +44,13 @@ Alternative to QualNorm: mean-normalized initialization
 Given prior gene expression data, there are a variety of methods for initializing uncurl. ``QualNorm`` is one way of doing this initialization. Another way, when we have real-valued prior data, we could normalize the prior data so that each cell type sums to 1, and then multiply that by the mean per-cell read count of the actual data.
 
 This performed better than QualNorm on sparse datasets such as the 10X datasets.
+
+
+Optimization methods
+--------------------
+
+The default optimization method for Poisson state estimation is NoLips [see paper for reference].
+
+Before settling on NoLips as a default, we also tried a variety of different optimization methods. The first was L-BFGS, as implemented in scipy. We also tried gradient descent, stochastic gradient descent, and a custom method based on alternating iteratively reweighted least squares on a Poisson regression model. These methods are not included in the uncurl package because they had poor performance characteristics compared to NoLips. We settled on NoLips because it was easy to port to sparse matrices and was easily parallelizable. L-BFGS tends to converge in fewer iterations, but the per-iteration time for NoLips is much less: it has closed-form updates that don't require gradient or objective value calculations, and the updates take advantage of data sparsity.
+
+To use different optimization methods, use the argument ``method=<method>``, where ``<method>`` can be either ``NoLips`` (default) or ``L-BFGS-B``.
