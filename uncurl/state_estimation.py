@@ -235,7 +235,7 @@ def initialize_means_weights(data, clusters, init_means=None, init_weights=None,
         w_init = init_weights.copy()
     return means, w_init
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False, regularization=0.0):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False, regularization=0.0, write_progress_file=None):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -260,6 +260,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         run_w_first (bool, optional): Whether or not to optimize W first (if false, M will be optimized first). Default: True
         constrain_w (bool, optional): If True, then W is normalized after every iteration. Default: False
         regularization (float, optional): Regularization coefficient for M and W. Default: 0 (no regularization).
+        write_progress_file (str, optional): filename to write progress updates to.
 
     Returns:
         M (array): genes x clusters - state means
@@ -304,6 +305,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
                 objective_fn = _call_sparse_obj
     w_new = w_init
     for i in range(max_iters):
+        # TODO: write progress
         if disp:
             print('iter: {0}'.format(i))
         if run_w_first:
@@ -334,6 +336,10 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             if disp:
                 w_ll = objective_fn(X, means, w_new)
                 print('Finished updating W. Objective value: {0}'.format(w_ll))
+        if write_progress_file is not None:
+            progress = open(write_progress_file, 'w')
+            progress.write(str(i))
+            progress.close()
     if normalize:
         w_new = w_new/w_new.sum(0)
     m_ll = objective_fn(X, means, w_new)
