@@ -20,7 +20,7 @@ parallel_extensions = [
         ]
 
 long_description = ''
-with open('README.rst', 'w') as f:
+with open('README.rst') as f:
     long_description = f.read()
 
 setup(name='uncurl_seq',
