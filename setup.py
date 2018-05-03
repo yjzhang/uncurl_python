@@ -20,7 +20,7 @@ parallel_extensions = [
         ]
 
 setup(name='uncurl_seq',
-      version='0.2.7',
+      version='0.2.8',
       description='Tool for pre-processing single-cell RNASeq data',
       url='https://github.com/yjzhang/uncurl_python',
       author='Yue Zhang',
