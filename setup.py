@@ -19,9 +19,15 @@ parallel_extensions = [
             extra_link_args=['-fopenmp'])
         ]
 
+long_description = ''
+with open('README.rst', 'w') as f:
+    long_description = f.read()
+
 setup(name='uncurl_seq',
-      version='0.2.8',
+      version='0.2.9',
       description='Tool for pre-processing single-cell RNASeq data',
+      long_description=long_description,
+      long_description_content_type='text/x-rst',
       url='https://github.com/yjzhang/uncurl_python',
       author='Yue Zhang',
       author_email='yjzhang@cs.washington.edu',
