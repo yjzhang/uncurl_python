@@ -71,6 +71,8 @@ def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_weights=None,
             init_weights = init_weights_.T
         elif init_means is None:
             init_means, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_weights)
+        init_means = init_means.copy(order='C')
+        init_weights = init_weights.copy(order='C')
     nmf = NMF(k, init=init, **kwargs)
     if write_progress_file is not None:
         progress = open(write_progress_file, 'w')
@@ -115,6 +117,8 @@ def norm_nmf(data, k, init_weights=None, init_means=None, normalize_w=True, retu
             init_weights = init_weights_.T
         elif init_means is None:
             init_means, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_weights)
+        init_means = init_means.copy(order='C')
+        init_weights = init_weights.copy(order='C')
     nmf = NMF(k, init=init, **kwargs)
     if write_progress_file is not None:
         progress = open(write_progress_file, 'w')
