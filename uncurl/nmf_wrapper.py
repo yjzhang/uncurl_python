@@ -48,7 +48,7 @@ def nmf_init(data, clusters, k, init='enhanced'):
     return init_m, init_w
 
 # TODO: initialization if init_w is a cluster list?
-def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_weights=None, init_means=None, **kwargs):
+def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_weights=None, init_means=None, write_progress_file=None, **kwargs):
     """
     Args:
         data (array): dense or sparse array with shape (genes, cells)
@@ -63,6 +63,7 @@ def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_weights=None,
         Two matrices M of shape (genes, k) and W of shape (k, cells). They correspond to M and M in Poisson state estimation. If return_cost is True (which it is by default), then the cost will also be returned. This might be prohibitably costly
     """
     init = None
+    data = log1p(cell_normalize(data))
     if init_weights is not None or init_means is not None:
         init = 'custom'
         if init_weights is None:
@@ -71,7 +72,10 @@ def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_weights=None,
         elif init_means is None:
             init_means, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_weights)
     nmf = NMF(k, init=init, **kwargs)
-    data = log1p(cell_normalize(data))
+    if write_progress_file is not None:
+        progress = open(write_progress_file, 'w')
+        progress.write(str(0))
+        progress.close()
     M = nmf.fit_transform(data, W=init_means, H=init_weights)
     W = nmf.components_
     if normalize_w:
@@ -89,7 +93,7 @@ def log_norm_nmf(data, k, normalize_w=True, return_cost=True, init_weights=None,
         return M, W
 
 # TODO: initialization
-def norm_nmf(data, k, init_weights=None, init_means=None, normalize_w=True, **kwargs):
+def norm_nmf(data, k, init_weights=None, init_means=None, normalize_w=True, return_cost=True, write_progress_file=None, **kwargs):
     """
     Args:
         data (array): dense or sparse array with shape (genes, cells)
@@ -102,6 +106,7 @@ def norm_nmf(data, k, init_weights=None, init_means=None, normalize_w=True, **kw
     Returns:
         Two matrices M of shape (genes, k) and W of shape (k, cells)
     """
+    data = cell_normalize(data)
     init = None
     if init_weights is not None or init_means is not None:
         init = 'custom'
@@ -111,9 +116,24 @@ def norm_nmf(data, k, init_weights=None, init_means=None, normalize_w=True, **kw
         elif init_means is None:
             init_means, _, n_iter = non_negative_factorization(data, n_components=k, init='custom', update_W=False, W=init_weights)
     nmf = NMF(k, init=init, **kwargs)
-    data = log1p(cell_normalize(data))
+    if write_progress_file is not None:
+        progress = open(write_progress_file, 'w')
+        progress.write(str(0))
+        progress.close()
     M = nmf.fit_transform(data, W=init_means, H=init_weights)
     W = nmf.components_
     if normalize_w:
         W = W/W.sum(0)
-    return M, W
+    if return_cost:
+        cost = 0
+        if sparse.issparse(data):
+            ws = sparse.csr_matrix(M)
+            hs = sparse.csr_matrix(W)
+            cost = 0.5*((data - ws.dot(hs)).power(2)).sum()
+        else:
+            cost = 0.5*((data - M.dot(W))**2).sum()
+        return M, W, cost
+    else:
+        return M, W
+
+

@@ -22,8 +22,14 @@ class NMFTest(TestCase):
         self.assertTrue(uncurl.evaluation.purity(labs, self.labs) > 0.85)
 
     def test_run_norm_nmf(self):
-        w, h = uncurl.nmf_wrapper.norm_nmf(self.data, 2)
+        w, h, cost = uncurl.nmf_wrapper.norm_nmf(self.data, 2)
         labs = h.argmax(0)
         self.assertTrue(uncurl.evaluation.purity(labs, self.labs) > 0.8)
 
-
+    def test_run_se(self):
+        w, h, cost = uncurl.run_state_estimation(self.data, 2, dist='log-norm')
+        labs = h.argmax(0)
+        self.assertTrue(uncurl.evaluation.purity(labs, self.labs) > 0.85)
+        w1, h1, cost = uncurl.run_state_estimation(self.data, 2, dist='gaussian')
+        labs = h1.argmax(0)
+        self.assertTrue(uncurl.evaluation.purity(labs, self.labs) > 0.8)

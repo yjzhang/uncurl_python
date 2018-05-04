@@ -333,8 +333,8 @@ def symmetric_kld(np.ndarray[DTYPE_t, ndim=1] p1, np.ndarray[DTYPE_t, ndim=1] p2
     cdef double[:] p2_view = p2
     cdef double kl1 = 0.0
     for i in range(len(p1)):
-        kl1 += p1_view[i]*log2(p1_view[i]/(p2_view[i]+eps))
-        kl1 += p2_view[i]*log2(p2_view[i]/(p1_view[i]+eps))
+        kl1 += p1_view[i]*log2(p1_view[i]/(p2_view[i]+eps) + eps)
+        kl1 += p2_view[i]*log2(p2_view[i]/(p1_view[i]+eps) + eps)
     return kl1
 
 @cython.boundscheck(False)
