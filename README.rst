@@ -29,9 +29,11 @@ Examples: see the ``examples`` folder, and the ``notebooks`` folder for Jupyter 
 Publications
 ------------
 
-Accepted for ISMB 2018 (To appear in Bioinformatics).
+Accepted for ISMB 2018.
 
-`Preprint <https://www.biorxiv.org/content/early/2018/03/01/142398>`_
+Mukherjee, S., Zhang, Y., Fan, J., Seelig, G. & Kannan, S. Scalable preprocessing for sparse scRNA-seq data exploiting prior knowledge. Bioinformatics 34, i124–i132 (2018).
+
+`https://academic.oup.com/bioinformatics/article/34/13/i124/5045758 <https://academic.oup.com/bioinformatics/article/34/13/i124/5045758>`_
 
 Features
 ========
