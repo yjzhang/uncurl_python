@@ -235,7 +235,7 @@ def initialize_means_weights(data, clusters, init_means=None, init_weights=None,
         w_init = init_weights.copy()
     return means, w_init
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=1e-10, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False, regularization=0.0, write_progress_file=None):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=0, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False, regularization=0.0, write_progress_file=None):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
