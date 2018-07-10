@@ -22,7 +22,7 @@ For parallel state estimation, OpenMP is required.
 
 To run tests: ``python setup.py test``
 
-Examples: see the examples folder.
+Examples: see the ``examples`` folder, and the ``notebooks`` folder for Jupyter notebooks.
 
 `Full documentation <https://yjzhang.github.io/uncurl_python/>`_
 
