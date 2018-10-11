@@ -39,7 +39,7 @@ class GapScoreTest(TestCase):
     def test_gap_score_3(self):
         data_mat = scipy.io.loadmat('data/SCDE_test.mat')
         data = data_mat['dat']
-        data_tsvd = gap_score.preproc_data(data)
+        data_tsvd = gap_score.preproc_data(data, gene_subset=True)
         max_k, gap_vals, sk_vals = gap_score.run_gap_k_selection(data_tsvd,
                 k_min=1, k_max=50, skip=5, B=5)
         self.assertTrue(max_k < 10)
