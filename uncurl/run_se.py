@@ -14,7 +14,7 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
 
     Args:
         data (array): genes x cells
-        clusters (int): number of mixture components
+        clusters (int): number of mixture components. If this is set to 0, this is automatically estimated using gap score.
         dist (str, optional): Distribution used in state estimation. Options: 'Poiss', 'NB', 'ZIP', 'LogNorm', 'Gaussian'. Default: 'Poiss'
         reps (int, optional): number of times to run the state estimation, taking the result with the highest log-likelihood.
         **kwargs: arguments to pass to the underlying state estimation function.
@@ -38,6 +38,13 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         func = norm_nmf
     else:
         print('dist should be one of Poiss, NB, ZIP, LogNorm, or Gaussian. Using Poiss.')
+    # TODO: estimate number of clusters
+    if clusters == 0:
+        from .gap_score import run_gap_k_selection, preproc_data
+        data_tsvd = preproc_data(data, gene_subset=False)
+        max_k, gap_vals, sk_vals = run_gap_k_selection(data_tsvd,
+                k_min=1, k_max=50, skip=5, B=6)
+        clusters = max_k
     best_ll = np.inf
     best_M = None
     best_W = None

@@ -4,6 +4,7 @@ Using gap score to determine optimal cluster number
 
 import unittest
 from unittest import TestCase
+from flaky import flaky
 
 import numpy as np
 import scipy
@@ -33,6 +34,16 @@ class GapScoreTest(TestCase):
                 k_min=1, k_max=50, skip=5, B=5)
         self.assertTrue(max_k > 3)
         self.assertTrue(max_k < 30)
+
+    @flaky(max_runs=3)
+    def test_gap_score_3(self):
+        data_mat = scipy.io.loadmat('data/SCDE_test.mat')
+        data = data_mat['dat']
+        data_tsvd = gap_score.preproc_data(data)
+        max_k, gap_vals, sk_vals = gap_score.run_gap_k_selection(data_tsvd,
+                k_min=1, k_max=50, skip=5, B=5)
+        self.assertTrue(max_k < 10)
+
 
 
 if __name__ == '__main__':

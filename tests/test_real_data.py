@@ -58,3 +58,19 @@ class RealDataTest(TestCase):
         # NMI should be > 0.75 on Zeisel subset as well
         self.assertTrue(results[0][0]>0.75)
         self.assertTrue(results[0][1]>0.75)
+
+    def test_10x_auto_cluster(self):
+        """
+        Test using automatic cluster size determination
+        """
+        from sklearn.metrics.cluster import normalized_mutual_info_score as nmi
+        # gene selection
+        genes = uncurl.max_variance_genes(self.data)
+        data_subset = self.data[genes,:]
+        # smaller # of iterations than default so it finishes faster...
+        M, W, ll = uncurl.run_state_estimation(data_subset, clusters=0,
+                max_iters=10, inner_max_iters=80)
+        labels = W.argmax(0)
+        # NMI should be > 0.75 on 10x_pure_pooled 
+        # (accounting for lower than default iter count)
+        self.assertTrue(nmi(self.labs, labels)>0.6)

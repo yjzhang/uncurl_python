@@ -4,15 +4,21 @@ Using gap score to determine optimal cluster number
 import numpy as np
 from sklearn.cluster import KMeans
 
-def preproc_data(data):
+def preproc_data(data, gene_subset=False):
     """
     basic data preprocessing before running gap score
+
+    Assumes that data is a matrix of shape (genes, cells).
+
+    Returns a matrix of shape (cells, 8).
     """
     import uncurl
     from uncurl.preprocessing import log1p, cell_normalize
     from sklearn.decomposition import TruncatedSVD
-    gene_subset = uncurl.max_variance_genes(data)
-    data_subset = data[gene_subset, :]
+    data_subset = data
+    if gene_subset:
+        gene_subset = uncurl.max_variance_genes(data)
+        data_subset = data[gene_subset, :]
     tsvd = TruncatedSVD(8)
     data_tsvd = tsvd.fit_transform(log1p(cell_normalize(data_subset)).T)
     return data_tsvd
@@ -52,7 +58,7 @@ def calculate_gap(data, clustering, km, B=50):
 
 
 def run_gap_k_selection(data, k_min=1, k_max=50, B=5,
-        skip=5):
+        skip=5, **kwargs):
     """
     Runs gap score for all k from k_min to k_max.
     """
