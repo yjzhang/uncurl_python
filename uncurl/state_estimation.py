@@ -207,6 +207,13 @@ def initialize_means_weights(data, clusters, init_means=None, init_weights=None,
             init_weights = initialize_from_assignments(assignments, clusters,
                     max_assign_weight)
             means = initialize_means(data, assignments, clusters)
+        elif initialization == 'random' or initialization == 'rand':
+            # choose k random cells and set means to those
+            selected_cells = np.random.choice(range(cells), size=clusters,
+                    replace=False)
+            means = data[:, selected_cells]
+            if sparse.issparse(means):
+                means = means.toarray()
     else:
         means = init_means.copy()
     means = means.astype(float)
@@ -295,14 +302,13 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         # will almost always improve performance?
         # if sparsity is below 40%?
         if method == 'NoLips':
-            if np.count_nonzero(X) < 0.4*genes*cells:
-                is_sparse = True
-                X = sparse.csc_matrix(X)
-                XT = sparse.csc_matrix(XT)
-                update_fn = sparse_nolips_update_w
-                if parallel:
-                    update_fn = parallel_sparse_nolips_update_w
-                objective_fn = _call_sparse_obj
+            is_sparse = True
+            X = sparse.csc_matrix(X)
+            XT = sparse.csc_matrix(XT)
+            update_fn = sparse_nolips_update_w
+            if parallel:
+                update_fn = parallel_sparse_nolips_update_w
+            objective_fn = _call_sparse_obj
     w_new = w_init
     for i in range(max_iters):
         # TODO: write progress

@@ -29,7 +29,7 @@ Examples: see the ``examples`` folder, and the ``notebooks`` folder for Jupyter 
 Publications
 ------------
 
-Accepted for ISMB 2018.
+Presented at ISMB 2018.
 
 Mukherjee, S., Zhang, Y., Fan, J., Seelig, G. & Kannan, S. Scalable preprocessing for sparse scRNA-seq data exploiting prior knowledge. Bioinformatics 34, i124–i132 (2018).
 
@@ -179,6 +179,26 @@ Lineage Estimation & Pseudotime
 The output MW of UNCURL can be used as input for other lineage estimation tools.
 
 We also have implemented our own lineage estimation tools but have not thoroughly validated them. See `docs for unsupported methods <https://yjzhang.github.io/uncurl_python/unsupported_methods.html#lineage-estimation>`_.
+
+Using UNCURL in R
+-----------------
+
+UNCURL has been tested in R using the ``reticulate`` library. There first has to be a python installation that has uncurl installed. Example:
+
+.. code-block:: R
+
+    library(reticulate)
+
+    uncurl <- import("uncurl")
+
+    # say that sce is a SingleCellExperiment object
+
+    data <- counts(sce)
+    k = 10
+    results <- uncurl$run_state_estimation(data, k)
+
+    m <- results[[1]]
+    w <- results[[2]]
 
 
 Miscellaneous

@@ -24,6 +24,7 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         W (array): clusters x cells - state mixing components for each cell
         ll (float): final log-likelihood
     """
+    clusters = int(clusters)
     func = poisson_estimate_state
     dist = dist.lower()
     if dist=='poiss' or dist=='poisson':
