@@ -4,7 +4,7 @@ Using gap score to determine optimal cluster number
 import numpy as np
 from sklearn.cluster import KMeans
 
-def preproc_data(data, gene_subset=False):
+def preproc_data(data, gene_subset=False, **kwargs):
     """
     basic data preprocessing before running gap score
 
@@ -32,7 +32,7 @@ def calculate_bounding_box(data):
     maxes = data.max(0)
     return mins, maxes
 
-def calculate_gap(data, clustering, km, B=50):
+def calculate_gap(data, clustering, km, B=50, **kwargs):
     """
     See: https://datasciencelab.wordpress.com/2013/12/27/finding-the-k-in-k-means-clustering/
 

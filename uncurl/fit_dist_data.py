@@ -12,7 +12,7 @@ def GetDistFitError(Dat):
     #Assumes data to be in the form of a numpy matrix 
     # TODO: make this work for sparse inputs?
     # TODO: fixed number of bins, rather than use the maximum value?
-    # that would 
+    # use np.histogram
     Dat = np.round(Dat).astype(int)
     Dat2 = np.log(1 + Dat)
     BinDat = np.zeros(max(Dat)+1)
@@ -27,6 +27,8 @@ def GetDistFitError(Dat):
 
     #Create a bin of frequencies and generate frequencies based on distr
     for i in range(0,len(BinDat)):
+        # this is EXTREMELY INEFFICIENT!!!!!
+        # n^2 since Dat==i requires iterating through the whole array
         BinDat[i] = sum(Dat==i)
         Poiss[i] = poisson.pmf(i,m)
         Norm[i] = norm.pdf((i-m+1)/std)

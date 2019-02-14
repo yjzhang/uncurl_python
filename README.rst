@@ -5,6 +5,8 @@ UNCURL
     :target: https://travis-ci.org/yjzhang/uncurl_python
 .. image:: https://img.shields.io/pypi/v/uncurl-seq.svg
     :target: https://pypi.python.org/pypi/uncurl-seq
+.. image:: https://pepy.tech/badge/uncurl-seq
+    :target: https://pepy.tech/project/uncurl-seq
 
 
 Installation
@@ -16,7 +18,7 @@ Alternatively, uncurl can be installed from source: After cloning the repository
 
 Requirements: numpy, scipy, cython, scikit-learn
 
-Tested on python 2.7, 3.4 on Linux.
+Tested on python 2.7, 3.5 on Linux.
 
 For parallel state estimation, OpenMP is required.
 
