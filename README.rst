@@ -195,12 +195,12 @@ UNCURL has been tested in R using the ``reticulate`` library. There first has to
     # https://rstudio.github.io/reticulate/
     library(reticulate)
 
-    # The 'import' function is provided by reticulate, and allows python
-    # libraries to be imported in R.
+    # The 'import' function is provided by reticulate, and allows python libraries to be imported in R.
     uncurl <- import("uncurl")
 
     # Say that 'sce' is a SingleCellExperiment object.
-    # See https://bioconductor.org/packages/release/bioc/vignettes/SingleCellExperiment/inst/doc/intro.html for an example.
+    # See https://bioconductor.org/packages/release/bioc/vignettes/SingleCellExperiment/inst/doc/intro.html
+    # for an example.
 
     data <- counts(sce)
     k = 10
