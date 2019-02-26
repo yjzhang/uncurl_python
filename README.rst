@@ -8,6 +8,7 @@ UNCURL
 .. image:: https://pepy.tech/badge/uncurl-seq
     :target: https://pepy.tech/project/uncurl-seq
 
+.. contents::
 
 Installation
 ------------
