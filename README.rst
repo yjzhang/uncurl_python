@@ -206,8 +206,13 @@ UNCURL has been tested in R using the ``reticulate`` library. There first has to
     k = 10
     results <- uncurl$run_state_estimation(data, k)
 
+    # m and w are matrices of numeric values.
+    # m is of shape (genes, k), an w is of shape (k, cells).
     m <- results[[1]]
     w <- results[[2]]
+
+    # This gets the cluster labels using argmax.
+    cluster_labels <- apply(w, 2, which.max)
 
 
 Miscellaneous
