@@ -10,6 +10,12 @@ UNCURL
 
 .. contents::
 
+Overview
+--------
+
+Uncurl is a python package for analyzing single-cell RNA-seq data.
+
+
 Installation
 ------------
 
@@ -25,9 +31,18 @@ For parallel state estimation, OpenMP is required.
 
 To run tests: ``python setup.py test``
 
-Examples: see the ``examples`` folder, and the ``notebooks`` folder for Jupyter notebooks.
+After the python package is installed, uncurl can be used from R using ``reticulate``. See `Using UNCURL in R <#using-uncurl-in-r>`_
+
+
+Examples
+--------
+
+See the ``examples`` folder for example scripts, and the ``notebooks`` folder for Jupyter notebooks.
+
+For a detailed tutorial, see ``Tutorial.ipynb`` in the ``notebooks`` folder.
 
 `Full documentation <https://yjzhang.github.io/uncurl_python/>`_
+
 
 Publications
 ------------
@@ -37,6 +52,7 @@ Presented at ISMB 2018.
 Mukherjee, S., Zhang, Y., Fan, J., Seelig, G. & Kannan, S. Scalable preprocessing for sparse scRNA-seq data exploiting prior knowledge. Bioinformatics 34, i124–i132 (2018).
 
 `https://academic.oup.com/bioinformatics/article/34/13/i124/5045758 <https://academic.oup.com/bioinformatics/article/34/13/i124/5045758>`_
+
 
 Features
 ========
@@ -166,6 +182,13 @@ Example:
   # data is a 2d array of floats, with dimensions genes x cells
   data = np.loadtxt('counts.txt')
   assignments_p, centers = poisson_cluster(data, 2)
+
+Imputation
+----------
+
+Imputation is done by simply multiplying the resulting matrices M and W, resulting in a new matrix of the same dimensionality as the original.
+
+For an example using UNCURL for imputation, see `this notebook <https://yjzhang.github.io/uncurl_python/unsupported_methods.html#lineage-estimation>`_.
 
 
 Dimensionality Reduction
