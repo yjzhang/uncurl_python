@@ -72,7 +72,7 @@ def poly_curve(x, *a):
     return output
 
 
-def lineage(means, weights, curve_function='poly', curve_dimensions=6):
+def run_lineage(means, weights, curve_function='poly', curve_dimensions=6):
     """
     Lineage graph produced by minimum spanning tree
 

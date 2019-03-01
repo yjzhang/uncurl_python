@@ -3,7 +3,7 @@ from flaky import flaky
 
 import numpy as np
 
-from uncurl import simulation, lineage, pseudotime
+from uncurl import simulation, run_lineage, pseudotime
 
 @flaky
 class LineageTest(TestCase):
@@ -19,7 +19,7 @@ class LineageTest(TestCase):
         sim_data = simulation.generate_state_data(M, W)
         sim_data = sim_data + 1e-8
         m2 = M + np.random.random(M.shape) - 0.5
-        curves, fitted_vals, edges, assignments = lineage(m2, W)
+        curves, fitted_vals, edges, assignments = run_lineage(m2, W)
         # TODO: assert something about the distances???
         print(len(edges))
         adjacent_count = 0
@@ -36,7 +36,7 @@ class LineageTest(TestCase):
         sim_data = simulation.generate_state_data(M, W)
         sim_data = sim_data + 1e-8
         m2 = M + np.random.random(M.shape) - 0.5
-        curves, fitted_vals, edges, assignments = lineage(m2, W)
+        curves, fitted_vals, edges, assignments = run_lineage(m2, W)
         ptime = pseudotime(0, edges, fitted_vals)
         # assert that the cells are generally increasing in ptime
         # test each cluster
