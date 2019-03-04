@@ -10,7 +10,8 @@ def preproc_data(data, gene_subset=False, **kwargs):
 
     Assumes that data is a matrix of shape (genes, cells).
 
-    Returns a matrix of shape (cells, 8).
+    Returns a matrix of shape (cells, 8), using the first 8 SVD
+    components. Why 8? It's an arbitrary selection...
     """
     import uncurl
     from uncurl.preprocessing import log1p, cell_normalize
@@ -19,7 +20,7 @@ def preproc_data(data, gene_subset=False, **kwargs):
     if gene_subset:
         gene_subset = uncurl.max_variance_genes(data)
         data_subset = data[gene_subset, :]
-    tsvd = TruncatedSVD(8)
+    tsvd = TruncatedSVD(min(8, data_subset.shape[0] - 1))
     data_tsvd = tsvd.fit_transform(log1p(cell_normalize(data_subset)).T)
     return data_tsvd
 
