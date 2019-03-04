@@ -45,7 +45,7 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         data_tsvd = preproc_data(data, gene_subset=False)
         max_k, gap_vals, sk_vals = run_gap_k_selection(data_tsvd,
                 k_min=1, k_max=50, skip=5, B=6)
-        clusters = max_k
+        clusters = min(max_k, data.shape[0] - 1)
     best_ll = np.inf
     best_M = None
     best_W = None
