@@ -350,3 +350,73 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         w_new = w_new/w_new.sum(0)
     m_ll = objective_fn(X, means, w_new)
     return means, w_new, m_ll
+
+
+def update_m(data, old_M, old_W, selected_genes, disp=False, inner_max_iters=100, parallel=True, threads=4, write_progress_file=None, tol=0.0, regularization=0.0):
+    """
+    This returns a new M matrix that contains all genes, given an M that was
+    created from running state estimation with a subset of genes.
+
+    Args:
+        data (sparse matrix or dense array): data matrix of shape (genes, cells), containing all genes
+        old_M (array): shape is (selected_genes, k)
+        old_W (array): shape is (k, cells)
+        selected_genes (list): list of selected gene indices
+        Rest of the args are as in poisson_estimate_state
+
+    Returns:
+        new_M: array of shape (all_genes, k)
+    """
+    genes, cells = data.shape
+    k = old_M.shape[1]
+    non_selected_genes = [x for x in range(genes) if x not in set(selected_genes)]
+    # 1. initialize new M
+    new_M = np.zeros((genes, k))
+    new_M[selected_genes, :] = old_M
+    # TODO: how to initialize rest of genes?
+    # data*w?
+    if disp:
+        print('computing initial guess for M by data*W.T')
+    new_M_non_selected = data[non_selected_genes, :] * sparse.csc_matrix(old_W.T)
+    new_M[non_selected_genes, :] = new_M_non_selected.toarray()
+    X = data.astype(float)
+    XT = X.T
+    is_sparse = False
+    if sparse.issparse(X):
+        is_sparse = True
+        update_fn = sparse_nolips_update_w
+        # convert to csc
+        X = sparse.csc_matrix(X)
+        XT = sparse.csc_matrix(XT)
+        if parallel:
+            update_fn = parallel_sparse_nolips_update_w
+        Xsum = np.asarray(X.sum(0)).flatten()
+        Xsum_m = np.asarray(X.sum(1)).flatten()
+        # L-BFGS-B won't work right now for sparse matrices
+        method = 'NoLips'
+        objective_fn = _call_sparse_obj
+    else:
+        objective_fn = objective
+        update_fn = nolips_update_w
+        Xsum = X.sum(0)
+        Xsum_m = X.sum(1)
+        # If method is NoLips, converting to a sparse matrix
+        # will always improve the performance (?) and never lower accuracy...
+        # will almost always improve performance?
+        # if sparsity is below 40%?
+        if method == 'NoLips':
+            is_sparse = True
+            X = sparse.csc_matrix(X)
+            XT = sparse.csc_matrix(XT)
+            update_fn = sparse_nolips_update_w
+            if parallel:
+                update_fn = parallel_sparse_nolips_update_w
+            objective_fn = _call_sparse_obj
+    if disp:
+        print('starting estimating M')
+    new_M = _estimate_w(XT, new_M.T, old_W.T, Xsum_m, update_fn, objective_fn, is_sparse, parallel, threads, method, tol, disp, inner_max_iters, 'M', regularization)
+    if write_progress_file is not None:
+        progress = open(write_progress_file, 'w')
+        progress.write('0')
+        progress.close()
+    return new_M.T

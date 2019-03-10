@@ -11,24 +11,24 @@ if __name__ == '__main__':
     # Poisson clustering
     assignments, centers = uncurl.poisson_cluster(data, 3)
     # State estimation
-    #means, weights = uncurl.poisson_estimate_state(data, 3, max_iters=5)
-    means, weights = np.load('means_weights.npy')
+    means, weights, ll = uncurl.run_state_estimation(data, 3)
+    #means, weights = np.load('means_weights.npy')
     # dimensionality reduction
     X = uncurl.dim_reduce(means, weights, 2)
     proj = np.dot(X.T, weights)
-    cluster_curves, cluster_fitted_vals, cluster_edges, cluster_assignments = uncurl.lineage(means, weights, curve_function='poly')
+    cluster_curves, cluster_fitted_vals, cluster_edges, cluster_assignments = uncurl.run_lineage(means, weights, curve_function='poly')
     # dimensionality reduction with true data
     true_weights = dat['X']
     true_means = dat['M']
     X = uncurl.dim_reduce(true_means, true_weights, 2)
     proj_true = np.dot(X.T, true_weights)
-    true_curves, true_fitted, true_edges, true_assignments = uncurl.lineage(true_means, true_weights)
+    true_curves, true_fitted, true_edges, true_assignments = uncurl.run_lineage(true_means, true_weights)
     # plotting dimensionality reduction, fitted curves
     plt.clf()
     plt.cla()
     plt.title('Dimensionality reduction plot')
-    plt.scatter(proj[0,:], proj[1,:], s=30, c=true_weights.argmax(0), edgecolors='none', alpha=0.7)
-    plt.scatter(cluster_fitted_vals[0,:], cluster_fitted_vals[1,:], s=30, c=true_weights.argmax(0), edgecolors='none', alpha=0.7)
+    plt.scatter(proj[0,:], proj[1,:], s=30, c=weights.argmax(0), edgecolors='none', alpha=0.7)
+    plt.scatter(cluster_fitted_vals[0,:], cluster_fitted_vals[1,:], s=30, c=weights.argmax(0), edgecolors='none', alpha=0.7)
     # connect the lines
     for edge in cluster_edges:
         plt.plot((cluster_fitted_vals[0, edge[0]], cluster_fitted_vals[0, edge[1]]),

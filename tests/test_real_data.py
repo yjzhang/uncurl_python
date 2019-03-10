@@ -74,3 +74,17 @@ class RealDataTest(TestCase):
         # NMI should be > 0.75 on 10x_pure_pooled 
         # (accounting for lower than default iter count)
         self.assertTrue(nmi(self.labs, labels)>0.6)
+
+    def test_10x_update_m(self):
+        """
+        Test after updating M
+        """
+        from uncurl.state_estimation import update_m
+        genes = uncurl.max_variance_genes(self.data)
+        data_subset = self.data[genes,:]
+        # smaller # of iterations than default so it finishes faster...
+        M, W, ll = uncurl.run_state_estimation(data_subset, clusters=0,
+                max_iters=10, inner_max_iters=50)
+        new_M = update_m(self.data, M, W, genes)
+        self.assertEqual(new_M.shape, (self.data.shape[0], W.shape[0]))
+        self.assertFalse(np.isnan(new_M).any())

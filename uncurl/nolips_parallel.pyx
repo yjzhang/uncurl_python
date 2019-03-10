@@ -34,7 +34,7 @@ cdef inline void _update(int2 i, DTYPE_t[:] data_, int2[:] indices, int2[:] indp
     cdef int2 start_ind = indptr[i]
     cdef int2 end_ind = indptr[i+1]
     cdef int2 g, k2, j, ind
-    cdef double mw
+    cdef double mw, divisor
     for ind in range(start_ind, end_ind):
         g = indices[ind]
         mw = eps
@@ -44,7 +44,12 @@ cdef inline void _update(int2 i, DTYPE_t[:] data_, int2[:] indices, int2[:] indp
         for j in range(k):
             cij[i,j] += M_view[g,j]*mw
     for j in range(k):
-        Wnew_view[j,i] = max(0.0, W_view[j,i]/(1+lam*W_view[j,i]*(regularization + R_view[j]-cij[i,j])))
+        # divisor has to be >= 0
+        divisor = 1+lam*W_view[j,i]*(regularization + R_view[j]-cij[i,j])
+        if divisor > 0:
+            Wnew_view[j,i] = W_view[j,i]/divisor
+        else:
+            Wnew_view[j,i] = 0.0
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
