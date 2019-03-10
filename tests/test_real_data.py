@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import unittest
 from unittest import TestCase
 
 import numpy as np
@@ -74,6 +75,12 @@ class RealDataTest(TestCase):
         # NMI should be > 0.75 on 10x_pure_pooled 
         # (accounting for lower than default iter count)
         self.assertTrue(nmi(self.labs, labels)>0.6)
+        # test RMSE
+        test_data = np.dot(M, W)
+        error = data_subset.toarray() - test_data
+        error = np.sqrt(np.mean(error**2))
+        print('data subset RMSE:', error)
+        self.assertTrue(error < 2.0)
 
     def test_10x_update_m(self):
         """
@@ -88,3 +95,12 @@ class RealDataTest(TestCase):
         new_M = update_m(self.data, M, W, genes)
         self.assertEqual(new_M.shape, (self.data.shape[0], W.shape[0]))
         self.assertFalse(np.isnan(new_M).any())
+        # test RMSE
+        test_data = np.dot(new_M, W)
+        error = self.data.toarray() - test_data
+        error = np.sqrt(np.mean(error**2))
+        print('M update RMSE:', error)
+        self.assertTrue(error < 2.0)
+
+if __name__ == '__main__':
+    unittest.main()
