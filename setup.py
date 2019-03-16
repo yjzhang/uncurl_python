@@ -24,7 +24,7 @@ with open('README.rst') as f:
     long_description = f.read()
 
 setup(name='uncurl_seq',
-      version='0.2.12',
+      version='0.2.13',
       description='Tool for pre-processing single-cell RNASeq data',
       long_description=long_description,
       long_description_content_type='text/x-rst',
