@@ -136,7 +136,7 @@ def _estimate_w(X, w_init, means, Xsum, update_fn, objective_fn, is_sparse=True,
     if method=='NoLips':
         nolips_iters = inner_max_iters
         m_sum = means.sum(0)
-        lams = 1/(2*Xsum)
+        lams = 1/(2*Xsum + eps)
         for j in range(nolips_iters):
             if is_sparse and parallel:
                 w_new = update_fn(X.data, X.indices, X.indptr, X.shape[1], X.shape[0], means, w_init, lams, m_sum, n_threads=threads, regularization=regularization)
@@ -242,7 +242,7 @@ def initialize_means_weights(data, clusters, init_means=None, init_weights=None,
         w_init = init_weights.copy()
     return means, w_init
 
-def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=0, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False, regularization=0.0, write_progress_file=None):
+def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, method='NoLips', max_iters=30, tol=0, disp=False, inner_max_iters=100, normalize=True, initialization='tsvd', parallel=True, threads=4, max_assign_weight=0.75, run_w_first=True, constrain_w=False, regularization=0.0, write_progress_file=None, **kwargs):
     """
     Uses a Poisson Covex Mixture model to estimate cell states and
     cell state mixing weights.
@@ -299,8 +299,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
         Xsum_m = X.sum(1)
         # If method is NoLips, converting to a sparse matrix
         # will always improve the performance (?) and never lower accuracy...
-        # will almost always improve performance?
-        # if sparsity is below 40%?
         if method == 'NoLips':
             is_sparse = True
             X = sparse.csc_matrix(X)
@@ -311,7 +309,6 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             objective_fn = _call_sparse_obj
     w_new = w_init
     for i in range(max_iters):
-        # TODO: write progress
         if disp:
             print('iter: {0}'.format(i))
         if run_w_first:
@@ -342,6 +339,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
             if disp:
                 w_ll = objective_fn(X, means, w_new)
                 print('Finished updating W. Objective value: {0}'.format(w_ll))
+        # write progress to progress file
         if write_progress_file is not None:
             progress = open(write_progress_file, 'w')
             progress.write(str(i))
@@ -352,7 +350,7 @@ def poisson_estimate_state(data, clusters, init_means=None, init_weights=None, m
     return means, w_new, m_ll
 
 
-def update_m(data, old_M, old_W, selected_genes, disp=False, inner_max_iters=100, parallel=True, threads=4, write_progress_file=None, tol=0.0, regularization=0.0):
+def update_m(data, old_M, old_W, selected_genes, disp=False, inner_max_iters=100, parallel=True, threads=4, write_progress_file=None, tol=0.0, regularization=0.0, **kwargs):
     """
     This returns a new M matrix that contains all genes, given an M that was
     created from running state estimation with a subset of genes.
