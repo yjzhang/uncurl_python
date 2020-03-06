@@ -375,6 +375,8 @@ def update_m(data, old_M, old_W, selected_genes, disp=False, inner_max_iters=100
     # data*w?
     if disp:
         print('computing initial guess for M by data*W.T')
+    if not sparse.issparse(data):
+        data = sparse.csc_matrix(data)
     new_M_non_selected = data[non_selected_genes, :] * sparse.csc_matrix(old_W.T)
     new_M[non_selected_genes, :] = new_M_non_selected.toarray()
     X = data.astype(float)
@@ -388,7 +390,6 @@ def update_m(data, old_M, old_W, selected_genes, disp=False, inner_max_iters=100
         XT = sparse.csc_matrix(XT)
         if parallel:
             update_fn = parallel_sparse_nolips_update_w
-        Xsum = np.asarray(X.sum(0)).flatten()
         Xsum_m = np.asarray(X.sum(1)).flatten()
         # L-BFGS-B won't work right now for sparse matrices
         method = 'NoLips'
@@ -396,7 +397,6 @@ def update_m(data, old_M, old_W, selected_genes, disp=False, inner_max_iters=100
     else:
         objective_fn = objective
         update_fn = nolips_update_w
-        Xsum = X.sum(0)
         Xsum_m = X.sum(1)
         # If method is NoLips, converting to a sparse matrix
         # will always improve the performance (?) and never lower accuracy...
