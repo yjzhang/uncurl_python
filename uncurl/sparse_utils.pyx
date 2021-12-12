@@ -101,7 +101,8 @@ def sparse_cell_normalize(np.ndarray[DTYPE_t, ndim=1] data,
         np.ndarray[int2, ndim=1] indices,
         np.ndarray[int2, ndim=1] indptr,
         Py_ssize_t cells,
-        Py_ssize_t genes):
+        Py_ssize_t genes,
+        int multiply_means=True):
     """
     cell_normalize for sparse matrices.
     does cell normalize in place.
@@ -119,8 +120,10 @@ def sparse_cell_normalize(np.ndarray[DTYPE_t, ndim=1] data,
         for i2 in range(start_ind, end_ind):
             data_[i2] /= s
         total_umis[c] = s
-    cdef double med = np.median(np.asarray(total_umis))
-    data *= med
+    cdef double med;
+    if multiply_means != 0:
+        med = np.median(np.asarray(total_umis))
+        data *= med
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

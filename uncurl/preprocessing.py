@@ -66,10 +66,12 @@ def max_variance_genes(data, nbins=5, frac=0.2):
         indices.extend(ind)
     return indices
 
-def cell_normalize(data):
+def cell_normalize(data, multiply_means=True):
     """
     Returns the data where the expression is normalized so that the total
     count per cell is equal.
+
+    If multiply_means is true, then the data will be multiplied to have the median UMI count for all cells.
     """
     if sparse.issparse(data):
         data = sparse.csc_matrix(data.astype(float))
@@ -78,7 +80,8 @@ def cell_normalize(data):
                 data.indices,
                 data.indptr,
                 data.shape[1],
-                data.shape[0])
+                data.shape[0],
+                multiply_means)
         return data
     data_norm = data.astype(float)
     total_umis = []
@@ -86,8 +89,9 @@ def cell_normalize(data):
         di = data_norm[:,i]
         total_umis.append(di.sum())
         di /= total_umis[i]
-    med = np.median(total_umis)
-    data_norm *= med
+    if multiply_means:
+        med = np.median(total_umis)
+        data_norm *= med
     return data_norm
 
 def log1p(data):
