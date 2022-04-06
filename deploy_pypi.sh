@@ -10,10 +10,9 @@ rm dist/*.tar.gz
 rm dist/*.whl
 
 # create a source distribution
-python setup.py sdist
+python3 setup.py sdist
 
 # create wheels - note: this can't be uploaded onto pypi
-python setup.py bdist_wheel
 python3 setup.py bdist_wheel
 
 # upload
