@@ -123,7 +123,8 @@ def sparse_cell_normalize(np.ndarray[DTYPE_t, ndim=1] data,
     cdef double med;
     if multiply_means != 0:
         med = np.median(np.asarray(total_umis))
-        data *= med
+        if med > 0:
+            data *= med
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
