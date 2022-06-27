@@ -17,7 +17,6 @@ import numpy as np
 from scipy import sparse
 from scipy.optimize import minimize
 from sklearn.cluster import KMeans
-from sklearn.decomposition import TruncatedSVD
 from sklearn.utils.extmath import randomized_svd
 
 eps=1e-8
@@ -31,7 +30,6 @@ def _create_w_objective(m, X):
         X (array): genes x cells
     """
     genes, clusters = m.shape
-    cells = X.shape[1]
     m_sum = m.sum(0)
     def objective(w):
         # convert w into a matrix first... because it's a vector for
@@ -167,7 +165,7 @@ def _call_sparse_obj(X, M, W):
     return sparse_objective(X.data, X.indices, X.indptr, X.shape[1], X.shape[0],
             M, W)
 
-def initialize_means_weights(data, clusters, init_means=None, init_weights=None, initialization='tsvd', max_assign_weight=0.75):
+def initialize_means_weights(data, clusters, init_means=None, init_weights=None, initialization='tsvd', max_assign_weight=0.75, use_log_norm=True):
     """
     Generates initial means and weights for state estimation.
     """
@@ -188,7 +186,10 @@ def initialize_means_weights(data, clusters, init_means=None, init_weights=None,
             means, assignments = kmeans_pp(data, clusters)
         elif initialization=='km':
             km = KMeans(clusters)
-            assignments = km.fit_predict(log1p(cell_normalize(data)).T)
+            if use_log_norm:
+                assignments = km.fit_predict(log1p(cell_normalize(data)).T)
+            else:
+                assignments = km.fit_predict(data.T)
             init_weights = initialize_from_assignments(assignments, clusters,
                     max_assign_weight)
             means = initialize_means(data, assignments, clusters)
@@ -200,8 +201,12 @@ def initialize_means_weights(data, clusters, init_means=None, init_weights=None,
             # prevents it from working properly on long inputs 
             # if num elements > 2**31
             #data_reduced = tsvd.fit_transform(log1p(cell_normalize(data)).T)
-            U, Sigma, VT = randomized_svd(log1p(cell_normalize(data)).T,
-                    n_components)
+            if use_log_norm:
+                U, Sigma, VT = randomized_svd(log1p(cell_normalize(data)).T,
+                        n_components)
+            else:
+                U, Sigma, VT = randomized_svd(data.T,
+                        n_components)
             data_reduced = U*Sigma
             assignments = km.fit_predict(data_reduced)
             init_weights = initialize_from_assignments(assignments, clusters,

@@ -37,6 +37,8 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
         func = log_norm_nmf
     elif dist=='gaussian' or dist=='norm' or dist=='normal':
         func = norm_nmf
+    elif dist=='none':
+        func = run_baseline
     else:
         print('dist should be one of Poiss, NB, ZIP, LogNorm, or Gaussian. Using Poiss.')
     # TODO: estimate number of clusters
@@ -64,3 +66,11 @@ def run_state_estimation(data, clusters, dist='Poiss', reps=1, **kwargs):
     return best_M, best_W, best_ll
 
 
+def run_baseline(data, clusters, **kwargs):
+    """
+    Run "baseline" tSVD + k-means
+    """
+    from .state_estimation import initialize_means_weights
+    m, w = initialize_means_weights(data, clusters, initialization='tsvd',
+            max_assign_weight=0.95, use_log_norm=False)
+    return m, w, 0

@@ -25,7 +25,7 @@ Alternatively, uncurl can be installed from source: After cloning the repository
 
 Requirements: numpy, scipy, cython, scikit-learn
 
-Tested on python 2.7, 3.5 on Linux.
+Tested on python 2.7, 3.5+ on Linux.
 
 For parallel state estimation, OpenMP is required.
 

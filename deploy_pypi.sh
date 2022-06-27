@@ -16,6 +16,6 @@ python3 setup.py sdist
 python3 setup.py bdist_wheel
 
 # upload
-twine upload dist/uncurl_seq-*.tar.gz
+twine upload dist/uncurl_seq-*.tar.gz --verbose
 
 # TODO: how to upload built wheels? This requires the 'manylinux1' platform tag?
